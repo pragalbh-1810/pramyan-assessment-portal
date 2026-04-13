@@ -1,5 +1,7 @@
 import { useState } from "react";
 import logo from "../assets/logo.jpeg";
+import { useNavigate } from "react-router-dom";
+import { setToken, setRole } from "../utils/auth";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -49,7 +51,6 @@ const styles = `
     animation: fadeInUp 0.6s ease both;
   }
 
-  /* ── LEFT ── */
   .login-left {
     width: 40%;
     background: linear-gradient(145deg, #1D9E75 0%, #185FA5 100%);
@@ -175,13 +176,12 @@ const styles = `
   .bottom-tag p { font-size: 11px; color: rgba(255,255,255,0.85); font-family: 'Inter', sans-serif; }
   .bottom-tag strong { color: white; }
 
-  /* ── RIGHT ── */
   .login-right {
-  flex: 1; background: white;
-  display: flex; align-items: center; justify-content: center;
-  padding: 2.5rem 3rem;
-  position: relative; overflow: hidden;
-}
+    flex: 1; background: white;
+    display: flex; align-items: center; justify-content: center;
+    padding: 2.5rem 3rem;
+    position: relative; overflow: hidden;
+  }
   .login-right::before {
     content: ''; position: absolute; top: -60px; right: -60px;
     width: 220px; height: 220px; border-radius: 50%;
@@ -200,15 +200,12 @@ const styles = `
   }
 
   .top-bar {
-    display: flex; justify-content: center ; align-items: center;
+    display: flex; justify-content: center; align-items: center;
     margin-bottom: 28px;
   }
   .sign-up-link { font-size: 11.5px; color: #888; font-family: 'Inter', sans-serif; }
   .sign-up-link a { color: #185FA5; font-weight: 500; text-decoration: none; }
   .sign-up-link a:hover { text-decoration: underline; }
-
-  
-
 
   .form-title { margin-bottom: 22px; }
   .form-title h2 { font-size: 24px; font-weight: 700; color: #0d1f3c; margin-bottom: 4px; }
@@ -240,7 +237,7 @@ const styles = `
     display: block; font-size: 10px; font-weight: 700;
     color: #185FA5; margin-bottom: 5px;
     letter-spacing: 0.5px; text-transform: uppercase;
-    text-align: left; padding:3px 2px ;
+    text-align: left; padding: 3px 2px;
   }
   .field input {
     width: 100%; height: 42px;
@@ -307,6 +304,7 @@ const styles = `
 `;
 
 export default function Login() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -324,56 +322,30 @@ export default function Login() {
   };
 
   const handleSubmit = async () => {
-
-  setLoading(true);
-
-  try {
-
-    const response = await fetch(
-      "http://localhost/pramyan-assessment-portal/backend/routes/login.php",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password
-        })
+    const newErrors = validate();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setLoading(true);
+    try {
+      // TODO: wire to login.php when Anshika's API is ready
+      // const res = await api.post("/routes/login.php", form);
+      // setToken(res.data.token);
+      // setRole(res.data.role);
+      // navigate("/dashboard");
+      console.log("Login submitted:", form);
+      alert("Login successful! (Wire to API when ready)");
+    } catch (err) {
+      if (err.response?.status === 401) {
+        setErrors({ api: "Wrong email or password. Please try again." });
+      } else {
+        setErrors({ api: "Something went wrong. Please try again." });
       }
-    );
-
-    const result = await response.json();
-
-    console.log(result);
-
-    if(result.success){
-
-      alert("Login successful");
-
-      localStorage.setItem("token", result.token);
-
+    } finally {
+      setLoading(false);
     }
-    else{
-
-      alert(result.message);
-
-    }
-
-  }
-  catch(error){
-
-    console.log(error);
-    alert("Server error");
-
-  }
-  finally{
-
-    setLoading(false);
-
-  }
-
-};
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSubmit();
@@ -416,7 +388,7 @@ export default function Login() {
                 { icon: "⚡", text: "Instant diagnostic reports" },
                 { icon: "◈", text: "Chapter-wise SWOT analysis" },
                 { icon: "◎", text: "Personalised 4-week study plan" },
-                { icon: "✦", text: "WhatsApp updates to parents" },
+                { icon: "✦", text: "Updates to parents" },
               ].map((f, i) => (
                 <div className="feat-item" key={i}>
                   <div className="feat-icon">{f.icon}</div>
@@ -438,9 +410,7 @@ export default function Login() {
                   </div>
                 ))}
               </div>
-              <p>
-                 students joined
-              </p>
+              <p>students joined</p>
             </div>
           </div>
 
@@ -458,7 +428,6 @@ export default function Login() {
                 <h2>Sign In</h2>
                 <p>Welcome back — let's pick up where you left off</p>
               </div>
-
 
               <button className="google-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24">

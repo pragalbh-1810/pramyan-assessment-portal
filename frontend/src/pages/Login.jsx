@@ -177,11 +177,11 @@ const styles = `
 
   /* ── RIGHT ── */
   .login-right {
-    flex: 1; background: white;
-    display: flex; align-items: center; justify-content: center;
-    padding: 2.5rem 3rem;
-    position: relative; overflow: hidden;
-  }
+  flex: 1; background: white;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2.5rem 3rem;
+  position: relative; overflow: hidden;
+}
   .login-right::before {
     content: ''; position: absolute; top: -60px; right: -60px;
     width: 220px; height: 220px; border-radius: 50%;
@@ -207,22 +207,8 @@ const styles = `
   .sign-up-link a { color: #185FA5; font-weight: 500; text-decoration: none; }
   .sign-up-link a:hover { text-decoration: underline; }
 
-  .welcome-back {
-    display: flex; align-items: center; gap: 10px;
-    background: #f0f9f5;
-    border: 1px solid #c8e8de;
-    border-radius: 12px;
-    padding: 10px 14px;
-    margin-bottom: 20px;
-  }
-  .welcome-icon {
-    width: 32px; height: 32px; border-radius: 8px;
-    background: #1D9E75;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; flex-shrink: 0;
-  }
-  .welcome-text p { font-size: 12px; font-weight: 600; color: #0a5a45; }
-  .welcome-text span { font-size: 11px; color: #5a9e87; font-family: 'Inter', sans-serif; }
+  
+
 
   .form-title { margin-bottom: 22px; }
   .form-title h2 { font-size: 24px; font-weight: 700; color: #0d1f3c; margin-bottom: 4px; }
@@ -254,6 +240,7 @@ const styles = `
     display: block; font-size: 10px; font-weight: 700;
     color: #185FA5; margin-bottom: 5px;
     letter-spacing: 0.5px; text-transform: uppercase;
+    text-align: left; padding:3px 2px ;
   }
   .field input {
     width: 100%; height: 42px;
@@ -426,7 +413,7 @@ export default function Login() {
                 ))}
               </div>
               <p>
-                <strong>2,400+</strong> students joined
+                 students joined
               </p>
             </div>
           </div>
@@ -446,13 +433,6 @@ export default function Login() {
                 <p>Welcome back — let's pick up where you left off</p>
               </div>
 
-              <div className="welcome-back">
-                <div className="welcome-icon">🎓</div>
-                <div className="welcome-text">
-                  <p>Student Assessment Portal</p>
-                  <span>Sign in to access your tests and reports</span>
-                </div>
-              </div>
 
               <button className="google-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24">

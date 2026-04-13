@@ -324,30 +324,56 @@ export default function Login() {
   };
 
   const handleSubmit = async () => {
-    const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-    setLoading(true);
-    try {
-      // TODO: wire to login.php when Anshika's API is ready
-      // const res = await api.post("/routes/login.php", form);
-      // setToken(res.data.token);
-      // setRole(res.data.role);
-      // navigate("/dashboard");
-      console.log("Login submitted:", form);
-      alert("Login successful! (Wire to API when ready)");
-    } catch (err) {
-      if (err.response?.status === 401) {
-        setErrors({ api: "Wrong email or password. Please try again." });
-      } else {
-        setErrors({ api: "Something went wrong. Please try again." });
+
+  setLoading(true);
+
+  try {
+
+    const response = await fetch(
+      "http://localhost/pramyan-assessment-portal/backend/routes/login.php",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password
+        })
       }
-    } finally {
-      setLoading(false);
+    );
+
+    const result = await response.json();
+
+    console.log(result);
+
+    if(result.success){
+
+      alert("Login successful");
+
+      localStorage.setItem("token", result.token);
+
     }
-  };
+    else{
+
+      alert(result.message);
+
+    }
+
+  }
+  catch(error){
+
+    console.log(error);
+    alert("Server error");
+
+  }
+  finally{
+
+    setLoading(false);
+
+  }
+
+};
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSubmit();

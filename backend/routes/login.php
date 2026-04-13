@@ -37,16 +37,17 @@ if (empty($email) || empty($password)) {
     exit();
 }
 
-// Look up email
+// IMPORTANT CHANGE HERE
 $stmt = $pdo->prepare("
-    SELECT id, name, email, password, role, parent_phone
+    SELECT id, name, email, password_hash, role, parent_phone
     FROM users
     WHERE email = ?
 ");
+
 $stmt->execute([$email]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Email not found
+// email not found
 if (!$user) {
     http_response_code(401);
     echo json_encode([
@@ -56,18 +57,22 @@ if (!$user) {
     exit();
 }
 
-// Wrong password
-if (!password_verify($password, $user['password'])) {
+// IMPORTANT CHANGE HERE
+if (!password_verify($password, $user['password_hash'])) {
+
     http_response_code(401);
+
     echo json_encode([
         'success' => false,
         'message' => 'Incorrect password'
     ]);
+
     exit();
 }
 
-// Generate JWT
+// generate token
 $secret = "pramyan_super_secret_key_2026";
+
 $token  = generateJWT([
     'id'    => (int)$user['id'],
     'email' => $user['email'],
@@ -77,6 +82,7 @@ $token  = generateJWT([
 ], $secret);
 
 http_response_code(200);
+
 echo json_encode([
     'success' => true,
     'token'   => $token,

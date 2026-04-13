@@ -17,7 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once dirname(__DIR__) . '/config/db.php';
 
-// Simple JWT generator — no Composer needed
 function generateJWT($payload, $secret) {
     $header    = rtrim(base64_encode(json_encode(['alg' => 'HS256', 'typ' => 'JWT'])), '=');
     $payload   = rtrim(base64_encode(json_encode($payload)), '=');
@@ -25,88 +24,96 @@ function generateJWT($payload, $secret) {
     return "$header.$payload.$signature";
 }
 
-// Get input
+// input
 $input        = json_decode(file_get_contents('php://input'), true);
-$name         = trim($input['name']         ?? '');
-$email        = trim($input['email']        ?? '');
-$password     =      $input['password']     ?? '';
-$phone        = trim($input['phone']        ?? '');
+
+$name         = trim($input['name'] ?? '');
+$email        = trim($input['email'] ?? '');
+$password     = $input['password'] ?? '';
+$class        = $input['class'] ?? null;
+$board        = trim($input['board'] ?? '');
 $parent_phone = trim($input['parent_phone'] ?? '');
-$class_name   = trim($input['class_name']   ?? '');
-$board        = trim($input['board']        ?? '');
 
-// Validation
-if (empty($name) || empty($email) || empty($password)) {
+// validation
+if (!$name || !$email || !$password) {
+
     http_response_code(400);
+
     echo json_encode([
-        'success' => false,
-        'message' => 'Name, email and password are required'
+        "success" => false,
+        "message" => "Name, email and password required"
     ]);
+
     exit();
 }
 
+// email format
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    http_response_code(400);
+
     echo json_encode([
-        'success' => false,
-        'message' => 'Invalid email format'
+        "success"=>false,
+        "message"=>"Invalid email"
     ]);
+
     exit();
 }
 
-// Check if email already exists
-$stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+// check existing email
+$stmt = $pdo->prepare("SELECT id FROM users WHERE email=?");
 $stmt->execute([$email]);
+
 if ($stmt->fetch()) {
-    http_response_code(400);
+
     echo json_encode([
-        'success' => false,
-        'message' => 'Email already registered'
+        "success"=>false,
+        "message"=>"Email already exists"
     ]);
+
     exit();
 }
 
-// Hash password with bcrypt
-$hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+// hash password
+$password_hash = password_hash($password, PASSWORD_BCRYPT);
 
-// Insert into users table
+// insert user
 $stmt = $pdo->prepare("
-    INSERT INTO users
-        (name, email, password, phone, parent_phone, class_name, board, role)
-    VALUES
-        (?, ?, ?, ?, ?, ?, ?, 'student')
+INSERT INTO users
+(name,email,password_hash,class,board,parent_phone,role)
+VALUES
+(?,?,?,?,?,?,'student')
 ");
+
 $stmt->execute([
-    $name,
-    $email,
-    $hashedPassword,
-    $phone,
-    $parent_phone,
-    $class_name,
-    $board
+$name,
+$email,
+$password_hash,
+$class,
+$board,
+$parent_phone
 ]);
 
 $userId = $pdo->lastInsertId();
 
-// Generate JWT
+// generate jwt
 $secret = "pramyan_super_secret_key_2026";
-$token  = generateJWT([
-    'id'    => (int)$userId,
-    'email' => $email,
-    'role'  => 'student',
-    'iat'   => time(),
-    'exp'   => time() + (7 * 24 * 60 * 60)
-], $secret);
 
-http_response_code(201);
+$token = generateJWT([
+"id" => (int)$userId,
+"email"=>$email,
+"role"=>"student",
+"iat"=>time(),
+"exp"=>time()+604800
+],$secret);
+
+// response
 echo json_encode([
-    'success' => true,
-    'message' => 'Account created successfully',
-    'token'   => $token,
-    'user'    => [
-        'id'    => (int)$userId,
-        'name'  => $name,
-        'email' => $email,
-        'role'  => 'student'
-    ]
+"success"=>true,
+"message"=>"Account created successfully",
+"token"=>$token,
+"user"=>[
+"id"=>(int)$userId,
+"name"=>$name,
+"email"=>$email,
+"role"=>"student"
+]
 ]);

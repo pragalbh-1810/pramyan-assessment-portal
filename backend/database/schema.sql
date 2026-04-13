@@ -2,103 +2,95 @@ CREATE DATABASE IF NOT EXISTS pramyan;
 USE pramyan;
 
 CREATE TABLE IF NOT EXISTS users (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  name          VARCHAR(100) NOT NULL,
-  email         VARCHAR(100) UNIQUE NOT NULL,
-  password      VARCHAR(255) NOT NULL,
-  phone         VARCHAR(20),
-  parent_phone  VARCHAR(20),
-  class_name    VARCHAR(50),
-  board         VARCHAR(50),
-  role          ENUM('student','admin') DEFAULT 'student',
-  google_id     VARCHAR(255) DEFAULT NULL,
-  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  class INT,
+  board VARCHAR(50),
+  role ENUM('student','admin') DEFAULT 'student',
+  parent_phone VARCHAR(20)
 );
 
 CREATE TABLE IF NOT EXISTS tests (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  title         VARCHAR(200) NOT NULL,
-  class_name    VARCHAR(50),
-  duration      INT NOT NULL,
-  total_marks   INT DEFAULT 60,
-  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  duration_mins INT NOT NULL,
+  class INT,
+  created_by INT,
+  FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS questions (
-  id               INT AUTO_INCREMENT PRIMARY KEY,
-  test_id          INT NOT NULL,
-  question_text    TEXT NOT NULL,
-  option_a         VARCHAR(500),
-  option_b         VARCHAR(500),
-  option_c         VARCHAR(500),
-  option_d         VARCHAR(500),
-  correct_option   VARCHAR(1) NOT NULL,
-  chapter          VARCHAR(100),
-  bloom_level      VARCHAR(5),
-  skill_type       VARCHAR(5),
-  section          VARCHAR(1),
-  marks            INT DEFAULT 1,
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  test_id INT NOT NULL,
+  section VARCHAR(10),
+  q_text TEXT NOT NULL,
+  opt_a TEXT,
+  opt_b TEXT,
+  opt_c TEXT,
+  opt_d TEXT,
+  correct ENUM('a','b','c','d') NOT NULL,
+  chapter VARCHAR(100) NOT NULL,
+  bloom_level ENUM('L1','L2','L3','L4','L5') NOT NULL,
+  skill_type ENUM('P1','P2','P3') NOT NULL,
   time_on_question INT DEFAULT 0,
-  class10_link     VARCHAR(255),
+  FOREIGN KEY (test_id) REFERENCES tests(id)
+);
+
+CREATE TABLE IF NOT EXISTS student_tests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  test_id INT NOT NULL,
+  start_time DATETIME,
+  is_submitted TINYINT(1) DEFAULT 0,
+  FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (test_id) REFERENCES tests(id)
 );
 
 CREATE TABLE IF NOT EXISTS responses (
-  id              INT AUTO_INCREMENT PRIMARY KEY,
+  id INT AUTO_INCREMENT PRIMARY KEY,
   student_test_id INT NOT NULL,
-  question_id     INT NOT NULL,
-  selected_option VARCHAR(1) DEFAULT NULL,
-  is_correct      TINYINT(1) DEFAULT 0,
-  auto_saved      TINYINT(1) DEFAULT 0,
+  question_id INT NOT NULL,
+  selected_option ENUM('a','b','c','d'),
+  saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  uploaded_file VARCHAR(500),
+  FOREIGN KEY (student_test_id) REFERENCES student_tests(id),
   FOREIGN KEY (question_id) REFERENCES questions(id)
 );
 
 CREATE TABLE IF NOT EXISTS results (
-  id                INT AUTO_INCREMENT PRIMARY KEY,
-  student_id        INT NOT NULL,
-  test_id           INT NOT NULL,
-  total_score       INT DEFAULT 0,
-  total_marks       INT DEFAULT 60,
-  overall_pct       DECIMAL(5,2) DEFAULT 0,
-  math_score        INT DEFAULT 0,
-  math_total        INT DEFAULT 30,
-  math_pct          DECIMAL(5,2) DEFAULT 0,
-  sci_score         INT DEFAULT 0,
-  sci_total         INT DEFAULT 30,
-  sci_pct           DECIMAL(5,2) DEFAULT 0,
-  performance_label VARCHAR(100),
-  skill_scores      JSON,
-  action_plan       TEXT,
-  created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (student_id) REFERENCES users(id),
-  FOREIGN KEY (test_id) REFERENCES tests(id)
-);
-
-CREATE TABLE IF NOT EXISTS bloom_scores (
-  id              INT AUTO_INCREMENT PRIMARY KEY,
-  student_id      INT NOT NULL,
-  test_id         INT NOT NULL,
-  bloom_level     VARCHAR(5) NOT NULL,
-  marks_scored    INT DEFAULT 0,
-  total_marks     INT DEFAULT 0,
-  score_pct       DECIMAL(5,2) DEFAULT 0,
-  subject         VARCHAR(50),
-  interpretation  TEXT,
-  FOREIGN KEY (student_id) REFERENCES users(id),
-  FOREIGN KEY (test_id) REFERENCES tests(id)
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  student_test_id INT NOT NULL,
+  total_score INT,
+  math_score INT,
+  sci_score INT,
+  overall_pct DECIMAL(5,2),
+  status ENUM('submitted','scored') DEFAULT 'submitted',
+  p1 DECIMAL(5,2),
+  p2 DECIMAL(5,2),
+  p3 DECIMAL(5,2),
+  action_plan TEXT,
+  FOREIGN KEY (student_test_id) REFERENCES student_tests(id)
 );
 
 CREATE TABLE IF NOT EXISTS chapter_scores (
-  id              INT AUTO_INCREMENT PRIMARY KEY,
-  student_id      INT NOT NULL,
-  test_id         INT NOT NULL,
-  chapter         VARCHAR(100),
-  subject         VARCHAR(50),
-  marks_scored    INT DEFAULT 0,
-  total_marks     INT DEFAULT 0,
-  score_pct       DECIMAL(5,2) DEFAULT 0,
-  swot_category   VARCHAR(20),
-  class10_link    VARCHAR(255),
-  FOREIGN KEY (student_id) REFERENCES users(id),
-  FOREIGN KEY (test_id) REFERENCES tests(id)
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  result_id INT NOT NULL,
+  chapter VARCHAR(100),
+  score INT,
+  max_score INT,
+  pct DECIMAL(5,2),
+  swot_category ENUM('Strength','Opportunity','Weakness'),
+  FOREIGN KEY (result_id) REFERENCES results(id)
+);
+
+CREATE TABLE IF NOT EXISTS bloom_scores (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  result_id INT NOT NULL,
+  bloom_level ENUM('L1','L2','L3','L4','L5'),
+  score INT,
+  max_score INT,
+  pct DECIMAL(5,2),
+  FOREIGN KEY (result_id) REFERENCES results(id)
 );

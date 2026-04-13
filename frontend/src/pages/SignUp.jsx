@@ -339,27 +339,61 @@ export default function SignUp() {
   };
 
   const handleSubmit = async () => {
-    const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-    setLoading(true);
-    try {
-      // TODO: wire to signup.php when Anshika's API is ready
-      // const res = await api.post("/routes/signup.php", form);
-      // setToken(res.data.token);
-      // setRole("student");
-      // navigate("/dashboard");
-      console.log("Form submitted:", form);
-      alert("Signup successful! (Wire to API when ready)");
-    } catch (err) {
-      setErrors({ api: "Signup failed. Please try again." });
-    } finally {
-      setLoading(false);
-    }
-  };
 
+  const newErrors = validate();
+
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+
+    const response = await fetch(
+      "http://localhost/pramyan-assessment-portal/backend/routes/signup.php",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          class: form.class,
+          board: form.board,
+          parent_phone: form.parentPhone
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    console.log(result);
+
+    if(result.success){
+      alert("Signup successful");
+    }
+    else{
+      alert(result.message);
+    }
+
+  }
+  catch(error){
+
+    console.log(error);
+
+    alert("Server error");
+
+  }
+  finally{
+
+    setLoading(false);
+
+  }
+};
   return (
     <>
       <style>{styles}</style>

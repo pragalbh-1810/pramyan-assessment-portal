@@ -242,7 +242,9 @@ const styles = `
   .field label {
     display: block; font-size: 10px; font-weight: 700;
     color: #185FA5; margin-bottom: 4px;
+    padding: 2px 2px; 
     letter-spacing: 0.5px; text-transform: uppercase;
+    text-align: left;
   }
   .field input, .field select {
     width: 100%; height: 38px;
@@ -251,6 +253,7 @@ const styles = `
     font-family: 'Inter', sans-serif; color: #1a1a1a;
     background: #f8fbff; outline: none;
     transition: all 0.2s; appearance: none;
+    text-align: left;
   }
   .field input::placeholder { color: #b8cce0; font-size: 12px; }
   .field input:focus, .field select:focus {

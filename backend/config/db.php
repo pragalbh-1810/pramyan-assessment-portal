@@ -1,20 +1,36 @@
 <?php
-// Local database credentials
-$host = '127.0.0.1';
-$db   = 'pramyan'; 
-$user = 'root';       
-$pass = '';   // your password        
+
+// Database credentials (XAMPP default)
+$host = "localhost";
+$dbname = "pramyan";
+$username = "root";
+$password = "";
 
 try {
-    // Create the connection
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);
-    
-    // Set PDO to throw exceptions on errors so they are easier to debug
+
+    $pdo = new PDO(
+        "mysql:host=$host;dbname=$dbname;charset=utf8mb4",
+        $username,
+        $password
+    );
+
+    // enable errors
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
+
+    // default fetch mode
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
 } catch (PDOException $e) {
-    // If the connection fails, return a JSON error so the frontend doesn't crash
-    header('Content-Type: application/json');
-    die(json_encode(["error" => "Database connection failed."]));
+
+    http_response_code(500);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Database connection failed",
+        "error" => $e->getMessage()
+    ]);
+
+    exit;
 }
+
 ?>

@@ -1,8 +1,11 @@
 import { useState } from "react";
 import logo from "../assets/logo.jpeg";
+<<<<<<< HEAD
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { setToken, setRole } from "../utils/auth";
+=======
+>>>>>>> origin/new-feature
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -313,7 +316,10 @@ const styles = `
 `;
 
 export default function SignUp() {
+<<<<<<< HEAD
   const navigate = useNavigate();
+=======
+>>>>>>> origin/new-feature
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -343,6 +349,7 @@ export default function SignUp() {
   };
 
   const handleSubmit = async () => {
+<<<<<<< HEAD
     const newErrors = validate();
 
     if (Object.keys(newErrors).length > 0) {
@@ -390,6 +397,63 @@ export default function SignUp() {
       setLoading(false);
     }
   };
+=======
+
+  const newErrors = validate();
+
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+
+    const response = await fetch(
+      "http://localhost/pramyan-assessment-portal/backend/routes/signup.php",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          class: form.class,
+          board: form.board,
+          parent_phone: form.parentPhone
+        })
+      }
+    );
+
+    const result = await response.json();
+
+    console.log(result);
+
+    if(result.success){
+      alert("Signup successful");
+    }
+    else{
+      alert(result.message);
+    }
+
+  }
+  catch(error){
+
+    console.log(error);
+
+    alert("Server error");
+
+  }
+  finally{
+
+    setLoading(false);
+
+  }
+};
+>>>>>>> origin/new-feature
   return (
     <>
       <style>{styles}</style>
@@ -414,7 +478,13 @@ export default function SignUp() {
             </div>
 
             <div className="left-text">
+<<<<<<< HEAD
               <h2>Your success starts right here</h2>
+=======
+              <h2>
+                Your success starts right here
+              </h2>
+>>>>>>> origin/new-feature
               <p>India's smartest student assessment platform</p>
             </div>
 
@@ -423,7 +493,11 @@ export default function SignUp() {
                 { icon: "⚡", text: "Instant diagnostic reports" },
                 { icon: "◈", text: "Chapter-wise SWOT analysis" },
                 { icon: "◎", text: "Personalised 4-week study plan" },
+<<<<<<< HEAD
                 { icon: "✦", text: "Updates to parents" },
+=======
+                { icon: "✦", text: "WhatsApp updates to parents" },
+>>>>>>> origin/new-feature
               ].map((f, i) => (
                 <div className="feat-item" key={i}>
                   <div className="feat-icon">{f.icon}</div>
@@ -445,7 +519,13 @@ export default function SignUp() {
                   </div>
                 ))}
               </div>
+<<<<<<< HEAD
               <p>students joined</p>
+=======
+              <p>
+                 students joined
+              </p>
+>>>>>>> origin/new-feature
             </div>
           </div>
 
@@ -459,7 +539,11 @@ export default function SignUp() {
                   <div className="pill pill-next" />
                 </div>
                 <div className="sign-in-link">
+<<<<<<< HEAD
                   Already have an account? <a href="/">Sign In</a>
+=======
+                  Already have an account? <a href="/login">Sign In</a>
+>>>>>>> origin/new-feature
                 </div>
               </div>
 

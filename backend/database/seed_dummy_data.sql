@@ -7,14 +7,25 @@ USE pramyan;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
-TRUNCATE TABLE bloom_scores;
-TRUNCATE TABLE chapter_scores;
-TRUNCATE TABLE results;
-TRUNCATE TABLE responses;
-TRUNCATE TABLE student_tests;
-TRUNCATE TABLE questions;
-TRUNCATE TABLE tests;
-TRUNCATE TABLE users;
+-- 1) Safely empty tables without breaking foreign key constraints
+DELETE FROM bloom_scores;
+DELETE FROM chapter_scores;
+DELETE FROM results;
+DELETE FROM responses;
+DELETE FROM student_tests;
+DELETE FROM questions;
+DELETE FROM tests;
+DELETE FROM users;
+
+-- 2) Reset the auto-increment IDs back to 1
+ALTER TABLE bloom_scores AUTO_INCREMENT = 1;
+ALTER TABLE chapter_scores AUTO_INCREMENT = 1;
+ALTER TABLE results AUTO_INCREMENT = 1;
+ALTER TABLE responses AUTO_INCREMENT = 1;
+ALTER TABLE student_tests AUTO_INCREMENT = 1;
+ALTER TABLE questions AUTO_INCREMENT = 1;
+ALTER TABLE tests AUTO_INCREMENT = 1;
+ALTER TABLE users AUTO_INCREMENT = 1;
 
 SET FOREIGN_KEY_CHECKS = 1;
 

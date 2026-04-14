@@ -1,6 +1,5 @@
 <?php
 header('Content-Type: application/json');
-<<<<<<< HEAD
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
@@ -32,9 +31,6 @@ try {
         exit();
     }
 
-    // Supports both contracts:
-    // A) Bulk: { user_id, test_id, answers: [{question_id, selected_option, time_on_question?}] }
-    // B) Single click: { student_test_id, question_id, selected_option, time_on_question? }
     $user_id = isset($input['user_id']) ? (int)$input['user_id'] : (int)$authUser['id'];
     $test_id = isset($input['test_id']) ? (int)$input['test_id'] : null;
     $student_test_id = isset($input['student_test_id']) ? (int)$input['student_test_id'] : null;
@@ -111,7 +107,6 @@ try {
         }
     }
 
-    // Prepared statements reused for each answer
     $questionCheckStmt = $pdo->prepare("SELECT id FROM questions WHERE id = ? AND test_id = ?");
     $responseLookupStmt = $pdo->prepare("SELECT id FROM responses WHERE student_test_id = ? AND question_id = ?");
     $responseInsertStmt = $pdo->prepare("
@@ -172,19 +167,4 @@ try {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
 }
-=======
-
-// 1. Require the middleware
-require_once '../middleware/auth.php';
-
-// 2. Run the gatekeeper (this will kill the script if auth fails)
-$user = authenticate(); 
-
-// 3. If they pass, send back success AND prove we know who they are!
-echo json_encode([
-    "saved" => true, 
-    "message" => "Welcome to the secure route!",
-    "logged_in_user_id" => $user['id']
-]);
->>>>>>> origin/new-feature
 ?>

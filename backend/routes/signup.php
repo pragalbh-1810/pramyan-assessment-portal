@@ -17,30 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once dirname(__DIR__) . '/config/db.php';
 
-<<<<<<< HEAD
 function generateJWT($payload, $secret) {
     $header    = rtrim(base64_encode(json_encode(['alg' => 'HS256', 'typ' => 'JWT'])), '=');
     $payload   = rtrim(base64_encode(json_encode($payload)), '=');
     $signature = rtrim(base64_encode(hash_hmac('sha256', "$header.$payload", $secret, true)), '=');
-=======
-function base64url_encode($data) {
-    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-}
-
-function generateJWT($payload, $secret) {
-
-    $header = base64url_encode(json_encode([
-        'alg' => 'HS256',
-        'typ' => 'JWT'
-    ]));
-
-    $payload = base64url_encode(json_encode($payload));
-
-    $signature = base64url_encode(
-        hash_hmac('sha256', "$header.$payload", $secret, true)
-    );
-
->>>>>>> origin/new-feature
     return "$header.$payload.$signature";
 }
 
@@ -56,25 +36,20 @@ $parent_phone = trim($input['parent_phone'] ?? '');
 
 // validation
 if (!$name || !$email || !$password) {
-
     http_response_code(400);
-
     echo json_encode([
         "success" => false,
         "message" => "Name, email and password required"
     ]);
-
     exit();
 }
 
 // email format
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-
     echo json_encode([
         "success"=>false,
         "message"=>"Invalid email"
     ]);
-
     exit();
 }
 
@@ -83,12 +58,10 @@ $stmt = $pdo->prepare("SELECT id FROM users WHERE email=?");
 $stmt->execute([$email]);
 
 if ($stmt->fetch()) {
-
     echo json_encode([
         "success"=>false,
         "message"=>"Email already exists"
     ]);
-
     exit();
 }
 
@@ -118,30 +91,25 @@ $userId = $pdo->lastInsertId();
 $secret = "pramyan_super_secret_key_2026";
 
 $token = generateJWT([
-"id" => (int)$userId,
-"email"=>$email,
-"role"=>"student",
-<<<<<<< HEAD
-=======
-"class"=>$class, 
->>>>>>> origin/new-feature
-"iat"=>time(),
-"exp"=>time()+604800
-],$secret);
+    "id"    => (int)$userId,
+    "email" => $email,
+    "role"  => "student",
+    "name"  => $name,
+    "class" => (int)$class,
+    "iat"   => time(),
+    "exp"   => time()+604800
+], $secret);
 
 // response
 echo json_encode([
-"success"=>true,
-"message"=>"Account created successfully",
-"token"=>$token,
-"user"=>[
-"id"=>(int)$userId,
-"name"=>$name,
-"email"=>$email,
-"role"=>"student"
-<<<<<<< HEAD
-=======
-"class"=>$class
->>>>>>> origin/new-feature
-]
+    "success"=>true,
+    "message"=>"Account created successfully",
+    "token"=>$token,
+    "user"=>[
+        "id"=>(int)$userId,
+        "name"=>$name,
+        "email"=>$email,
+        "role"=>"student",
+        "class"=>(int)$class
+    ]
 ]);

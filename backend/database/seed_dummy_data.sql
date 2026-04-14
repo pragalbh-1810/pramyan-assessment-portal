@@ -1,46 +1,114 @@
 USE pramyan;
 
--- 1. Insert an Admin and a Student
-INSERT INTO users (name, email, password_hash, class, board, role, parent_phone) 
-VALUES 
-('Admin Anshika', 'admin@pramyan.com', 'hashed_pw_123', NULL, NULL, 'admin', NULL),
-('Student Keerthiga', 'keerthiga@student.com', 'hashed_pw_456', 10, 'CBSE', 'student', '9876543210');
+-- Dummy data for frontend testing.
+-- Login credentials:
+--   Admin   -> admin@pramyan.com / Admin@123
+--   Student -> any student email below / Student@123
 
--- 2. Insert a Test (Created by the Admin, id=1)
-INSERT INTO tests (name, duration_mins, class, created_by) 
-VALUES 
-('Class 10 Diagnostic Assessment', 90, 10, 1);
+SET FOREIGN_KEY_CHECKS = 0;
 
--- 3. Insert Questions for the Test (test_id=1)
-INSERT INTO questions (test_id, section, q_text, opt_a, opt_b, opt_c, opt_d, correct, chapter, bloom_level, skill_type) 
-VALUES 
-(1, 'A', 'What is the sum of angles in a triangle?', '90', '180', '360', '270', 'b', 'Geometry', 'L1', 'P1'),
-(1, 'B', 'What is the chemical formula for water?', 'H2O', 'CO2', 'O2', 'NaCl', 'a', 'Chemical Reactions', 'L1', 'P1');
+TRUNCATE TABLE bloom_scores;
+TRUNCATE TABLE chapter_scores;
+TRUNCATE TABLE results;
+TRUNCATE TABLE responses;
+TRUNCATE TABLE student_tests;
+TRUNCATE TABLE questions;
+TRUNCATE TABLE tests;
+TRUNCATE TABLE users;
 
--- 4. Insert a Test Attempt by the Student (user_id=2, test_id=1)
-INSERT INTO student_tests (user_id, test_id, start_time, is_submitted) 
-VALUES 
-(2, 1, '2026-04-13 10:00:00', 1);
+SET FOREIGN_KEY_CHECKS = 1;
 
--- 5. Insert the Student's Responses (student_test_id=1, question_id=1 & 2)
--- Student got Q1 right, Q2 wrong
-INSERT INTO responses (student_test_id, question_id, selected_option) 
-VALUES 
-(1, 1, 'b'), 
-(1, 2, 'b');
+-- 1) Users (Updated with google_id)
+INSERT INTO users (name, email, password_hash, google_id, class, board, role, parent_phone)
+VALUES
+('Admin Anshika', 'admin@pramyan.com', '$2y$12$bZdaQTylwXK3E5MKtAZvquUhglTlpMoXZ.kYnr77Rjd3VihN.4UXm', NULL, NULL, NULL, 'admin', NULL),
+('Aarav Sharma', 'aarav.student@pramyan.com', '$2y$12$wFcMqMbM4rBmcgDemERmWOHmAFr534KeQn/7r0Tzj8rCw8npdO2lG', NULL, 10, 'CBSE', 'student', '9876500011'),
+('Diya Nair', 'diya.student@pramyan.com', '$2y$12$wFcMqMbM4rBmcgDemERmWOHmAFr534KeQn/7r0Tzj8rCw8npdO2lG', NULL, 10, 'CBSE', 'student', '9876500022'),
+('Vihaan Patel', 'vihaan.student@pramyan.com', '$2y$12$wFcMqMbM4rBmcgDemERmWOHmAFr534KeQn/7r0Tzj8rCw8npdO2lG', NULL, 9, 'ICSE', 'student', '9876500033'),
+('Anaya Reddy', 'anaya.student@pramyan.com', '$2y$12$wFcMqMbM4rBmcgDemERmWOHmAFr534KeQn/7r0Tzj8rCw8npdO2lG', NULL, 8, 'CBSE', 'student', '9876500044');
 
--- 6. Insert the Final Computed Results (student_test_id=1)
-INSERT INTO results (student_test_id, total_score, math_score, sci_score, overall_pct, status, p1, p2, p3, action_plan) 
-VALUES 
-(1, 1, 1, 0, 50.00, 'scored', 50.00, 0.00, 0.00, 'Focus heavily on Chemical Reactions this week.');
+-- 2) Tests (created_by = admin id 1)
+INSERT INTO tests (name, duration_mins, class, created_by)
+VALUES
+('Class 10 Diagnostic Assessment', 90, 10, 1),
+('Class 9 Mid-Term Readiness Test', 60, 9, 1),
+('Class 8 Foundation Check', 45, 8, 1);
 
--- 7. Insert the Chapter SWOT Scores (result_id=1)
-INSERT INTO chapter_scores (result_id, chapter, score, max_score, pct, swot_category) 
-VALUES 
+-- 3) Questions
+INSERT INTO questions (test_id, section, q_text, opt_a, opt_b, opt_c, opt_d, correct, chapter, bloom_level, skill_type, time_on_question)
+VALUES
+-- Test 1
+(1, 'A', 'What is the sum of angles in a triangle?', '90', '180', '270', '360', 'b', 'Geometry', 'L1', 'P1', 75),
+(1, 'A', 'If x + 5 = 13, then x = ?', '6', '7', '8', '9', 'c', 'Algebra', 'L1', 'P1', 64),
+(1, 'B', 'What is the chemical formula for water?', 'CO2', 'H2O', 'O2', 'NaCl', 'b', 'Chemical Reactions', 'L1', 'P1', 58),
+(1, 'B', 'Which organ pumps blood in the human body?', 'Liver', 'Lungs', 'Kidney', 'Heart', 'd', 'Life Processes', 'L2', 'P2', 70),
+-- Test 2
+(2, 'A', 'Find HCF of 18 and 24.', '3', '6', '9', '12', 'b', 'Number Systems', 'L2', 'P2', 81),
+(2, 'A', 'A triangle with two equal sides is called?', 'Scalene', 'Right', 'Isosceles', 'Equilateral', 'c', 'Geometry', 'L1', 'P1', 67),
+(2, 'B', 'Which process do plants use to make food?', 'Respiration', 'Transpiration', 'Photosynthesis', 'Digestion', 'c', 'Natural Resources', 'L1', 'P1', 73),
+-- Test 3
+(3, 'A', 'What is 25% of 200?', '25', '40', '50', '75', 'c', 'Percentages', 'L1', 'P1', 55),
+(3, 'B', 'Which state change is from liquid to gas?', 'Condensation', 'Evaporation', 'Freezing', 'Melting', 'b', 'Matter', 'L2', 'P2', 62);
+
+-- 4) Student test attempts
+INSERT INTO student_tests (user_id, test_id, start_time, is_submitted)
+VALUES
+(2, 1, '2026-04-10 10:00:00', 1),
+(3, 1, '2026-04-10 11:30:00', 1),
+(4, 2, '2026-04-11 09:15:00', 1),
+(5, 3, '2026-04-12 14:00:00', 0);
+
+-- 5) Responses
+INSERT INTO responses (student_test_id, question_id, selected_option)
+VALUES
+-- Aarav / Test 1
+(1, 1, 'b'),
+(1, 2, 'c'),
+(1, 3, 'b'),
+(1, 4, 'd'),
+-- Diya / Test 1
+(2, 1, 'a'),
+(2, 2, 'c'),
+(2, 3, 'b'),
+(2, 4, 'c'),
+-- Vihaan / Test 2
+(3, 5, 'b'),
+(3, 6, 'c'),
+(3, 7, 'c'),
+-- Anaya / Test 3 (in progress)
+(4, 8, 'c');
+
+-- 6) Results (only for submitted tests)
+INSERT INTO results (student_test_id, total_score, math_score, sci_score, overall_pct, status, p1, p2, p3, action_plan)
+VALUES
+(1, 4, 2, 2, 100.00, 'scored', 100.00, 100.00, 0.00, 'Keep up the consistency and move to higher-order questions (P3).'),
+(2, 2, 1, 1, 50.00, 'scored', 66.67, 33.33, 0.00, 'Revise Geometry and Life Processes with daily concept practice.'),
+(3, 3, 2, 1, 100.00, 'scored', 66.67, 33.33, 0.00, 'Introduce time-bound mixed question drills to improve speed.');
+
+-- 7) Chapter-level SWOT
+INSERT INTO chapter_scores (result_id, chapter, score, max_score, pct, swot_category)
+VALUES
+-- Result 1 (Aarav)
 (1, 'Geometry', 1, 1, 100.00, 'Strength'),
-(1, 'Chemical Reactions', 0, 1, 0.00, 'Weakness');
+(1, 'Algebra', 1, 1, 100.00, 'Strength'),
+(1, 'Chemical Reactions', 1, 1, 100.00, 'Strength'),
+(1, 'Life Processes', 1, 1, 100.00, 'Strength'),
+-- Result 2 (Diya)
+(2, 'Geometry', 0, 1, 0.00, 'Weakness'),
+(2, 'Algebra', 1, 1, 100.00, 'Strength'),
+(2, 'Chemical Reactions', 1, 1, 100.00, 'Strength'),
+(2, 'Life Processes', 0, 1, 0.00, 'Opportunity'),
+-- Result 3 (Vihaan)
+(3, 'Number Systems', 1, 1, 100.00, 'Strength'),
+(3, 'Geometry', 1, 1, 100.00, 'Strength'),
+(3, 'Natural Resources', 1, 1, 100.00, 'Strength');
 
--- 8. Insert the Bloom's Taxonomy Scores (result_id=1)
-INSERT INTO bloom_scores (result_id, bloom_level, score, max_score, pct) 
-VALUES 
-(1, 'L1', 1, 2, 50.00);
+-- 8) Bloom levels
+INSERT INTO bloom_scores (result_id, bloom_level, score, max_score, pct)
+VALUES
+(1, 'L1', 3, 3, 100.00),
+(1, 'L2', 1, 1, 100.00),
+(2, 'L1', 2, 3, 66.67),
+(2, 'L2', 0, 1, 0.00),
+(3, 'L1', 1, 1, 100.00),
+(3, 'L2', 2, 2, 100.00);

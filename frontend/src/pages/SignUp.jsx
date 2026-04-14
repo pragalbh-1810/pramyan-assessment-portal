@@ -378,7 +378,7 @@ export default function SignUp() {
       if (result.success) {
         setToken(result.token);
         setRole(result.user.role);
-        navigate("/dashboard");
+        navigate("/instructions/1");
       } else {
         setErrors({ api: result.message });
       }

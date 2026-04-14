@@ -17,10 +17,30 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once dirname(__DIR__) . '/config/db.php';
 
+<<<<<<< HEAD
 function generateJWT($payload, $secret) {
     $header    = rtrim(base64_encode(json_encode(['alg' => 'HS256', 'typ' => 'JWT'])), '=');
     $payload   = rtrim(base64_encode(json_encode($payload)), '=');
     $signature = rtrim(base64_encode(hash_hmac('sha256', "$header.$payload", $secret, true)), '=');
+=======
+function base64url_encode($data) {
+    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+}
+
+function generateJWT($payload, $secret) {
+
+    $header = base64url_encode(json_encode([
+        'alg' => 'HS256',
+        'typ' => 'JWT'
+    ]));
+
+    $payload = base64url_encode(json_encode($payload));
+
+    $signature = base64url_encode(
+        hash_hmac('sha256', "$header.$payload", $secret, true)
+    );
+
+>>>>>>> origin/new-feature
     return "$header.$payload.$signature";
 }
 
@@ -100,7 +120,12 @@ $secret = "pramyan_super_secret_key_2026";
 $token = generateJWT([
 "id" => (int)$userId,
 "email"=>$email,
+"name" => $name,
 "role"=>"student",
+<<<<<<< HEAD
+=======
+"class"=>$class, 
+>>>>>>> origin/new-feature
 "iat"=>time(),
 "exp"=>time()+604800
 ],$secret);
@@ -115,5 +140,9 @@ echo json_encode([
 "name"=>$name,
 "email"=>$email,
 "role"=>"student"
+<<<<<<< HEAD
+=======
+"class"=>$class
+>>>>>>> origin/new-feature
 ]
 ]);

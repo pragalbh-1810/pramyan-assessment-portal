@@ -37,9 +37,8 @@ if (empty($email) || empty($password)) {
     exit();
 }
 
-// IMPORTANT CHANGE HERE
 $stmt = $pdo->prepare("
-    SELECT id, name, email, password_hash, role, parent_phone
+    SELECT id, name, email, password_hash, role, parent_phone, class
     FROM users
     WHERE email = ?
 ");
@@ -57,16 +56,12 @@ if (!$user) {
     exit();
 }
 
-// IMPORTANT CHANGE HERE
 if (!password_verify($password, $user['password_hash'])) {
-
     http_response_code(401);
-
     echo json_encode([
         'success' => false,
         'message' => 'Incorrect password'
     ]);
-
     exit();
 }
 
@@ -76,7 +71,10 @@ $secret = "pramyan_super_secret_key_2026";
 $token  = generateJWT([
     'id'    => (int)$user['id'],
     'email' => $user['email'],
+    'name'  => $user['name'],
     'role'  => $user['role'],
+    'name'  => $user['name'],
+    'class' => (int)$user['class'],
     'iat'   => time(),
     'exp'   => time() + (7 * 24 * 60 * 60)
 ], $secret);
@@ -91,6 +89,7 @@ echo json_encode([
         'name'         => $user['name'],
         'email'        => $user['email'],
         'role'         => $user['role'],
+        'class'        => (int)$user['class'],
         'parent_phone' => $user['parent_phone']
     ]
 ]);

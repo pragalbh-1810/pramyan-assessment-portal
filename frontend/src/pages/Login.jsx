@@ -439,7 +439,12 @@ const handleSubmit = async () => {
                 <p>Welcome back — let's pick up where you left off</p>
               </div>
 
-              <button className="google-btn">
+              <button
+                className="google-btn"
+                onClick={() => {
+                  window.location.href =
+                    "http://localhost/pramyan-assessment-portal/backend/routes/google-auth.php";
+                }}>
                 <svg width="16" height="16" viewBox="0 0 24 24">
                   <path
                     fill="#4285F4"

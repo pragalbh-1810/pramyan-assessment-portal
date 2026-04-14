@@ -17,10 +17,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once dirname(__DIR__) . '/config/db.php';
 
+function base64url_encode($data) {
+    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+}
+
 function generateJWT($payload, $secret) {
-    $header    = rtrim(base64_encode(json_encode(['alg' => 'HS256', 'typ' => 'JWT'])), '=');
-    $payload   = rtrim(base64_encode(json_encode($payload)), '=');
-    $signature = rtrim(base64_encode(hash_hmac('sha256', "$header.$payload", $secret, true)), '=');
+
+    $header = base64url_encode(json_encode([
+        'alg' => 'HS256',
+        'typ' => 'JWT'
+    ]));
+
+    $payload = base64url_encode(json_encode($payload));
+
+    $signature = base64url_encode(
+        hash_hmac('sha256', "$header.$payload", $secret, true)
+    );
+
     return "$header.$payload.$signature";
 }
 
@@ -39,7 +52,7 @@ if (empty($email) || empty($password)) {
 
 // IMPORTANT CHANGE HERE
 $stmt = $pdo->prepare("
-    SELECT id, name, email, password_hash, role, parent_phone
+    SELECT id, name, email, password_hash, role, parent_phone, class
     FROM users
     WHERE email = ?
 ");
@@ -77,6 +90,7 @@ $token  = generateJWT([
     'id'    => (int)$user['id'],
     'email' => $user['email'],
     'role'  => $user['role'],
+    'class' => $user['class'],
     'iat'   => time(),
     'exp'   => time() + (7 * 24 * 60 * 60)
 ], $secret);
@@ -91,6 +105,7 @@ echo json_encode([
         'name'         => $user['name'],
         'email'        => $user['email'],
         'role'         => $user['role'],
+        'class'=>$user['class'],
         'parent_phone' => $user['parent_phone']
     ]
 ]);

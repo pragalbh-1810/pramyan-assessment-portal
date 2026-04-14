@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   class INT,
   board VARCHAR(50),
   role ENUM('student','admin') DEFAULT 'student',
+  google_id VARCHAR(255) NULL,
   parent_phone VARCHAR(20)
 );
 

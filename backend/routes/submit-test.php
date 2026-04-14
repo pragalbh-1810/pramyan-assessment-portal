@@ -52,25 +52,63 @@ try {
     }
 
     // 5. The Lock-In: Mark the test as submitted
-    // (This inherently locks all responses because save-answers.php respects this flag)
     $updateStmt = $pdo->prepare("UPDATE student_tests SET is_submitted = 1 WHERE id = ?");
     $updateStmt->execute([$student_test_id]);
 
-    // ---------------------------------------------------------
-    // 6. STUB: Trigger calculate-score.php
-    // We will wire up the actual grading logic here in Task 4.
-    // For now, it's an empty hook waiting for the engine.
-    // 
-    // require_once __DIR__ . '/calculate-score.php';
-    // calculateScoreForTest($student_test_id);
-    // ---------------------------------------------------------
+    // 6. TASK 2: Wire scoring logic
+    // Auto calculate score after submit
+    $calcStmt = $pdo->prepare("
+        SELECT r.selected_option, q.correct, q.section
+        FROM responses r
+        JOIN questions q ON r.question_id = q.id
+        WHERE r.student_test_id = ?
+    ");
+
+    $calcStmt->execute([$student_test_id]);
+    $responses = $calcStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $total = 0; 
+    $math = 0; 
+    $sci = 0;
+
+    foreach ($responses as $r) {
+        if ($r['selected_option'] === $r['correct']) {
+            $total++;
+            if ($r['section'] === 'A') {
+                $math++;
+            } else {
+                $sci++;
+            }
+        }
+    }
+
+    $totalQ = count($responses);
+    $pct = $totalQ > 0 ? round(($total / $totalQ) * 100, 2) : 0;
+
+    $insertResult = $pdo->prepare("
+        INSERT INTO results
+        (student_test_id, total_score, math_score, sci_score, overall_pct, status)
+        VALUES (?, ?, ?, ?, ?, 'scored')
+        ON DUPLICATE KEY UPDATE
+        total_score = VALUES(total_score), 
+        math_score = VALUES(math_score),
+        sci_score = VALUES(sci_score), 
+        overall_pct = VALUES(overall_pct), 
+        status = 'scored'
+    ");
+
+    $insertResult->execute([$student_test_id, $total, $math, $sci, $pct]);
+    
+    // Set scored status for the response
+    $scored = true;
 
     // 7. Return success to React
     http_response_code(200);
     echo json_encode([
         'success' => true,
         'submitted' => true,
-        'message' => 'Test locked successfully'
+        'scored' => $scored,
+        'message' => 'Test locked and graded successfully'
     ]);
 
 } catch (PDOException $e) {

@@ -71,6 +71,7 @@ $secret = "pramyan_super_secret_key_2026";
 $token  = generateJWT([
     'id'    => (int)$user['id'],
     'email' => $user['email'],
+    'name'  => $user['name'],
     'role'  => $user['role'],
     'name'  => $user['name'],
     'class' => (int)$user['class'],

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
-import axios from "axios";
 import logo from "../assets/logo.jpeg";
+import { useNavigate } from "react-router-dom";
+import { setToken, setRole } from "../utils/auth";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -51,7 +51,6 @@ const styles = `
     animation: fadeInUp 0.6s ease both;
   }
 
-  /* ── LEFT ── */
   .login-left {
     width: 40%;
     background: linear-gradient(145deg, #1D9E75 0%, #185FA5 100%);
@@ -177,13 +176,12 @@ const styles = `
   .bottom-tag p { font-size: 11px; color: rgba(255,255,255,0.85); font-family: 'Inter', sans-serif; }
   .bottom-tag strong { color: white; }
 
-  /* ── RIGHT ── */
   .login-right {
-  flex: 1; background: white;
-  display: flex; align-items: center; justify-content: center;
-  padding: 2.5rem 3rem;
-  position: relative; overflow: hidden;
-}
+    flex: 1; background: white;
+    display: flex; align-items: center; justify-content: center;
+    padding: 2.5rem 3rem;
+    position: relative; overflow: hidden;
+  }
   .login-right::before {
     content: ''; position: absolute; top: -60px; right: -60px;
     width: 220px; height: 220px; border-radius: 50%;
@@ -202,15 +200,12 @@ const styles = `
   }
 
   .top-bar {
-    display: flex; justify-content: center ; align-items: center;
+    display: flex; justify-content: center; align-items: center;
     margin-bottom: 28px;
   }
   .sign-up-link { font-size: 11.5px; color: #888; font-family: 'Inter', sans-serif; }
   .sign-up-link a { color: #185FA5; font-weight: 500; text-decoration: none; }
   .sign-up-link a:hover { text-decoration: underline; }
-
-  
-
 
   .form-title { margin-bottom: 22px; }
   .form-title h2 { font-size: 24px; font-weight: 700; color: #0d1f3c; margin-bottom: 4px; }
@@ -242,7 +237,7 @@ const styles = `
     display: block; font-size: 10px; font-weight: 700;
     color: #185FA5; margin-bottom: 5px;
     letter-spacing: 0.5px; text-transform: uppercase;
-    text-align: left; padding:3px 2px ;
+    text-align: left; padding: 3px 2px;
   }
   .field input {
     width: 100%; height: 42px;
@@ -309,6 +304,7 @@ const styles = `
 `;
 
 export default function Login() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -325,56 +321,40 @@ export default function Login() {
     return newErrors;
   };
 
-  const handleSubmit = async () => {
-
+const handleSubmit = async () => {
+  const newErrors = validate();
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
   setLoading(true);
-
   try {
-
     const response = await fetch(
       "http://localhost/pramyan-assessment-portal/backend/routes/login.php",
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           email: form.email,
-          password: form.password
-        })
-      }
+          password: form.password,
+        }),
+      },
     );
-
     const result = await response.json();
-
-    console.log(result);
-
-    if(result.success){
-
-      alert("Login successful");
-
-      localStorage.setItem("token", result.token);
-
+    if (result.success) {
+      setToken(result.token);
+      setRole(result.user.role);
+      navigate("/instructions/1");
+    } else {
+      setErrors({ api: result.message });
     }
-    else{
-
-      alert(result.message);
-
-    }
-
-  }
-  catch(error){
-
-    console.log(error);
-    alert("Server error");
-
-  }
-  finally{
-
+  } catch (err) {
+    setErrors({ api: "Something went wrong. Please try again." });
+  } finally {
     setLoading(false);
-
   }
-
 };
 
   const handleKeyDown = (e) => {
@@ -418,7 +398,7 @@ export default function Login() {
                 { icon: "⚡", text: "Instant diagnostic reports" },
                 { icon: "◈", text: "Chapter-wise SWOT analysis" },
                 { icon: "◎", text: "Personalised 4-week study plan" },
-                { icon: "✦", text: "WhatsApp updates to parents" },
+                { icon: "✦", text: "Updates to parents" },
               ].map((f, i) => (
                 <div className="feat-item" key={i}>
                   <div className="feat-icon">{f.icon}</div>
@@ -440,9 +420,7 @@ export default function Login() {
                   </div>
                 ))}
               </div>
-              <p>
-                 students joined
-              </p>
+              <p>students joined</p>
             </div>
           </div>
 
@@ -461,50 +439,32 @@ export default function Login() {
                 <p>Welcome back — let's pick up where you left off</p>
               </div>
 
-
-              <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
-
-  <GoogleLogin
-
-    onSuccess={async (credentialResponse) => {
-
-      try {
-
-        const res = await axios.post(
-          "http://localhost/pramyan-assessment-portal/backend/routes/google-auth.php",
-          {
-            google_token: credentialResponse.credential
-          }
-        );
-
-        if (res.data.success) {
-
-          localStorage.setItem("token", res.data.token);
-
-          localStorage.setItem("user", JSON.stringify(res.data.user));
-
-          window.location.href = "/dashboard";
-
-        }
-
-      } catch (err) {
-
-        console.log(err);
-
-        alert("Google login failed");
-
-      }
-
-    }}
-
-    onError={() => alert("Google Sign In Failed")}
-
-    theme="outline"
-    size="large"
-
-  />
-
-</div>
+              <button
+                className="google-btn"
+                onClick={() => {
+                  window.location.href =
+                    "http://localhost/pramyan-assessment-portal/backend/routes/google-auth.php";
+                }}>
+                <svg width="16" height="16" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  />
+                </svg>
+                Continue with Google
+              </button>
 
               <div className="divider">
                 <span>or sign in with email</span>

@@ -2,7 +2,7 @@
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once dirname(__DIR__) . '/config/db.php';
 
 
-// load .env
+// LOAD .env
 $envPath = dirname(__DIR__) . '/.env';
 
 if (file_exists($envPath)) {
@@ -27,64 +27,125 @@ if (file_exists($envPath)) {
         list($name, $value) = explode('=', $line, 2);
 
         $name = trim($name);
-
         $value = trim($value);
 
         putenv("$name=$value");
-
     }
-
 }
 
 
-// create JWT
+// CREATE JWT FUNCTION
 function generateJWT($payload, $secret) {
 
-    $header = rtrim(base64_encode(json_encode([
+    $header = rtrim(strtr(base64_encode(json_encode([
         "alg" => "HS256",
         "typ" => "JWT"
-    ])), '=');
+    ])), '+/', '-_'), '=');
 
-    $payload = rtrim(base64_encode(json_encode($payload)), '=');
+    $payload = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
 
-    $signature = rtrim(base64_encode(
+    $signature = rtrim(strtr(base64_encode(
         hash_hmac('sha256', "$header.$payload", $secret, true)
-    ), '=');
+    ), '+/', '-_'), '=');
 
     return "$header.$payload.$signature";
-
 }
 
 
-// get google token from frontend
-$input = json_decode(file_get_contents("php://input"), true);
 
-$google_token = $input["google_token"] ?? null;
+/*
+STEP 1
+If Google has NOT redirected back yet,
+redirect user to Google login
+*/
+if (!isset($_GET['code'])) {
 
-if (!$google_token) {
+    $client_id = getenv("GOOGLE_CLIENT_ID");
+
+    $redirect_uri =
+        "http://localhost/pramyan-assessment-portal/backend/routes/google-auth.php";
+
+    $google_url =
+        "https://accounts.google.com/o/oauth2/v2/auth?"
+        . "client_id=$client_id"
+        . "&redirect_uri=" . urlencode($redirect_uri)
+        . "&response_type=code"
+        . "&scope=openid%20email%20profile"
+        . "&access_type=online";
+
+    header("Location: $google_url");
+    exit();
+}
+
+
+
+/*
+STEP 2
+Google redirected back with authorization code
+*/
+$code = $_GET['code'];
+
+
+
+/*
+STEP 3
+Exchange code for Google ID token
+*/
+$token_url = "https://oauth2.googleapis.com/token";
+
+$post_fields = [
+
+    "code" => $code,
+
+    "client_id" => getenv("GOOGLE_CLIENT_ID"),
+
+    "client_secret" => getenv("GOOGLE_CLIENT_SECRET"),
+
+    "redirect_uri" =>
+        "http://localhost/pramyan-assessment-portal/backend/routes/google-auth.php",
+
+    "grant_type" => "authorization_code"
+];
+
+$ch = curl_init();
+
+curl_setopt($ch, CURLOPT_URL, $token_url);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_fields));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+
+curl_close($ch);
+
+$data = json_decode($response, true);
+
+$id_token = $data["id_token"] ?? null;
+
+if (!$id_token) {
 
     echo json_encode([
         "success" => false,
-        "message" => "Google token missing"
+        "message" => "Failed to get Google token"
     ]);
 
     exit();
-
 }
 
 
-// decode google token
-$parts = explode(".", $google_token);
+
+/*
+STEP 4
+Decode token to get user info
+*/
+$parts = explode(".", $id_token);
 
 $payload = json_decode(
     base64_decode(strtr($parts[1], '-_', '+/')),
     true
 );
 
-
-// get user details
 $email = $payload["email"] ?? null;
-
 $name  = $payload["name"] ?? "Student";
 
 
@@ -96,23 +157,33 @@ if (!$email) {
     ]);
 
     exit();
-
 }
 
 
-// check user exists
-$stmt = $pdo->prepare("SELECT * FROM users WHERE email=?");
+
+/*
+STEP 5
+Check if user exists
+*/
+$stmt = $pdo->prepare(
+    "SELECT * FROM users WHERE email=?"
+);
 
 $stmt->execute([$email]);
 
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 
-// create user if not exists
+
+/*
+STEP 6
+Create user if not exists
+*/
 if (!$user) {
 
     $stmt = $pdo->prepare("
-        INSERT INTO users (name,email,password_hash,role)
+        INSERT INTO users
+        (name,email,password_hash,role)
         VALUES (?,?,?,?)
     ");
 
@@ -128,11 +199,14 @@ if (!$user) {
 } else {
 
     $userId = $user["id"];
-
 }
 
 
-// create jwt
+
+/*
+STEP 7
+Create JWT
+*/
 $secret = getenv("JWT_SECRET");
 
 $token = generateJWT([
@@ -150,25 +224,14 @@ $token = generateJWT([
 ], $secret);
 
 
-// response
-echo json_encode([
 
-    "success" => true,
 
-    "token" => $token,
+/*
+STEP 8
+Redirect back to React app with token
+*/
+header(
+    "Location: http://localhost:5175/instructions/1?token=$token"
+);
 
-    "user" => [
-
-        "id" => (int)$userId,
-
-        "name" => $name,
-
-        "email" => $email,
-
-        "role" => "student"
-
-    ]
-
-]);
-
-?>
+exit();

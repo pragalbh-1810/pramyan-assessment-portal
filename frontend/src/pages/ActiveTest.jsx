@@ -596,8 +596,9 @@ export default function ActiveTest() {
   const submitTest = async (isAuto = false) => {
     const token = getToken() || "test";
     try {
-      await fetch(
-        "http://localhost/pramyan-assessment-portal/backend/routes/submit-test.php",
+      // Step 1 — Save all answers first
+      const saveRes = await fetch(
+        "http://localhost/pramyan-assessment-portal/backend/routes/save-answers.php",
         {
           method: "POST",
           headers: {
@@ -605,12 +606,35 @@ export default function ActiveTest() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            test_id: testId,
-            answers: answers,
-            auto_submitted: isAuto,
+            test_id: parseInt(testId),
+            answers: Object.entries(answers).map(
+              ([question_id, selected_option]) => ({
+                question_id: parseInt(question_id),
+                selected_option,
+                time_on_question: 0,
+              }),
+            ),
           }),
         },
       );
+      const saveResult = await saveRes.json();
+
+      // Step 2 — Submit using student_test_id
+      if (saveResult.success) {
+        await fetch(
+          "http://localhost/pramyan-assessment-portal/backend/routes/submit-test.php",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              student_test_id: saveResult.student_test_id,
+            }),
+          },
+        );
+      }
     } catch {}
     navigate(`/report/${testId}`);
   };

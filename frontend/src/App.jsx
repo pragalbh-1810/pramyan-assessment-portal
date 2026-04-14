@@ -6,6 +6,9 @@ import Instructions from "./pages/Instructions";
 import ActiveTest from "./pages/ActiveTest";
 import Submit from "./pages/Submit";
 import Report from "./pages/Report";
+import GoogleCallback from "./pages/GoogleCallback";
+// add this route:
+<Route path="/auth/google/callback" element={<GoogleCallback />} />;
 
 function App() {
   return (

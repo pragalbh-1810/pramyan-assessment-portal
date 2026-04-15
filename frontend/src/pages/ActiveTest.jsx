@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getToken } from "../utils/auth";
+import { setupTabSwitchMonitor } from "../utils/tabSwitchMonitor";
+import { useAutoSubmit } from "../utils/autoSubmit";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -70,8 +72,30 @@ const styles = `
   .topbar-center {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
   }
+  
+  /* Auto-Save Indicator */
+  .save-indicator {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: fadeIn 0.3s ease;
+  }
+  .save-indicator.saving {
+    color: #185FA5;
+    background: rgba(255, 255, 255, 0.9);
+  }
+  .save-indicator.success {
+    color: #1D9E75;
+    background: #E1F5EE;
+  }
+
   .timer-box {
     display: flex;
     align-items: center;
@@ -137,7 +161,7 @@ const styles = `
     box-shadow: 0 2px 16px rgba(24,95,165,0.07);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
     animation: fadeIn 0.4s ease both;
   }
   .q-header {
@@ -170,8 +194,19 @@ const styles = `
     font-weight: 600;
     color: #0d1f3c;
     line-height: 1.7;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     flex-shrink: 0;
+  }
+  .q-image-container {
+    margin-bottom: 24px;
+    text-align: left;
+  }
+  .q-image-container img {
+    max-width: 100%;
+    max-height: 280px;
+    border-radius: 12px;
+    border: 1.5px solid #e2edf8;
+    object-fit: contain;
   }
   .options-list {
     display: flex;
@@ -269,7 +304,7 @@ const styles = `
 
   /* ── RIGHT SIDEBAR ── */
   .test-sidebar {
-    width: 240px;
+    width: 280px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -349,6 +384,7 @@ const styles = `
     padding: 14px 16px;
     box-shadow: 0 2px 12px rgba(24,95,165,0.06);
     flex: 1;
+    overflow-y: auto;
   }
   .palette-title {
     font-size: 10px;
@@ -367,13 +403,14 @@ const styles = `
   .palette-btn {
     width: 100%;
     aspect-ratio: 1;
-    border-radius: 8px;
+    border-radius: 6px;
     border: none;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.15s;
     font-family: 'Inter', sans-serif;
+    padding: 2px;
   }
   .palette-btn.answered {
     background: #185FA5;
@@ -384,6 +421,7 @@ const styles = `
     color: white;
     transform: scale(1.1);
     box-shadow: 0 2px 8px rgba(29,158,117,0.4);
+    z-index: 2;
   }
   .palette-btn.unanswered {
     background: #e2edf8;
@@ -391,6 +429,7 @@ const styles = `
   }
   .palette-btn:hover {
     transform: scale(1.1);
+    z-index: 2;
   }
   .palette-btn.current:hover {
     transform: scale(1.15);
@@ -504,18 +543,7 @@ const styles = `
   }
 `;
 
-// Dummy questions — will be replaced by Anshika's API
-const DUMMY_QUESTIONS = Array.from({ length: 32 }, (_, i) => ({
-  id: i + 1,
-  section: i < 16 ? "Mathematics" : "Science",
-  q_text: `Question ${i + 1}: This is a sample question for the diagnostic assessment test. What is the correct answer?`,
-  opt_a: "Option A — First choice",
-  opt_b: "Option B — Second choice",
-  opt_c: "Option C — Third choice",
-  opt_d: "Option D — Fourth choice",
-}));
-
-const TOTAL_TIME = 45 * 60; // 45 minutes in seconds
+const TOTAL_TIME = 45 * 60; // 45 minutes
 
 function decodeToken(token) {
   try {
@@ -525,21 +553,52 @@ function decodeToken(token) {
   }
 }
 
+// NEW: Helper function to separate "Q21 (a):" from the actual text
+const parseQuestionData = (text) => {
+  if (!text) return { label: null, body: "" };
+  // Regex to find patterns like "Q21 (a): " or "Q1: " at the start
+  const match = text.match(/^Q(\d+(?:\s*\([a-zA-Z]\))?)\s*:\s*([\s\S]*)/i);
+  if (match) {
+    // Removes spaces so "21 (a)" becomes "21(a)" for the UI
+    return { label: match[1].replace(/\s+/g, ''), body: match[2] }; 
+  }
+  return { label: null, body: text };
+};
+
 export default function ActiveTest() {
   const navigate = useNavigate();
   const { testId } = useParams();
 
-  const [questions, setQuestions] = useState(DUMMY_QUESTIONS);
+  const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({}); // { questionId: 'a'|'b'|'c'|'d' }
+  const [answers, setAnswers] = useState({}); 
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
   const [showModal, setShowModal] = useState(false);
   const [studentName, setStudentName] = useState("Student");
   const [submitted, setSubmitted] = useState(false);
 
+  const [saveIndicator, setSaveIndicator] = useState({ show: false, text: "", type: "" });
+  const answersRef = useRef({});
+
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const warningsRef = useRef(0);
+  const MAX_WARNINGS = 2;
+
   const timerRef = useRef(null);
 
-  // Get student name from token
+  const { handleAutoSubmit, submitTest } = useAutoSubmit({
+    testId,
+    answersRef,
+    submitted,
+    setSubmitted,
+    setSaveIndicator,
+    timerRef
+  });
+
   useEffect(() => {
     const token = getToken();
     if (token) {
@@ -548,7 +607,6 @@ export default function ActiveTest() {
     }
   }, []);
 
-  // Fetch questions from API
   useEffect(() => {
     const token = getToken() || "test";
     fetchQuestions(token);
@@ -564,13 +622,27 @@ export default function ActiveTest() {
       if (result.success && result.questions?.length > 0) {
         setQuestions(result.questions);
       }
-      // else keep dummy questions
-    } catch {
-      // keep dummy questions
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  // Timer countdown
+  useEffect(() => {
+    return setupTabSwitchMonitor({
+      isSubmitted: () => submitted,
+      maxWarnings: MAX_WARNINGS,
+      onWarning: (warningCount) => {
+        warningsRef.current = warningCount;
+        setShowWarningModal(true);
+      },
+      onMaxViolations: () => {
+        warningsRef.current = MAX_WARNINGS;
+        alert("You switched tabs/windows multiple times. Your test is now automatically submitted.");
+        handleAutoSubmit();
+      },
+    });
+  }, [submitted, handleAutoSubmit]);
+
   useEffect(() => {
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
@@ -583,77 +655,24 @@ export default function ActiveTest() {
       });
     }, 1000);
     return () => clearInterval(timerRef.current);
-  }, []);
+  }, [handleAutoSubmit]);
 
-  const handleAutoSubmit = useCallback(() => {
-    if (!submitted) {
-      setSubmitted(true);
-      clearInterval(timerRef.current);
-      submitTest(true);
-    }
-  }, [submitted]);
-
-  const submitTest = async (isAuto = false) => {
-    const token = getToken() || "test";
-    try {
-      // Step 1 — Save all answers first
-      const saveRes = await fetch(
-        "http://localhost/pramyan-assessment-portal/backend/routes/save-answers.php",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            test_id: parseInt(testId),
-            answers: Object.entries(answers).map(
-              ([question_id, selected_option]) => ({
-                question_id: parseInt(question_id),
-                selected_option,
-                time_on_question: 0,
-              }),
-            ),
-          }),
-        },
-      );
-      const saveResult = await saveRes.json();
-
-      // Step 2 — Submit using student_test_id
-      if (saveResult.success) {
-        await fetch(
-          "http://localhost/pramyan-assessment-portal/backend/routes/submit-test.php",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              student_test_id: saveResult.student_test_id,
-            }),
-          },
-        );
-      }
-    } catch {}
-    navigate(`/report/${testId}`);
-  };
-
-  // Format time as MM:SS
   const formatTime = (secs) => {
-    const m = Math.floor(secs / 60)
-      .toString()
-      .padStart(2, "0");
+    const m = Math.floor(secs / 60).toString().padStart(2, "0");
     const s = (secs % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
 
-  const isWarning = timeLeft <= 5 * 60; // last 5 minutes
+  const isWarning = timeLeft <= 5 * 60;
 
   const currentQuestion = questions[currentIndex];
-
   const answeredCount = Object.keys(answers).length;
   const unansweredCount = questions.length - answeredCount;
+
+  // Process the current question text
+  const parsedCurrentQ = parseQuestionData(currentQuestion?.q_text);
+  const displayLabel = parsedCurrentQ.label || (currentIndex + 1);
+  const displayBody = parsedCurrentQ.body || "Loading question...";
 
   const handleOptionSelect = (option) => {
     setAnswers((prev) => ({ ...prev, [currentQuestion.id]: option }));
@@ -667,6 +686,8 @@ export default function ActiveTest() {
     });
   };
 
+  if (questions.length === 0) return <div style={{padding: '40px', textAlign: 'center'}}>Loading Test...</div>;
+
   return (
     <>
       <style>{styles}</style>
@@ -674,13 +695,16 @@ export default function ActiveTest() {
         {/* TOP BAR */}
         <div className="test-topbar">
           <div className="topbar-left">
-            <span className="topbar-testname">
-              Pramyan Diagnostic Assessment
-            </span>
+            <span className="topbar-testname">Pramyan Diagnostic Assessment</span>
             <span className="topbar-student">👤 {studentName}</span>
           </div>
 
           <div className="topbar-center">
+            {saveIndicator.show && (
+              <div className={`save-indicator ${saveIndicator.type}`}>
+                {saveIndicator.text}
+              </div>
+            )}
             <div className={`timer-box ${isWarning ? "warn" : ""}`}>
               <span className="timer-icon">⏱</span>
               {formatTime(timeLeft)}
@@ -688,9 +712,7 @@ export default function ActiveTest() {
           </div>
 
           <div className="topbar-right">
-            <button
-              className="submit-top-btn"
-              onClick={() => setShowModal(true)}>
+            <button className="submit-top-btn" onClick={() => setShowModal(true)}>
               Submit Test
             </button>
           </div>
@@ -702,13 +724,24 @@ export default function ActiveTest() {
           <div className="question-panel">
             <div className="q-header">
               <div className="q-counter">
-                Question <strong>{currentIndex + 1}</strong> of{" "}
-                {questions.length}
+                {/* Dynamically uses "21(a)" or the standard index */}
+                Question <strong>{displayLabel}</strong> of {questions.length}
               </div>
               <div className="q-section-tag">{currentQuestion?.section}</div>
             </div>
 
-            <div className="q-text">{currentQuestion?.q_text}</div>
+            {/* Display the clean question text */}
+            <div className="q-text">{displayBody}</div>
+
+            {/* NEW: Display the image if it exists in the DB */}
+            {currentQuestion?.q_image && (
+              <div className="q-image-container">
+                <img 
+                  src={`http://localhost/pramyan-assessment-portal/backend/assets/images/${currentQuestion.q_image}`} 
+                  alt={`Figure for Question ${displayLabel}`}
+                />
+              </div>
+            )}
 
             <div className="options-list">
               {["a", "b", "c", "d"].map((opt) => (
@@ -729,11 +762,9 @@ export default function ActiveTest() {
                 disabled={currentIndex === 0}>
                 ← Previous
               </button>
-
               <button className="clear-btn" onClick={handleClearAnswer}>
                 Clear Answer
               </button>
-
               <button
                 className="nav-btn"
                 onClick={() => setCurrentIndex((i) => i + 1)}
@@ -745,7 +776,6 @@ export default function ActiveTest() {
 
           {/* SIDEBAR */}
           <div className="test-sidebar">
-            {/* Stats */}
             <div className="stats-box">
               <div className="stat-item">
                 <span className="stat-num">{questions.length}</span>
@@ -761,82 +791,72 @@ export default function ActiveTest() {
               </div>
             </div>
 
-            {/* Legend */}
             <div className="legend-box">
               <div className="legend-title">Legend</div>
-              <div className="legend-row">
-                <div className="legend-dot dot-current" />
-                Current Question
-              </div>
-              <div className="legend-row">
-                <div className="legend-dot dot-answered" />
-                Answered
-              </div>
-              <div className="legend-row">
-                <div className="legend-dot dot-unanswered" />
-                Not Answered
-              </div>
+              <div className="legend-row"><div className="legend-dot dot-current" />Current</div>
+              <div className="legend-row"><div className="legend-dot dot-answered" />Answered</div>
+              <div className="legend-row"><div className="legend-dot dot-unanswered" />Not Answered</div>
             </div>
 
-            {/* Question Palette */}
             <div className="palette-box">
               <div className="palette-title">Question Palette</div>
               <div className="palette-grid">
-                {questions.map((q, i) => (
-                  <button
-                    key={q.id}
-                    className={`palette-btn ${
-                      i === currentIndex
-                        ? "current"
-                        : answers[q.id]
-                          ? "answered"
-                          : "unanswered"
-                    }`}
-                    onClick={() => setCurrentIndex(i)}>
-                    {i + 1}
-                  </button>
-                ))}
+                {questions.map((q, i) => {
+                  // Dynamically label the buttons with "1", "21(a)", etc.
+                  const qLabel = parseQuestionData(q.q_text).label || (i + 1);
+                  return (
+                    <button
+                      key={q.id}
+                      className={`palette-btn ${i === currentIndex ? "current" : answers[q.id] ? "answered" : "unanswered"}`}
+                      onClick={() => setCurrentIndex(i)}>
+                      {qLabel}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* SUBMIT CONFIRMATION MODAL */}
+      {showWarningModal && (
+        <div className="modal-overlay" style={{ zIndex: 1001 }}>
+          <div className="modal-box">
+            <div className="modal-icon">⚠️</div>
+            <div className="modal-title">Warning!</div>
+            <div className="modal-text">
+              Navigating away from the test window is not allowed. <br/><br/>
+              <strong>Warning {warningsRef.current} of {MAX_WARNINGS}.</strong><br/>
+              If you leave this tab again, your test will be automatically submitted.
+            </div>
+            <div className="modal-btns">
+              <button
+                className="modal-confirm"
+                onClick={() => setShowWarningModal(false)}
+                style={{ width: '100%', background: 'linear-gradient(135deg, #e24b4a, #c43a39)', boxShadow: '0 4px 14px rgba(226,75,74,0.25)' }}>
+                I Understand
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-box">
             <div className="modal-icon">📋</div>
             <div className="modal-title">Submit Test?</div>
             <div className="modal-text">
-              Once submitted you cannot go back or change your answers. Are you
-              sure you want to submit?
+              Once submitted you cannot go back or change your answers. Are you sure you want to submit?
             </div>
             <div className="modal-stats">
-              <div className="modal-stat">
-                <span className="modal-stat-num blue">{questions.length}</span>
-                <span className="modal-stat-label">Total</span>
-              </div>
-              <div className="modal-stat">
-                <span className="modal-stat-num green">{answeredCount}</span>
-                <span className="modal-stat-label">Answered</span>
-              </div>
-              <div className="modal-stat">
-                <span className="modal-stat-num gray">{unansweredCount}</span>
-                <span className="modal-stat-label">Unanswered</span>
-              </div>
+              <div className="modal-stat"><span className="modal-stat-num blue">{questions.length}</span><span className="modal-stat-label">Total</span></div>
+              <div className="modal-stat"><span className="modal-stat-num green">{answeredCount}</span><span className="modal-stat-label">Answered</span></div>
+              <div className="modal-stat"><span className="modal-stat-num gray">{unansweredCount}</span><span className="modal-stat-label">Unanswered</span></div>
             </div>
             <div className="modal-btns">
-              <button
-                className="modal-cancel"
-                onClick={() => setShowModal(false)}>
-                Go Back
-              </button>
-              <button
-                className="modal-confirm"
-                onClick={() => submitTest(false)}>
-                Yes, Submit →
-              </button>
+              <button className="modal-cancel" onClick={() => setShowModal(false)}>Go Back</button>
+              <button className="modal-confirm" onClick={() => submitTest(false)}>Yes, Submit →</button>
             </div>
           </div>
         </div>

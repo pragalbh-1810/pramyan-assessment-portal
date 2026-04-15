@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getToken } from "../utils/auth";
+import { setupTabSwitchMonitor } from "../utils/tabSwitchMonitor";
+import { useAutoSubmit } from "../utils/autoSubmit"; // Adjust this path based on where you saved autoSubmit.js
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -70,8 +72,30 @@ const styles = `
   .topbar-center {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
   }
+  
+  /* Auto-Save Indicator */
+  .save-indicator {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: fadeIn 0.3s ease;
+  }
+  .save-indicator.saving {
+    color: #185FA5;
+    background: rgba(255, 255, 255, 0.9);
+  }
+  .save-indicator.success {
+    color: #1D9E75;
+    background: #E1F5EE;
+  }
+
   .timer-box {
     display: flex;
     align-items: center;
@@ -531,13 +555,37 @@ export default function ActiveTest() {
 
   const [questions, setQuestions] = useState(DUMMY_QUESTIONS);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({}); // { questionId: 'a'|'b'|'c'|'d' }
+  const [answers, setAnswers] = useState({}); 
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
   const [showModal, setShowModal] = useState(false);
   const [studentName, setStudentName] = useState("Student");
   const [submitted, setSubmitted] = useState(false);
 
+  // --- UI STATE FOR AUTO-SAVE ---
+  const [saveIndicator, setSaveIndicator] = useState({ show: false, text: "", type: "" });
+  const answersRef = useRef({});
+
+  // Update ref whenever answers change
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  // --- STATE & REFS FOR TAB SWITCHING ---
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const warningsRef = useRef(0);
+  const MAX_WARNINGS = 2;
+
   const timerRef = useRef(null);
+
+  // Bring in the extracted custom hook
+  const { handleAutoSubmit, submitTest } = useAutoSubmit({
+    testId,
+    answersRef,
+    submitted,
+    setSubmitted,
+    setSaveIndicator,
+    timerRef
+  });
 
   // Get student name from token
   useEffect(() => {
@@ -564,11 +612,30 @@ export default function ActiveTest() {
       if (result.success && result.questions?.length > 0) {
         setQuestions(result.questions);
       }
-      // else keep dummy questions
     } catch {
       // keep dummy questions
     }
   };
+
+  // --- TAB SWITCHING DETECTION LOGIC ---
+  useEffect(() => {
+    return setupTabSwitchMonitor({
+      isSubmitted: () => submitted,
+      maxWarnings: MAX_WARNINGS,
+      onWarning: (warningCount) => {
+        warningsRef.current = warningCount;
+        setShowWarningModal(true);
+      },
+      onMaxViolations: () => {
+        warningsRef.current = MAX_WARNINGS;
+        alert(
+          "You switched tabs/windows multiple times. Your test is now automatically submitted.",
+        );
+        handleAutoSubmit();
+      },
+    });
+  }, [submitted, handleAutoSubmit]);
+  // -----------------------------------------
 
   // Timer countdown
   useEffect(() => {
@@ -583,61 +650,7 @@ export default function ActiveTest() {
       });
     }, 1000);
     return () => clearInterval(timerRef.current);
-  }, []);
-
-  const handleAutoSubmit = useCallback(() => {
-    if (!submitted) {
-      setSubmitted(true);
-      clearInterval(timerRef.current);
-      submitTest(true);
-    }
-  }, [submitted]);
-
-  const submitTest = async (isAuto = false) => {
-    const token = getToken() || "test";
-    try {
-      // Step 1 — Save all answers first
-      const saveRes = await fetch(
-        "http://localhost/pramyan-assessment-portal/backend/routes/save-answers.php",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            test_id: parseInt(testId),
-            answers: Object.entries(answers).map(
-              ([question_id, selected_option]) => ({
-                question_id: parseInt(question_id),
-                selected_option,
-                time_on_question: 0,
-              }),
-            ),
-          }),
-        },
-      );
-      const saveResult = await saveRes.json();
-
-      // Step 2 — Submit using student_test_id
-      if (saveResult.success) {
-        await fetch(
-          "http://localhost/pramyan-assessment-portal/backend/routes/submit-test.php",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              student_test_id: saveResult.student_test_id,
-            }),
-          },
-        );
-      }
-    } catch {}
-    navigate(`/report/${testId}`);
-  };
+  }, [handleAutoSubmit]);
 
   // Format time as MM:SS
   const formatTime = (secs) => {
@@ -681,6 +694,13 @@ export default function ActiveTest() {
           </div>
 
           <div className="topbar-center">
+            {/* NEW: Auto-Save Indicator Output */}
+            {saveIndicator.show && (
+              <div className={`save-indicator ${saveIndicator.type}`}>
+                {saveIndicator.text}
+              </div>
+            )}
+            
             <div className={`timer-box ${isWarning ? "warn" : ""}`}>
               <span className="timer-icon">⏱</span>
               {formatTime(timeLeft)}
@@ -801,6 +821,36 @@ export default function ActiveTest() {
           </div>
         </div>
       </div>
+
+      {/* --- TAB SWITCHING WARNING MODAL --- */}
+      {showWarningModal && (
+        <div className="modal-overlay" style={{ zIndex: 1001 }}>
+          <div className="modal-box">
+            <div className="modal-icon">⚠️</div>
+            <div className="modal-title">Warning!</div>
+            <div className="modal-text">
+              Navigating away from the test window is not allowed. 
+              <br/><br/>
+              <strong>Warning {warningsRef.current} of {MAX_WARNINGS}.</strong>
+              <br/>
+              If you leave this tab again, your test will be automatically submitted.
+            </div>
+            <div className="modal-btns">
+              <button
+                className="modal-confirm"
+                onClick={() => setShowWarningModal(false)}
+                style={{ 
+                  width: '100%', 
+                  background: 'linear-gradient(135deg, #e24b4a, #c43a39)', 
+                  boxShadow: '0 4px 14px rgba(226,75,74,0.25)' 
+                }}>
+                I Understand
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* --------------------------------------- */}
 
       {/* SUBMIT CONFIRMATION MODAL */}
       {showModal && (

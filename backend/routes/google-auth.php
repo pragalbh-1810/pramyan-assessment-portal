@@ -1,4 +1,5 @@
 <?php
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
@@ -11,135 +12,226 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once dirname(__DIR__) . '/config/db.php';
 
-// --------------------------------------------------------------------
-// LIGHTWEIGHT .ENV LOADER
-// --------------------------------------------------------------------
+
+// LOAD .env
 $envPath = dirname(__DIR__) . '/.env';
+
 if (file_exists($envPath)) {
+
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
     foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue; // Skip comments
+
+        if (strpos(trim($line), '#') === 0) continue;
+
         list($name, $value) = explode('=', $line, 2);
+
         $name = trim($name);
-        $value = trim($value, " \t\n\r\0\x0B\"'"); // Strip spaces and quotes
-        putenv(sprintf('%s=%s', $name, $value));
-        $_ENV[$name] = $value;
+        $value = trim($value);
+
+        putenv("$name=$value");
     }
-} else {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Missing .env file']);
-    exit();
 }
 
+
+// CREATE JWT FUNCTION
 function generateJWT($payload, $secret) {
-    $header    = rtrim(base64_encode(json_encode(['alg' => 'HS256', 'typ' => 'JWT'])), '=');
-    $payload   = rtrim(base64_encode(json_encode($payload)), '=');
-    $signature = rtrim(base64_encode(hash_hmac('sha256', "$header.$payload", $secret, true)), '=');
+
+    $header = rtrim(strtr(base64_encode(json_encode([
+        "alg" => "HS256",
+        "typ" => "JWT"
+    ])), '+/', '-_'), '=');
+
+    $payload = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+
+    $signature = rtrim(strtr(base64_encode(
+        hash_hmac('sha256', "$header.$payload", $secret, true)
+    ), '+/', '-_'), '=');
+
     return "$header.$payload.$signature";
 }
 
-// Safely grab credentials from the .env file
-$clientId     = getenv('GOOGLE_CLIENT_ID');
-$clientSecret = getenv('GOOGLE_CLIENT_SECRET');
-$redirectUri  = getenv('GOOGLE_REDIRECT_URI');
-$jwtSecret    = getenv('JWT_SECRET');
 
-// Step 1 — Redirect to Google
+
+/*
+STEP 1
+If Google has NOT redirected back yet,
+redirect user to Google login
+*/
 if (!isset($_GET['code'])) {
-    $params = http_build_query([
-        'client_id'     => $clientId,
-        'redirect_uri'  => $redirectUri,
-        'response_type' => 'code',
-        'scope'         => 'openid email profile',
-        'access_type'   => 'online',
-        'prompt'        => 'select_account'
-    ]);
-    header('Location: https://accounts.google.com/o/oauth2/v2/auth?' . $params);
+
+    $client_id = getenv("GOOGLE_CLIENT_ID");
+
+    $redirect_uri =
+        "http://localhost/pramyan-assessment-portal/backend/routes/google-auth.php";
+
+    $google_url =
+        "https://accounts.google.com/o/oauth2/v2/auth?"
+        . "client_id=$client_id"
+        . "&redirect_uri=" . urlencode($redirect_uri)
+        . "&response_type=code"
+        . "&scope=openid%20email%20profile"
+        . "&access_type=online";
+
+    header("Location: $google_url");
     exit();
 }
 
-// Step 2 — Exchange code for tokens
+
+
+/*
+STEP 2
+Google redirected back with authorization code
+*/
 $code = $_GET['code'];
 
-$tokenResponse = file_get_contents('https://oauth2.googleapis.com/token', false,
-    stream_context_create([
-        'http' => [
-            'method'  => 'POST',
-            'header'  => 'Content-Type: application/x-www-form-urlencoded',
-            'content' => http_build_query([
-                'code'          => $code,
-                'client_id'     => $clientId,
-                'client_secret' => $clientSecret,
-                'redirect_uri'  => $redirectUri,
-                'grant_type'    => 'authorization_code'
-            ])
-        ]
-    ])
+
+
+/*
+STEP 3
+Exchange code for Google ID token
+*/
+$token_url = "https://oauth2.googleapis.com/token";
+
+$post_fields = [
+
+    "code" => $code,
+
+    "client_id" => getenv("GOOGLE_CLIENT_ID"),
+
+    "client_secret" => getenv("GOOGLE_CLIENT_SECRET"),
+
+    "redirect_uri" =>
+        "http://localhost/pramyan-assessment-portal/backend/routes/google-auth.php",
+
+    "grant_type" => "authorization_code"
+];
+
+$ch = curl_init();
+
+curl_setopt($ch, CURLOPT_URL, $token_url);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_fields));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+
+curl_close($ch);
+
+$data = json_decode($response, true);
+
+$id_token = $data["id_token"] ?? null;
+
+if (!$id_token) {
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Failed to get Google token"
+    ]);
+
+    exit();
+}
+
+
+
+/*
+STEP 4
+Decode token to get user info
+*/
+$parts = explode(".", $id_token);
+
+$payload = json_decode(
+    base64_decode(strtr($parts[1], '-_', '+/')),
+    true
 );
 
-if (!$tokenResponse) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Failed to get token from Google']);
-    exit();
-}
+$email = $payload["email"] ?? null;
+$name  = $payload["name"] ?? "Student";
 
-$tokenData = json_decode($tokenResponse, true);
-
-if (!isset($tokenData['id_token'])) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'No ID token received from Google']);
-    exit();
-}
-
-// Step 3 — Decode the ID token safely (Fixing Base64URL format)
-$idToken  = $tokenData['id_token'];
-$parts    = explode('.', $idToken);
-$b64 = strtr($parts[1], '-_', '+/');
-$payload  = json_decode(base64_decode($b64), true);
-
-$email    = $payload['email'] ?? null;
-$name     = $payload['name']  ?? 'Student';
 
 if (!$email) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Could not get email from Google']);
+
+    echo json_encode([
+        "success" => false,
+        "message" => "Invalid Google token"
+    ]);
+
     exit();
 }
 
-// Step 4 — Find existing user or create new one (Strict Schema Match)
-$stmt = $pdo->prepare("SELECT id, name, email, role, parent_phone FROM users WHERE email = ?");
+
+
+/*
+STEP 5
+Check if user exists
+*/
+$stmt = $pdo->prepare(
+    "SELECT * FROM users WHERE email=?"
+);
+
 $stmt->execute([$email]);
+
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+
+
+/*
+STEP 6
+Create user if not exists
+*/
 if (!$user) {
-    // New user — insert without a password since they use Google
+
     $stmt = $pdo->prepare("
-        INSERT INTO users (name, email, password_hash, role)
-        VALUES (?, ?, '', 'student')
+        INSERT INTO users
+        (name,email,password_hash,role)
+        VALUES (?,?,?,?)
     ");
-    $stmt->execute([$name, $email]);
+
+    $stmt->execute([
+        $name,
+        $email,
+        "",
+        "student"
+    ]);
+
     $userId = $pdo->lastInsertId();
 
-    $user = [
-        'id'           => (int)$userId,
-        'name'         => $name,
-        'email'        => $email,
-        'role'         => 'student',
-        'parent_phone' => null
-    ];
+} else {
+
+    $userId = $user["id"];
 }
 
-// Step 5 — Generate our own JWT
-$token = generateJWT([
-    'id'    => (int)$user['id'],
-    'email' => $user['email'],
-    'role'  => $user['role'],
-    'iat'   => time(),
-    'exp'   => time() + (7 * 24 * 60 * 60)
-], $jwtSecret);
 
-// Step 6 — Redirect back to React frontend
-$frontendUrl = 'http://localhost:5173/auth/google/callback';
-header('Location: ' . $frontendUrl . '?token=' . $token . '&name=' . urlencode($user['name']) . '&email=' . urlencode($user['email']) . '&role=' . $user['role']);
+
+/*
+STEP 7
+Create JWT
+*/
+$secret = getenv("JWT_SECRET");
+
+$token = generateJWT([
+
+    "id" => (int)$userId,
+
+    "email" => $email,
+
+    "role" => "student",
+
+    "iat" => time(),
+
+    "exp" => time() + 604800
+
+], $secret);
+
+
+
+
+/*
+STEP 8
+Redirect back to React app with token
+*/
+header(
+    "Location: http://localhost:5175/instructions/1?token=$token"
+);
+
 exit();
-?>

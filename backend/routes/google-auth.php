@@ -230,8 +230,10 @@ $token = generateJWT([
 STEP 8
 Redirect back to React app with token
 */
-header(
-    "Location: http://localhost:5175/instructions/1?token=$token"
+
+    header(
+    "Location: http://localhost:5173/google-callback?token=$token&role=student"
 );
+
 
 exit();

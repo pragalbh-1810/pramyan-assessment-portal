@@ -41,11 +41,13 @@ if (!$test_id) {
 
 
 // STEP 3: fetch questions (without correct answer)
+// FIXED: Added q_image to the SELECT statement
 $stmt = $pdo->prepare("
     SELECT 
         id,
         section,
         q_text,
+        q_image,
         opt_a,
         opt_b,
         opt_c,

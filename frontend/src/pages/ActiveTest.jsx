@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getToken } from "../utils/auth";
 import { setupTabSwitchMonitor } from "../utils/tabSwitchMonitor";
-import { useAutoSubmit } from "../utils/autoSubmit"; // Adjust this path based on where you saved autoSubmit.js
+import { useAutoSubmit } from "../utils/autoSubmit";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');

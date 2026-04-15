@@ -7,8 +7,6 @@ import ActiveTest from "./pages/ActiveTest";
 import Submit from "./pages/Submit";
 import Report from "./pages/Report";
 import GoogleCallback from "./pages/GoogleCallback";
-// add this route:
-<Route path="/auth/google/callback" element={<GoogleCallback />} />;
 
 function App() {
   return (
@@ -16,6 +14,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
+        <Route path="/google-callback" element={<GoogleCallback />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/instructions/:testId" element={<Instructions />} />
         <Route path="/test/:testId" element={<ActiveTest />} />

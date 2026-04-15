@@ -6,10 +6,10 @@ CREATE TABLE IF NOT EXISTS users (
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
+  google_id VARCHAR(255) NULL,
   class INT,
   board VARCHAR(50),
   role ENUM('student','admin') DEFAULT 'student',
-  google_id VARCHAR(255) NULL,
   parent_phone VARCHAR(20)
 );
 

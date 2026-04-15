@@ -20,7 +20,6 @@ if (!$student_test_id) {
 
 /* =========================================
    GET RESPONSES WITH QUESTION TAGS
-========================================= */
 $stmt = $pdo->prepare("
     SELECT
         r.selected_option,
@@ -39,7 +38,6 @@ $responses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 /* =========================================
    INITIALIZE COUNTERS
-========================================= */
 $total = 0;
 $math = 0;
 $sci = 0;
@@ -109,7 +107,6 @@ $p3 = $skillStats['P3']['total'] > 0
 
 /* =========================================
    ACTION PLAN AUTO GENERATION
-========================================= */
 $action_plan = json_encode([
     "week1" => "focus on weak chapters",
     "week2" => "practice bloom level L2 and L3",
@@ -119,7 +116,6 @@ $action_plan = json_encode([
 
 /* =========================================
    INSERT INTO RESULTS
-========================================= */
 $stmt = $pdo->prepare("
     INSERT INTO results (
         student_test_id, total_score, math_score, sci_score, 
@@ -153,7 +149,6 @@ if (!$result_id) {
 
 /* =========================================
    SAVE CHAPTER SWOT
-========================================= */
 foreach ($chapterStats as $chapter => $data) {
     $pct = $data['total'] > 0 ? round(($data['score'] / $data['total']) * 100, 2) : 0;
 
@@ -177,7 +172,6 @@ foreach ($chapterStats as $chapter => $data) {
 
 /* =========================================
    SAVE BLOOM SCORES
-========================================= */
 foreach ($bloomStats as $bloom => $data) {
     $pct = $data['total'] > 0 ? round(($data['score'] / $data['total']) * 100, 2) : 0;
 
@@ -193,7 +187,6 @@ foreach ($bloomStats as $bloom => $data) {
 
 /* =========================================
    RETURN JSON RESPONSE
-========================================= */
 echo json_encode([
     "success"     => true,
     "overall_pct" => $overall_pct,

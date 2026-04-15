@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS questions (
   test_id INT NOT NULL,
   section VARCHAR(10),
   q_text TEXT NOT NULL,
+  q_image VARCHAR(255) DEFAULT NULL,
   opt_a TEXT,
   opt_b TEXT,
   opt_c TEXT,

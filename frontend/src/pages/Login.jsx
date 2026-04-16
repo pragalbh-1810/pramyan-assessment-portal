@@ -346,8 +346,18 @@ const handleSubmit = async () => {
     if (result.success) {
       setToken(result.token);
       setRole(result.user.role);
-      navigate("/instructions/1");
-    } else {
+      
+      // Role-based redirect
+      const decoded = JSON.parse(atob(result.token.split('.')[1])); 
+      
+      if (decoded.role === 'teacher') {
+          navigate('/teacher'); 
+      } else if (decoded.role === 'admin') {
+          navigate('/admin');
+      } else {
+          navigate('/instructions/1'); // student default
+      }
+  } else {
       setErrors({ api: result.message });
     }
   } catch (err) {

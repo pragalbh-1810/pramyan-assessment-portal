@@ -113,6 +113,7 @@ $action_plan = json_encode([
     "week3" => "revise mistakes",
     "week4" => "attempt mock test"
 ]);
+*/
 
 /* =========================================
    INSERT INTO RESULTS
@@ -146,6 +147,7 @@ if (!$result_id) {
     $stmt->execute([$student_test_id]);
     $result_id = $stmt->fetchColumn();
 }
+*/
 
 /* =========================================
    SAVE CHAPTER SWOT
@@ -169,6 +171,7 @@ foreach ($chapterStats as $chapter => $data) {
         $result_id, $chapter, $data['score'], $data['total'], $pct, $swot
     ]);
 }
+*/
 
 /* =========================================
    SAVE BLOOM SCORES
@@ -184,6 +187,7 @@ foreach ($bloomStats as $bloom => $data) {
         $result_id, $bloom, $data['score'], $data['total'], $pct
     ]);
 }
+*/
 
 /* =========================================
    RETURN JSON RESPONSE
@@ -194,3 +198,4 @@ echo json_encode([
     "p2"          => $p2,
     "p3"          => $p3
 ]);
+*/

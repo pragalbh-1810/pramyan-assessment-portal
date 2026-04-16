@@ -7,6 +7,8 @@ import ActiveTest from "./pages/ActiveTest";
 import Submit from "./pages/Submit";
 import Report from "./pages/Report";
 import GoogleCallback from "./pages/GoogleCallback";
+import TeacherPanel from './pages/TeacherPanel';
+import AdminPanel from './pages/AdminPanel';
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
         <Route path="/test/:testId" element={<ActiveTest />} />
         <Route path="/submit/:testId" element={<Submit />} />
         <Route path="/report/:testId" element={<Report />} />
+        <Route path="/teacher" element={<TeacherPanel />} />
+        <Route path="/admin" element={<AdminPanel />} />
       </Routes>
     </BrowserRouter>
   );

@@ -116,8 +116,6 @@ if (!$email) {
     exit();
 }
 
-
-
 /*
 STEP 5 & 6
 Check if user exists, determine if profile needs updating, and create if they don't exist

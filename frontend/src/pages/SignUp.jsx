@@ -378,7 +378,21 @@ export default function SignUp() {
       if (result.success) {
         setToken(result.token);
         setRole(result.user.role);
-        navigate("/instructions/1");
+        // New user — fetch correct test for their class
+        try {
+          const testsRes = await fetch(
+            "http://localhost/pramyan-assessment-portal/backend/routes/get-tests.php",
+            { headers: { Authorization: `Bearer ${result.token}` } },
+          );
+          const testsData = await testsRes.json();
+          if (testsData.success && testsData.tests.length > 0) {
+            navigate(`/instructions/${testsData.tests[0].id}`);
+          } else {
+            navigate("/instructions/1");
+          }
+        } catch {
+          navigate("/instructions/1");
+        }
       } else {
         setErrors({ api: result.message });
       }

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getToken } from "../utils/auth";
 import { setupTabSwitchMonitor } from "../utils/tabSwitchMonitor";
 import { useAutoSubmit } from "../utils/autoSubmit";
+import { uploadWorkingSheet } from "../utils/fileUpload";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -576,6 +577,8 @@ export default function ActiveTest() {
   const [showModal, setShowModal] = useState(false);
   const [studentName, setStudentName] = useState("Student");
   const [submitted, setSubmitted] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const [saveIndicator, setSaveIndicator] = useState({ show: false, text: "", type: "" });
   const answersRef = useRef({});
@@ -686,6 +689,33 @@ export default function ActiveTest() {
     });
   };
 
+  // 2. Add handle function
+const handleFileChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // You need the student_test_id. This is usually returned 
+  // when the test starts or stored in a state. 
+  // For this example, I'll assume it's available.
+  // Backend derives student_test_id using test_id + auth user.
+  const currentTestId = testId;
+
+  setUploading(true);
+  setSaveIndicator({ show: true, text: "Uploading sheet...", type: "saving" });
+
+  const result = await uploadWorkingSheet(file, currentTestId);
+
+  if (result.success) {
+    setSelectedFile(file.name);
+    setSaveIndicator({ show: true, text: "Sheet Uploaded!", type: "success" });
+  } else {
+    setSaveIndicator({ show: true, text: "Upload Failed", type: "warn" });
+  }
+  setUploading(false);
+  
+  setTimeout(() => setSaveIndicator({ show: false }), 3000);
+};
+
   if (questions.length === 0) return <div style={{padding: '40px', textAlign: 'center'}}>Loading Test...</div>;
 
   return (
@@ -754,6 +784,27 @@ export default function ActiveTest() {
                 </div>
               ))}
             </div>
+
+            {/* 3. CONDITIONAL UPLOAD SECTION */}
+        {currentIndex === questions.length - 1 && (
+            <div className="upload-container">
+                <label className="upload-label">
+                    Step 3: Upload your rough work / working sheet (Optional)
+                </label>
+                <input 
+                    type="file" 
+                    className="file-input" 
+                    onChange={handleFileChange}
+                    disabled={uploading}
+                    accept=".pdf,.jpg,.jpeg,.png"
+                />
+                {selectedFile && (
+                    <p style={{fontSize: '11px', color: '#1D9E75', marginTop: '5px'}}>
+                        ✓ {selectedFile} attached
+                    </p>
+                )}
+            </div>
+        )}
 
             <div className="q-nav-btns">
               <button

@@ -321,41 +321,56 @@ export default function Login() {
     return newErrors;
   };
 
-const handleSubmit = async () => {
-  const newErrors = validate();
-  if (Object.keys(newErrors).length > 0) {
-    setErrors(newErrors);
-    return;
-  }
-  setLoading(true);
-  try {
-    const response = await fetch(
-      "http://localhost/pramyan-assessment-portal/backend/routes/login.php",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password,
-        }),
-      },
-    );
-    const result = await response.json();
-    if (result.success) {
-      setToken(result.token);
-      setRole(result.user.role);
-      navigate("/instructions/1");
-    } else {
-      setErrors({ api: result.message });
+  const handleSubmit = async () => {
+    const newErrors = validate();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
     }
-  } catch (err) {
-    setErrors({ api: "Something went wrong. Please try again." });
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      const response = await fetch(
+        "http://localhost/pramyan-assessment-portal/backend/routes/login.php",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: form.email,
+            password: form.password,
+          }),
+        },
+      );
+      const result = await response.json();
+      if (result.success) {
+        setToken(result.token);
+        setRole(result.user.role);
+        
+        // Role-based redirect
+        const decoded = JSON.parse(atob(result.token.split('.')[1])); 
+        
+        if (decoded.role === 'teacher') {
+            navigate('/teacher'); 
+        } else if (decoded.role === 'admin') {
+            navigate('/admin');
+        } else {
+            // Check the class specifically and redirect to appropriate test
+            if (String(decoded.class) === "9") {
+                navigate('/instructions/2'); // Class 9 gets Test 2
+            } else {
+                navigate('/instructions/1'); // Class 10 and everyone else gets Test 1
+            }
+        }
+      } else {
+        setErrors({ api: result.message });
+      }
+    } catch (err) {
+      setErrors({ api: "Something went wrong. Please try again." });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSubmit();

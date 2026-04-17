@@ -350,17 +350,36 @@ export default function Login() {
         // Role-based redirect
         const decoded = JSON.parse(atob(result.token.split('.')[1])); 
         
-        if (decoded.role === 'teacher') {
-            navigate('/teacher'); 
-        } else if (decoded.role === 'admin') {
-            navigate('/admin');
+        if (decoded.role === "teacher") {
+          navigate("/teacher");
+        } else if (decoded.role === "admin") {
+          navigate("/admin");
         } else {
-            // Check the class specifically and redirect to appropriate test
-            if (String(decoded.class) === "9") {
-                navigate('/instructions/2'); // Class 9 gets Test 2
+          // Fetch student's test and check if already submitted
+          try {
+            const testsRes = await fetch(
+              "http://localhost/pramyan-assessment-portal/backend/routes/get-tests.php",
+              { headers: { Authorization: `Bearer ${result.token}` } },
+            );
+            const testsData = await testsRes.json();
+            if (testsData.success && testsData.tests.length > 0) {
+              const testId = testsData.tests[0].id;
+              const detailRes = await fetch(
+                `http://localhost/pramyan-assessment-portal/backend/routes/get-test-details.php?test_id=${testId}`,
+                { headers: { Authorization: `Bearer ${result.token}` } },
+              );
+              const detailData = await detailRes.json();
+              if (detailData.success && detailData.test.is_submitted) {
+                navigate(`/report/${testId}`);
+              } else {
+                navigate(`/instructions/${testId}`);
+              }
             } else {
-                navigate('/instructions/1'); // Class 10 and everyone else gets Test 1
+              navigate("/instructions/1");
             }
+          } catch {
+            navigate("/instructions/1");
+          }
         }
       } else {
         setErrors({ api: result.message });

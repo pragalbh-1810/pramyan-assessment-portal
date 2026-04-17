@@ -32,14 +32,19 @@ function verifyJWT($token, $secret) {
 }
 
 function authenticate() {
-    // NEW: Safely get the Authorization header regardless of the server type
     $authHeader = null;
-    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
-        $authHeader = trim($_SERVER["HTTP_AUTHORIZATION"]);
+
+    if (!empty($_SERVER['HTTP_AUTHORIZATION'])) {
+        $authHeader = trim($_SERVER['HTTP_AUTHORIZATION']);
+    } elseif (!empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $authHeader = trim($_SERVER['REDIRECT_HTTP_AUTHORIZATION']);
     } elseif (function_exists('apache_request_headers')) {
-        $requestHeaders = apache_request_headers();
-        if (isset($requestHeaders['Authorization'])) {
-            $authHeader = trim($requestHeaders['Authorization']);
+        $headers = apache_request_headers();
+        foreach ($headers as $key => $value) {
+            if (strtolower($key) === 'authorization') {
+                $authHeader = trim($value);
+                break;
+            }
         }
     }
 

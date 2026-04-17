@@ -357,20 +357,30 @@ export default function Instructions() {
   }, [testId]);
 
   const fetchTestDetails = async (token) => {
-    let studentClass = 10;
     try {
-      const payload = token.split(".")[1];
-      const decoded = JSON.parse(atob(payload));
-      studentClass = decoded.class || 10;
-    } catch {}
-
-    setTest({
-      name: "PRAMYAN EDUCATION — DIAGNOSTIC ASSESSMENT TEST",
-      duration_mins: 45,
-      class: studentClass,
-      total_questions: 32,
-    });
-    setLoading(false);
+      const res = await fetch(
+        `http://localhost/pramyan-assessment-portal/backend/routes/get-test-details.php?test_id=${testId}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const data = await res.json();
+      if (data.success) {
+        setTest(data.test);
+      } else {
+        setTest({
+          name: "PRAMYAN EDUCATION — DIAGNOSTIC ASSESSMENT TEST",
+          duration_mins: 45,
+          total_questions: 32,
+        });
+      }
+    } catch {
+      setTest({
+        name: "PRAMYAN EDUCATION — DIAGNOSTIC ASSESSMENT TEST",
+        duration_mins: 45,
+        total_questions: 32,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleStartTest = () => {

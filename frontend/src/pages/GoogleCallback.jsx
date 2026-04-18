@@ -15,11 +15,9 @@ export default function GoogleCallback() {
       return;
     }
 
-    // Save token
     setToken(token);
     setRole(role || "student");
 
-    // Role based redirect
     if (role === "teacher") {
       navigate("/teacher", { replace: true });
       return;
@@ -29,11 +27,39 @@ export default function GoogleCallback() {
       return;
     }
 
-    // Student — backend already redirects to /complete-profile or /instructions/:id
-    // This callback only handles the token saving for existing students
-    // New users are sent directly to /complete-profile by google-auth.php
-    // so this page won't even be hit for them
-    navigate("/instructions/1", { replace: true });
+    // Student — fetch their test and check if already submitted
+    const checkAndRedirect = async () => {
+      try {
+        const testsRes = await fetch(
+          "http://localhost/pramyan-assessment-portal/backend/routes/get-tests.php",
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        const testsData = await testsRes.json();
+
+        if (testsData.success && testsData.tests.length > 0) {
+          const testId = testsData.tests[0].id;
+          const detailRes = await fetch(
+            `http://localhost/pramyan-assessment-portal/backend/routes/get-test-details.php?test_id=${testId}`,
+            { headers: { Authorization: `Bearer ${token}` } },
+          );
+          const detailData = await detailRes.json();
+
+          if (detailData.success && detailData.test.is_submitted) {
+            // Old user already submitted → go to report
+            navigate(`/report/${testId}`, { replace: true });
+          } else {
+            // Not submitted yet → go to instructions
+            navigate(`/instructions/${testId}`, { replace: true });
+          }
+        } else {
+          navigate("/instructions/1", { replace: true });
+        }
+      } catch {
+        navigate("/instructions/1", { replace: true });
+      }
+    };
+
+    checkAndRedirect();
   }, []);
 
   return (

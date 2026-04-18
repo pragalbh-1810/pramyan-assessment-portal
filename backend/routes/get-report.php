@@ -10,6 +10,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+// ✅ FIX 1: LOAD .env FIRST before loading the database!
+$envPath = dirname(__DIR__) . '/.env';
+if (file_exists($envPath)) {
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        list($name, $value) = explode('=', $line, 2);
+        putenv(trim($name) . "=" . trim($value));
+    }
+}
+
 require_once dirname(__DIR__) . '/config/db.php';
 require_once dirname(__DIR__) . '/middleware/auth.php';
 
@@ -91,11 +102,11 @@ try {
     $stmt->execute([$student_test_id]);
     $counts = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Get section max totals in one query instead of three
+    // ✅ FIX 2: Changed 'Mathematics' to 'Math' to perfectly match your database!
     $stmt = $pdo->prepare("
         SELECT 
             COUNT(*) as total,
-            SUM(CASE WHEN section = 'Mathematics' THEN 1 ELSE 0 END) as mathMax,
+            SUM(CASE WHEN section = 'Math' THEN 1 ELSE 0 END) as mathMax,
             SUM(CASE WHEN section = 'Science' THEN 1 ELSE 0 END) as sciMax
         FROM questions 
         WHERE test_id = ?

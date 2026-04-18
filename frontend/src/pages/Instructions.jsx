@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
-import { getToken } from "../utils/auth";
+import { getToken, setToken } from "../utils/auth";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -347,14 +347,30 @@ const RULES = [
 export default function Instructions() {
   const navigate = useNavigate();
   const { testId } = useParams();
+  const [searchParams] = useSearchParams(); // Get URL parameters
+  const tokenUrl = searchParams.get("token");
+
   const [checked, setChecked] = useState(false);
   const [test, setTest] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getToken() || "test";
-    fetchTestDetails(token);
-  }, [testId]);
+    // 1. If returning from Google Auth, save the token to LocalStorage!
+    if (tokenUrl) {
+      setToken(tokenUrl);
+    }
+
+    // 2. Get active token (either the one we just saved, or from an existing session)
+    const activeToken = tokenUrl || getToken();
+
+    if (!activeToken) {
+      alert("Please log in to continue.");
+      navigate("/");
+      return;
+    }
+
+    fetchTestDetails(activeToken);
+  }, [testId, tokenUrl, navigate]);
 
   const fetchTestDetails = async (token) => {
     try {
@@ -363,24 +379,33 @@ export default function Instructions() {
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const data = await res.json();
+      
       if (data.success) {
         setTest(data.test);
       } else {
-        setTest({
-          name: "PRAMYAN EDUCATION — DIAGNOSTIC ASSESSMENT TEST",
-          duration_mins: 45,
-          total_questions: 32,
-        });
+        fallbackTest(token);
       }
     } catch {
-      setTest({
-        name: "PRAMYAN EDUCATION — DIAGNOSTIC ASSESSMENT TEST",
-        duration_mins: 45,
-        total_questions: 32,
-      });
+      fallbackTest(token);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fallbackTest = (token) => {
+    // If backend fetch fails, decode the token to at least show their Class correctly
+    let userClass = "Unknown";
+    try {
+      const decoded = JSON.parse(atob(token.split(".")[1]));
+      userClass = decoded.class || "Unknown";
+    } catch (e) {}
+
+    setTest({
+      name: "PRAMYAN EDUCATION — DIAGNOSTIC ASSESSMENT TEST",
+      duration_mins: 45,
+      total_questions: 32,
+      class: userClass,
+    });
   };
 
   const handleStartTest = () => {

@@ -10,12 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-require_once dirname(__DIR__) . '/config/db.php';
-
-
-// LOAD .env
+// ✅ STEP 0: LOAD .env FIRST before anything else
 $envPath = dirname(__DIR__) . '/.env';
-
 if (file_exists($envPath)) {
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
@@ -26,6 +22,9 @@ if (file_exists($envPath)) {
         putenv("$name=$value");
     }
 }
+
+// ✅ STEP 0.1: THEN load db connection
+require_once dirname(__DIR__) . '/config/db.php';
 
 
 // CREATE JWT FUNCTION
@@ -40,7 +39,6 @@ function generateJWT($payload, $secret) {
     ), '+/', '-_'), '=');
     return "$header.$payload.$signature";
 }
-
 
 
 /*
@@ -61,13 +59,11 @@ if (!isset($_GET['code'])) {
 }
 
 
-
 /*
 STEP 2
 Google redirected back with authorization code
 */
 $code = $_GET['code'];
-
 
 
 /*
@@ -100,7 +96,6 @@ if (!$id_token) {
 }
 
 
-
 /*
 STEP 4
 Decode token to get user info
@@ -116,6 +111,7 @@ if (!$email) {
     exit();
 }
 
+
 /*
 STEP 5 & 6
 Check if user exists, determine if profile needs updating, and create if they don't exist
@@ -126,6 +122,7 @@ $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $needsProfileUpdate = false;
 $userClass = null;
+$userRole = 'student';
 
 if (!$user) {
     // Brand new user from Google! They definitely need to complete their profile.
@@ -137,13 +134,13 @@ if (!$user) {
     // Returning user
     $userId = $user["id"];
     $userClass = $user["class"];
-    
+    $userRole = $user["role"];
+
     // Check if any required fields are empty
     if (empty($user["class"]) || empty($user["board"]) || empty($user["parent_phone"])) {
         $needsProfileUpdate = true;
     }
 }
-
 
 
 /*
@@ -152,28 +149,40 @@ Create JWT
 */
 $secret = getenv("JWT_SECRET");
 $token = generateJWT([
-    "id" => (int)$userId,
+    "id"    => (int)$userId,
     "email" => $email,
-    "role" => "student",
-    "class" => $userClass, // This will be null if they are new, which is fine!
-    "iat" => time(),
-    "exp" => time() + 604800
+    "role"  => $userRole,
+    "class" => $userClass,
+    "iat"   => time(),
+    "exp"   => time() + 604800
 ], $secret);
-
 
 
 /*
 STEP 8
 Redirect back to React app based on profile status
 */
-$frontend_url = "http://localhost:5173"; // Back to Vite default port!
+$frontend_url = "http://localhost:5173";
 
 if ($needsProfileUpdate) {
     // Send them to the Complete Profile page
     header("Location: $frontend_url/complete-profile?token=$token");
-} else {
-    // Profile is complete! Route them to the correct test instructions based on class
-    $testRoute = ($userClass == 9) ? 2 : 1; 
-    header("Location: $frontend_url/instructions/$testRoute?token=$token");
+    exit();
 }
+
+// ✅ FIXED: Admin goes to admin panel
+if ($userRole === 'admin') {
+    header("Location: $frontend_url/admin?token=$token");
+    exit();
+}
+
+// ✅ FIXED: Map each class to its correct test_id
+$classToTest = [
+    8  => 3,  // Class 8 → test_id 3 (Class 8 Foundation Check)
+    9  => 2,  // Class 9 → test_id 2 (Class 9 Mid-Term Readiness Test)
+    10 => 1,  // Class 10 → test_id 1 (Class 10 Diagnostic Assessment)
+];
+
+$testRoute = $classToTest[$userClass] ?? 1;
+header("Location: $frontend_url/instructions/$testRoute?token=$token");
 exit();

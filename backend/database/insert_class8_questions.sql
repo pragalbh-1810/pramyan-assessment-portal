@@ -14,7 +14,7 @@ VALUES
 
 (3, 'Math', 'Q1: [Math | Integers] Which of the following statements about integers is TRUE?', NULL, 'The product of two negative integers is always negative', 'Division of any integer by zero is zero', 'The product of two negative integers is always positive', 'Sum of a positive and a negative integer is always positive', 'c', 'Integers', 'L1', 'P1', 60),
 
-(3, 'Math', 'Q2: [Math | Fractions & Decimals] What is the value of 2½ × 1⅗?', NULL, '2⅖', '4½', '3⅘', '4⅖', 'c', 'Fractions & Decimals', 'L2', 'P2', 60),
+(3, 'Math', 'Q2: [Math | Fractions & Decimals] What is the value of 2⅓ × 1⅘?', NULL, '2⁴⁄₁₅', '4⅕', '3⁸⁄₁₅', '4¹⁄₁₅', 'b', 'Fractions & Decimals', 'L2', 'P2', 60),
 
 (3, 'Math', 'Q3: [Math | Simple Equations] The solution of 5x + 3 = 28 is:', NULL, 'x = 5', 'x = 7', 'x = 3', 'x = 4', 'a', 'Simple Equations', 'L2', 'P2', 45),
 
@@ -70,9 +70,9 @@ VALUES
 (3, 'Math', 'Q23 (b): [Math | Perimeter & Area] Tiles of size 40 cm × 40 cm are used to tile the floor. How many tiles are needed?', NULL, '120', '200', '300', '480', 'c', 'Perimeter & Area', 'L2', 'P2', 60),
 (3, 'Math', 'Q23 (c): [Math | Perimeter & Area] The room has 4 walls each of height 3 m. If 1 litre of paint covers 12 m², how many litres are needed to paint all four walls?', NULL, '5 litres', '6 litres', '7 litres', '8 litres', 'c', 'Perimeter & Area', 'L2', 'P2', 60),
 
-(3, 'Math', 'Q24 (a): [Math | Algebraic Expressions] Simplify: (3a + 2b) + (5a - 4b) - (2a - b) = ?', NULL, '6a - b', '8b', '6a + b', '8a - 3b', 'c', 'Algebraic Expressions', 'L2', 'P2', 45),
+(3, 'Math', 'Q24 (a): [Math | Algebraic Expressions] Simplify: (3a + 2b) + (5a - 4b) - (2a - b) = ?', NULL, '6a - b', '6a + b', '8a - 3b', '4a - 3b', 'a', 'Algebraic Expressions', 'L2', 'P2', 45),
 (3, 'Math', 'Q24 (b): [Math | Algebraic Expressions] Subtract (4x² - 3x + 1) from (7x² + 2x - 5). The result is:', NULL, '3x² - 5x - 6', '3x² + 5x - 6', '11x² - x - 4', '3x² + 5x + 6', 'b', 'Algebraic Expressions', 'L3', 'P3', 60),
-(3, 'Math', 'Q24 (c): [Math | Algebraic Expressions] Find the value of 5p² - 3pq + 2q² when p = 2 and q = -1.', NULL, '24', '26', '28', '32', 'b', 'Algebraic Expressions', 'L3', 'P3', 60),
+(3, 'Math', 'Q24 (c): [Math | Algebraic Expressions] Find the value of 5p² - 3pq + 2q² when p = 2 and q = -1.', NULL, '24', '26', '28', '32', 'c', 'Algebraic Expressions', 'L3', 'P3', 60),
 
 
 -- SECTION B: SCIENCE (4 Questions x 3 parts = 12 Rows, 3 Marks each)
@@ -103,7 +103,7 @@ VALUES
 
 (3, 'Math', 'Q30 (a): [Math | Data Handling + Fractions & Decimals] The marks of 10 students (out of 50): 42, 36, 28, 48, 36, 25, 42, 36, 50, 17. What are the Mean, Median, and Mode respectively?', NULL, '36, 36, 42', '36, 39, 36', '36, 36, 36', '38, 36, 36', 'c', 'Data Handling + Fractions & Decimals', 'L2', 'P2', 90),
 (3, 'Math', 'Q30 (b): [Math | Data Handling] An 11th student joins and scores 36. What happens to the Mode and new Mean?', NULL, 'Mode changes to 42; Mean = 36', 'Mode stays 36; Mean = 36', 'Mode stays 36; Mean increases', 'Both Mode and Mean change', 'b', 'Data Handling + Fractions & Decimals', 'L3', 'P3', 60),
-(3, 'Math', 'Q30 (c): [Math | Fractions & Decimals] The passing mark is 60% of 50. How many students passed?', NULL, '7', '8', '9', '10', 'b', 'Data Handling + Fractions & Decimals', 'L2', 'P2', 45),
+(3, 'Math', 'Q30 (c): [Math | Fractions & Decimals] The passing mark is 60% of 50. How many students passed?', NULL, '7', '8', '9', '10', 'a', 'Data Handling + Fractions & Decimals', 'L2', 'P2', 45),
 (3, 'Math', 'Q30 (d): [Math | Fractions & Decimals] Rajan scored 42 out of 50. His score as a percentage is:', NULL, '80%', '82%', '84%', '86%', 'c', 'Data Handling + Fractions & Decimals', 'L2', 'P2', 30),
 
 
@@ -117,4 +117,4 @@ VALUES
 (3, 'Science', 'Q32 (a): [Science | Heat + Light] Mia wears a black coat and Tia wears a white coat on a sunny day. Who feels warmer and why?', NULL, 'Tia, because white absorbs more heat', 'Mia, because black absorbs more heat', 'Mia, because black reflects heat', 'Tia, because white emits heat', 'b', 'Heat + Light', 'L3', 'P3', 45),
 (3, 'Science', 'Q32 (b): [Science | Heat + Light] A clinical thermometer reads 40.2°C. What is the temperature in Fahrenheit?', NULL, '100.36°F', '102.36°F', '104.36°F', '106.36°F', 'c', 'Heat + Light', 'L3', 'P3', 60),
 (3, 'Science', 'Q32 (c): [Science | Heat + Light] What does a body temperature of 40.2°C indicate?', NULL, 'Normal temperature', 'Mild fever', 'High fever', 'Hypothermia', 'c', 'Heat + Light', 'L2', 'P2', 30),
-(3, 'Science', 'Q32 (d): [Science | Light] A ray of light hits a plane mirror. If the angle of incidence is 30°, what is the angle between the incident ray and the reflected ray?', NULL, '30°', '60°', '90°', '120°', 'b', 'Heat + Light', 'L2', 'P2', 30);
+(3, 'Science', 'Q32 (d): [Science | Light] A boy stands 3 m in front of a plane mirror. How far is his image from the mirror?', NULL, '6 m in front', '3 m behind', '3 m in front', '6 m behind', 'b', 'Heat + Light', 'L2', 'P2', 30);

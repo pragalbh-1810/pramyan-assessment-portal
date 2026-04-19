@@ -554,13 +554,11 @@ function decodeToken(token) {
   }
 }
 
-// NEW: Helper function to separate "Q21 (a):" from the actual text
+// Helper function to separate "Q21 (a):" from the actual text
 const parseQuestionData = (text) => {
   if (!text) return { label: null, body: "" };
-  // Regex to find patterns like "Q21 (a): " or "Q1: " at the start
   const match = text.match(/^Q(\d+(?:\s*\([a-zA-Z]\))?)\s*:\s*([\s\S]*)/i);
   if (match) {
-    // Removes spaces so "21 (a)" becomes "21(a)" for the UI
     return { label: match[1].replace(/\s+/g, ''), body: match[2] }; 
   }
   return { label: null, body: text };
@@ -571,6 +569,7 @@ export default function ActiveTest() {
   const { testId } = useParams();
 
   const [questions, setQuestions] = useState([]);
+  const [totalQuestions, setTotalQuestions] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({}); 
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
@@ -624,6 +623,7 @@ export default function ActiveTest() {
       const result = await res.json();
       if (result.success && result.questions?.length > 0) {
         setQuestions(result.questions);
+        setTotalQuestions(result.total_questions);
       }
     } catch (err) {
       console.error(err);
@@ -669,10 +669,26 @@ export default function ActiveTest() {
   const isWarning = timeLeft <= 5 * 60;
 
   const currentQuestion = questions[currentIndex];
-  const answeredCount = Object.keys(answers).length;
-  const unansweredCount = questions.length - answeredCount;
+  const mainQuestionGroups = {};
+  questions.forEach(q => {
+    const match = q.q_text.match(/^Q(\d+)/i);
+    const mainNum = match ? match[1] : q.id; 
+    if (!mainQuestionGroups[mainNum]) {
+      mainQuestionGroups[mainNum] = [];
+    }
+    mainQuestionGroups[mainNum].push(q.id);
+  });
 
-  // Process the current question text
+  // 2. Count how many *Main* questions have ALL parts answered
+  let answeredMainCount = 0;
+  Object.values(mainQuestionGroups).forEach(partIds => {
+    const isFullyAnswered = partIds.every(id => answers[id]);
+    if (isFullyAnswered) {
+      answeredMainCount++;
+    }
+  });
+
+  const unansweredMainCount = totalQuestions - answeredMainCount;
   const parsedCurrentQ = parseQuestionData(currentQuestion?.q_text);
   const displayLabel = parsedCurrentQ.label || (currentIndex + 1);
   const displayBody = parsedCurrentQ.body || "Loading question...";
@@ -689,32 +705,27 @@ export default function ActiveTest() {
     });
   };
 
-  // 2. Add handle function
-const handleFileChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  // You need the student_test_id. This is usually returned 
-  // when the test starts or stored in a state. 
-  // For this example, I'll assume it's available.
-  // Backend derives student_test_id using test_id + auth user.
-  const currentTestId = testId;
+    const currentTestId = testId;
 
-  setUploading(true);
-  setSaveIndicator({ show: true, text: "Uploading sheet...", type: "saving" });
+    setUploading(true);
+    setSaveIndicator({ show: true, text: "Uploading sheet...", type: "saving" });
 
-  const result = await uploadWorkingSheet(file, currentTestId);
+    const result = await uploadWorkingSheet(file, currentTestId);
 
-  if (result.success) {
-    setSelectedFile(file.name);
-    setSaveIndicator({ show: true, text: "Sheet Uploaded!", type: "success" });
-  } else {
-    setSaveIndicator({ show: true, text: "Upload Failed", type: "warn" });
-  }
-  setUploading(false);
-  
-  setTimeout(() => setSaveIndicator({ show: false }), 3000);
-};
+    if (result.success) {
+      setSelectedFile(file.name);
+      setSaveIndicator({ show: true, text: "Sheet Uploaded!", type: "success" });
+    } else {
+      setSaveIndicator({ show: true, text: "Upload Failed", type: "warn" });
+    }
+    setUploading(false);
+    
+    setTimeout(() => setSaveIndicator({ show: false }), 3000);
+  };
 
   if (questions.length === 0) return <div style={{padding: '40px', textAlign: 'center'}}>Loading Test...</div>;
 
@@ -754,8 +765,7 @@ const handleFileChange = async (e) => {
           <div className="question-panel">
             <div className="q-header">
               <div className="q-counter">
-                {/* Dynamically uses "21(a)" or the standard index */}
-                Question <strong>{displayLabel}</strong> of {questions.length}
+                Question <strong>{displayLabel}</strong> of {totalQuestions}
               </div>
               <div className="q-section-tag">{currentQuestion?.section}</div>
             </div>
@@ -763,7 +773,6 @@ const handleFileChange = async (e) => {
             {/* Display the clean question text */}
             <div className="q-text">{displayBody}</div>
 
-            {/* NEW: Display the image if it exists in the DB */}
             {currentQuestion?.q_image && (
               <div className="q-image-container">
                 <img 
@@ -785,7 +794,6 @@ const handleFileChange = async (e) => {
               ))}
             </div>
 
-            {/* 3. CONDITIONAL UPLOAD SECTION */}
         {currentIndex === questions.length - 1 && (
             <div className="upload-container">
                 <label className="upload-label">
@@ -829,15 +837,15 @@ const handleFileChange = async (e) => {
           <div className="test-sidebar">
             <div className="stats-box">
               <div className="stat-item">
-                <span className="stat-num">{questions.length}</span>
+                <span className="stat-num">{totalQuestions}</span>
                 <span className="stat-lbl">Total</span>
               </div>
               <div className="stat-item">
-                <span className="stat-num green">{answeredCount}</span>
+                <span className="stat-num green">{answeredMainCount}</span>
                 <span className="stat-lbl">Answered</span>
               </div>
               <div className="stat-item">
-                <span className="stat-num gray">{unansweredCount}</span>
+                <span className="stat-num gray">{unansweredMainCount}</span>
                 <span className="stat-lbl">Left</span>
               </div>
             </div>
@@ -853,7 +861,6 @@ const handleFileChange = async (e) => {
               <div className="palette-title">Question Palette</div>
               <div className="palette-grid">
                 {questions.map((q, i) => {
-                  // Dynamically label the buttons with "1", "21(a)", etc.
                   const qLabel = parseQuestionData(q.q_text).label || (i + 1);
                   return (
                     <button
@@ -901,9 +908,9 @@ const handleFileChange = async (e) => {
               Once submitted you cannot go back or change your answers. Are you sure you want to submit?
             </div>
             <div className="modal-stats">
-              <div className="modal-stat"><span className="modal-stat-num blue">{questions.length}</span><span className="modal-stat-label">Total</span></div>
-              <div className="modal-stat"><span className="modal-stat-num green">{answeredCount}</span><span className="modal-stat-label">Answered</span></div>
-              <div className="modal-stat"><span className="modal-stat-num gray">{unansweredCount}</span><span className="modal-stat-label">Unanswered</span></div>
+              <div className="modal-stat"><span className="modal-stat-num blue">{questions.length}</span><span className="modal-stat-label">Total Parts</span></div>
+              <div className="modal-stat"><span className="modal-stat-num green">{Object.keys(answers).length}</span><span className="modal-stat-label">Answered</span></div>
+              <div className="modal-stat"><span className="modal-stat-num gray">{questions.length - Object.keys(answers).length}</span><span className="modal-stat-label">Left</span></div>
             </div>
             <div className="modal-btns">
               <button className="modal-cancel" onClick={() => setShowModal(false)}>Go Back</button>

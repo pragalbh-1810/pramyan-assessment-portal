@@ -25,7 +25,6 @@ require_once dirname(__DIR__) . '/middleware/auth.php';
 
 // STEP 1: authenticate user
 $user = authenticate();
-
 $user_id = $user['id'];
 
 
@@ -48,9 +47,7 @@ $stmt = $pdo->prepare("
     FROM tests
     WHERE id = ?
 ");
-
 $stmt->execute([$test_id]);
-
 $test = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$test) {
@@ -63,18 +60,19 @@ if (!$test) {
 }
 
 
-// STEP 4: count questions
-$stmt = $pdo->prepare("
-    SELECT COUNT(*) as total_questions
-    FROM questions
-    WHERE test_id = ?
-");
-
+// STEP 4: count unique main questions (Outputs 32 instead of 60)
+$stmt = $pdo->prepare("SELECT q_text FROM questions WHERE test_id = ?");
 $stmt->execute([$test_id]);
+$questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$qData = $stmt->fetch(PDO::FETCH_ASSOC);
-
-$total_questions = (int)$qData['total_questions'];
+$main_questions = [];
+foreach ($questions as $q) {
+    // Looks for "Q1", "Q21", etc., and counts them as a single question
+    if (preg_match('/^Q(\d+)/i', $q['q_text'], $matches)) {
+        $main_questions[$matches[1]] = true;
+    }
+}
+$total_questions = count($main_questions);
 
 
 // STEP 5: check if student already started test
@@ -83,9 +81,7 @@ $stmt = $pdo->prepare("
     FROM student_tests
     WHERE user_id = ? AND test_id = ?
 ");
-
 $stmt->execute([$user_id, $test_id]);
-
 $attempt = $stmt->fetch(PDO::FETCH_ASSOC);
 
 

@@ -7,8 +7,8 @@ import ActiveTest from "./pages/ActiveTest";
 import Submit from "./pages/Submit";
 import Report from "./pages/Report";
 import GoogleCallback from "./pages/GoogleCallback";
-import TeacherPanel from "./pages/Teacherpanel";
-import AdminPanel from "./pages/Adminpanel";
+import TeacherPanel from "./pages/TeacherPanel";
+import AdminPanel from "./pages/AdminPanel";
 import CompleteProfile from "./pages/CompleteProfile";
 
 function App() {

@@ -41,7 +41,6 @@ if (!$test_id) {
 
 
 // STEP 3: fetch questions (without correct answer)
-// FIXED: Added q_image to the SELECT statement
 $stmt = $pdo->prepare("
     SELECT 
         id,
@@ -60,14 +59,21 @@ $stmt = $pdo->prepare("
 ");
 
 $stmt->execute([$test_id]);
-
 $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// FIX: Count unique main questions dynamically (Outputs 32)
+$main_questions = [];
+foreach ($questions as $q) {
+    if (preg_match('/^Q(\d+)/i', $q['q_text'], $matches)) {
+        $main_questions[$matches[1]] = true;
+    }
+}
+$actual_total = count($main_questions);
 
 // STEP 4: return response
 echo json_encode([
     "success" => true,
     "test_id" => (int)$test_id,
-    "total_questions" => count($questions),
+    "total_questions" => $actual_total, // Now sends exactly 32
     "questions" => $questions
 ]);

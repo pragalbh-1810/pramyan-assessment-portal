@@ -203,7 +203,7 @@ html,body{min-height:100%;background:#EEF4FF;font-family:'Sora',sans-serif;}
 .stu-banner {
   background:#fff; border-radius:18px; padding:18px 22px; margin-bottom:16px;
   box-shadow:0 2px 14px rgba(24,95,165,.07); border:1.5px solid #f0f4fb;
-  display:flex; align-items:center; gap:14px; animation:fadeUp .4s ease both;
+  display:flex; align-items:center;  text-align:left; gap:14px; animation:fadeUp .4s ease both;
 }
 .stu-avi-lg {
   width:54px; height:54px; border-radius:50%; flex-shrink:0;
@@ -314,7 +314,7 @@ html,body{min-height:100%;background:#EEF4FF;font-family:'Sora',sans-serif;}
 .action-card {
   background:linear-gradient(135deg,#e6f7f1,#EEF4FF); border-radius:16px;
   padding:18px 22px; margin-bottom:16px; border:1.5px solid #b8e8d4;
-  animation:fadeUp .4s ease .2s both;
+  animation:fadeUp .4s ease .2s both; text-align:left;
 }
 .action-text { font-size:13px; color:#444; font-family:'DM Sans',sans-serif; line-height:1.7; white-space:pre-line; }
 
@@ -332,6 +332,50 @@ html,body{min-height:100%;background:#EEF4FF;font-family:'Sora',sans-serif;}
   .sub-grid   { grid-template-columns:1fr; }
   .stat-row   { grid-template-columns:repeat(2,1fr); }
   .skill-grid { grid-template-columns:1fr; }
+
+  /* NAV mobile */
+  .tp-nav     { padding:0 12px; margin:6px 8px 0; }
+  .nav-title  { font-size:12px; }
+  .nav-chip   { display:none; }
+  .nav-name   { display:none; }
+  .btn-white  { padding:6px 10px; font-size:11px; }
+
+  /* Right panel padding */
+  .tp-right   { padding:14px 12px 48px; }
+
+  /* Student banner */
+  .stu-banner { padding:14px; flex-wrap:wrap; }
+  .stu-name-lg { font-size:14px; }
+  .stu-sub-lg  { font-size:11px; }
+
+  /* Hero card */
+  .hero-card  { flex-direction:column; align-items:flex-start; padding:18px; gap:14px; }
+  .hero-name  { font-size:15px; }
+  .hero-r     { align-self:flex-end; }
+  .score-ring { width:72px; height:72px; }
+  .ring-num   { font-size:20px; }
+
+  /* Chapter rows */
+  .ch-row     { flex-wrap:wrap; gap:6px; }
+  .ch-lbl     { width:100%; font-size:11px; }
+  .swot-tag   { width:auto; }
+
+  /* Question table — make it scrollable */
+  .q-card     { padding:14px 10px; overflow-x:auto; }
+  .qtable     { min-width:480px; }
+  .qtable th,
+  .qtable td  { padding:7px 6px; font-size:11px; }
+
+  /* Action plan */
+  .action-card { padding:14px; }
+
+  /* Eyebrow */
+  .eyebrow    { font-size:9px; }
+
+  /* Skill grid */
+  .skill-grid { grid-template-columns:repeat(3,1fr); }
+  .sk-val     { font-size:16px; }
+  .sk-lbl     { font-size:10px; }
 }
 `;
 
@@ -1035,15 +1079,109 @@ export default function TeacherPanel() {
                           )}
 
                           {/* ACTION PLAN */}
+                          {/* ACTION PLAN */}
                           {report.action_plan && (
                             <>
                               <div className="eyebrow">📝 Action Plan</div>
                               <div className="action-card">
                                 <div className="card-title">
-                                  📝 Recommended Action Plan
+                                  📝 Recommended 4-Week Action Plan
                                 </div>
-                                <div className="action-text">
-                                  {report.action_plan}
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "10px",
+                                    marginTop: "12px",
+                                  }}>
+                                  {(() => {
+                                    try {
+                                      const plan =
+                                        typeof report.action_plan === "string"
+                                          ? JSON.parse(report.action_plan)
+                                          : report.action_plan;
+                                      const weekIcons = {
+                                        week1: "🔴",
+                                        week2: "🟡",
+                                        week3: "🔵",
+                                        week4: "🟢",
+                                      };
+                                      const weekLabels = {
+                                        week1: "Week 1",
+                                        week2: "Week 2",
+                                        week3: "Week 3",
+                                        week4: "Week 4",
+                                      };
+                                      return Object.entries(plan).map(
+                                        ([week, task]) => (
+                                          <div
+                                            key={week}
+                                            style={{
+                                              display: "flex",
+                                              alignItems: "flex-start",
+                                              gap: "12px",
+                                              background: "white",
+                                              borderRadius: "12px",
+                                              padding: "12px 16px",
+                                              border: "1.5px solid #e2edf8",
+                                              boxShadow:
+                                                "0 2px 8px rgba(24,95,165,0.06)",
+                                            }}>
+                                            <div
+                                              style={{
+                                                width: "36px",
+                                                height: "36px",
+                                                borderRadius: "10px",
+                                                flexShrink: 0,
+                                                background:
+                                                  "linear-gradient(135deg, #1D9E75, #185FA5)",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                color: "white",
+                                                fontSize: "12px",
+                                                fontWeight: "700",
+                                              }}>
+                                              {weekLabels[week]?.replace(
+                                                "Week ",
+                                                "W",
+                                              )}
+                                            </div>
+                                            <div>
+                                              <div
+                                                style={{
+                                                  fontSize: "11px",
+                                                  fontWeight: "700",
+                                                  color: "#185FA5",
+                                                  marginBottom: "2px",
+                                                  textTransform: "uppercase",
+                                                  letterSpacing: "0.4px",
+                                                }}>
+                                                {weekIcons[week]}{" "}
+                                                {weekLabels[week]}
+                                              </div>
+                                              <div
+                                                style={{
+                                                  fontSize: "13px",
+                                                  color: "#333",
+                                                  fontFamily:
+                                                    "'DM Sans', sans-serif",
+                                                  lineHeight: "1.5",
+                                                }}>
+                                                {task}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ),
+                                      );
+                                    } catch {
+                                      return (
+                                        <div className="action-text">
+                                          {report.action_plan}
+                                        </div>
+                                      );
+                                    }
+                                  })()}
                                 </div>
                               </div>
                             </>

@@ -455,9 +455,7 @@ export default function Instructions() {
             </div>
 
             <div className="left-text">
-              <h2>
-                You're almost ready! Read carefully.
-              </h2>
+              <h2>You're almost ready! Read carefully.</h2>
               <p>Please go through all instructions before starting</p>
             </div>
 
@@ -474,18 +472,14 @@ export default function Instructions() {
                   <div className="info-box-icon">⏱</div>
                   <div className="info-box-content">
                     <span className="info-box-label">Duration</span>
-                    <span className="info-box-value">
-                      {test.duration_mins} Minutes
-                    </span>
+                    <span className="info-box-value">45 minutes</span>
                   </div>
                 </div>
                 <div className="info-box">
                   <div className="info-box-icon">❓</div>
                   <div className="info-box-content">
                     <span className="info-box-label">Total Questions</span>
-                    <span className="info-box-value">
-                      {test.total_questions} Questions
-                    </span>
+                    <span className="info-box-value">32 Questions</span>
                   </div>
                 </div>
                 <div className="info-box">

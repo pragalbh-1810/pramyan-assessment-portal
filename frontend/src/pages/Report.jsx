@@ -469,7 +469,13 @@ export default function Report() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getToken() || "test";
+    // Check if token came via URL (Google redirect)
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("token");
+    if (urlToken) {
+      localStorage.setItem("token", urlToken);
+    }
+    const token = urlToken || getToken() || "test";
     const decoded = decodeToken(token);
     if (decoded?.name) setStudentName(decoded.name);
     fetchReport(token);
@@ -485,39 +491,10 @@ export default function Report() {
       if (result.success) {
         setReport(result);
       } else {
-        // Dummy fallback data
-        setReport({
-          total_score: 38,
-          max_score: 60,
-          math_score: 22,
-          math_max: 30,
-          sci_score: 16,
-          sci_max: 30,
-          overall_pct: 63,
-          math_pct: 73,
-          sci_pct: 53,
-          answered: 28,
-          unanswered: 4,
-          correct: 22,
-          wrong: 6,
-        });
+        setReport(null);
       }
     } catch {
-      setReport({
-        total_score: 38,
-        max_score: 60,
-        math_score: 22,
-        math_max: 30,
-        sci_score: 16,
-        sci_max: 30,
-        overall_pct: 63,
-        math_pct: 73,
-        sci_pct: 53,
-        answered: 28,
-        unanswered: 4,
-        correct: 22,
-        wrong: 6,
-      });
+      setReport(null);
     } finally {
       setLoading(false);
     }
@@ -551,6 +528,41 @@ export default function Report() {
                 fontSize: "14px",
               }}>
               Loading your results...
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (!report) {
+    return (
+      <>
+        <style>{styles}</style>
+        <div className="report-outer">
+          <div className="report-topbar">
+            <div className="topbar-logo">
+              <img src={logo} alt="Pramyan" />
+              <span className="topbar-title">Pramyan Education</span>
+            </div>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              padding: "80px",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "12px",
+            }}>
+            <div style={{ fontSize: "32px" }}>⚠️</div>
+            <p
+              style={{
+                color: "#888",
+                fontFamily: "Inter, sans-serif",
+                fontSize: "14px",
+              }}>
+              Report not available. Please complete the test first.
             </p>
           </div>
         </div>

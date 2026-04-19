@@ -484,7 +484,7 @@ export default function Report() {
   const fetchReport = async (token) => {
     try {
       const res = await fetch(
-        `http://localhost/pramyan-assessment-portal/backend/routes/get-report.php?test_id=${testId}`,
+        `https://pramyan.com/assessment/backend_test/backend/routes/get-report.php?test_id=${testId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const result = await res.json();

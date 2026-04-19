@@ -330,7 +330,7 @@ export default function Login() {
     setLoading(true);
     try {
       const response = await fetch(
-        "http://localhost/pramyan-assessment-portal/backend/routes/login.php",
+        "https://pramyan.com/assessment/backend_test/backend/routes/login.php",
         {
           method: "POST",
           headers: {
@@ -346,10 +346,10 @@ export default function Login() {
       if (result.success) {
         setToken(result.token);
         setRole(result.user.role);
-        
+
         // Role-based redirect
-        const decoded = JSON.parse(atob(result.token.split('.')[1])); 
-        
+        const decoded = JSON.parse(atob(result.token.split(".")[1]));
+
         if (decoded.role === "teacher") {
           navigate("/teacher");
         } else if (decoded.role === "admin") {
@@ -358,14 +358,14 @@ export default function Login() {
           // Fetch student's test and check if already submitted
           try {
             const testsRes = await fetch(
-              "http://localhost/pramyan-assessment-portal/backend/routes/get-tests.php",
+              "https://pramyan.com/assessment/backend_test/backend/routes/get-tests.php",
               { headers: { Authorization: `Bearer ${result.token}` } },
             );
             const testsData = await testsRes.json();
             if (testsData.success && testsData.tests.length > 0) {
               const testId = testsData.tests[0].id;
               const detailRes = await fetch(
-                `http://localhost/pramyan-assessment-portal/backend/routes/get-test-details.php?test_id=${testId}`,
+                `https://pramyan.com/assessment/backend_test/backend/routes/get-test-details.php?test_id=${testId}`,
                 { headers: { Authorization: `Bearer ${result.token}` } },
               );
               const detailData = await detailRes.json();
@@ -477,7 +477,7 @@ export default function Login() {
                 className="google-btn"
                 onClick={() => {
                   window.location.href =
-                    "http://localhost/pramyan-assessment-portal/backend/routes/google-auth.php";
+                    "https://pramyan.com/assessment/backend_test/backend/routes/google-auth.php";
                 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24">
                   <path

@@ -19,20 +19,23 @@ export const uploadWorkingSheet = async (file, testId) => {
   try {
     const token = getToken();
     const response = await fetch(
-      "http://localhost/pramyan-assessment-portal/backend/routes/upload.php",
+      "https://pramyan.com/assessment/backend_test/backend/routes/upload.php",
       {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: formData,
-      }
+      },
     );
 
     const result = await response.json().catch(() => null);
     if (!response.ok) {
       return (
-        result || { success: false, message: `Upload failed (${response.status})` }
+        result || {
+          success: false,
+          message: `Upload failed (${response.status})`,
+        }
       );
     }
     return result;

@@ -375,11 +375,11 @@ export default function Instructions() {
   const fetchTestDetails = async (token) => {
     try {
       const res = await fetch(
-        `http://localhost/pramyan-assessment-portal/backend/routes/get-test-details.php?test_id=${testId}`,
+        `https://pramyan.com/assessment/backend_test/backend/routes/get-test-details.php?test_id=${testId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const data = await res.json();
-      
+
       if (data.success) {
         setTest(data.test);
       } else {
@@ -392,41 +392,41 @@ export default function Instructions() {
     }
   };
 
- const fallbackTest = (token) => {
-   // Decode token to get class and testId mapping
-   let userClass = null;
-   try {
-     const decoded = JSON.parse(atob(token.split(".")[1]));
-     userClass = decoded.class || null;
-   } catch (e) {}
+  const fallbackTest = (token) => {
+    // Decode token to get class and testId mapping
+    let userClass = null;
+    try {
+      const decoded = JSON.parse(atob(token.split(".")[1]));
+      userClass = decoded.class || null;
+    } catch (e) {}
 
-   // Map class to correct test name and details
-   const classTestMap = {
-     8: {
-       name: "Class 8 Foundation Check",
-       duration_mins: 45,
-       total_questions: 32,
-     },
-     9: {
-       name: "Class 9 Mid-Term Readiness Test",
-       duration_mins: 60,
-       total_questions: 32,
-     },
-     10: {
-       name: "Class 10 Diagnostic Assessment",
-       duration_mins: 90,
-       total_questions: 32,
-     },
-   };
+    // Map class to correct test name and details
+    const classTestMap = {
+      8: {
+        name: "Class 8 Foundation Check",
+        duration_mins: 45,
+        total_questions: 32,
+      },
+      9: {
+        name: "Class 9 Mid-Term Readiness Test",
+        duration_mins: 60,
+        total_questions: 32,
+      },
+      10: {
+        name: "Class 10 Diagnostic Assessment",
+        duration_mins: 90,
+        total_questions: 32,
+      },
+    };
 
-   const testInfo = classTestMap[Number(userClass)] || {
-     name: "Pramyan Diagnostic Assessment",
-     duration_mins: 60,
-     total_questions: 32,
-   };
+    const testInfo = classTestMap[Number(userClass)] || {
+      name: "Pramyan Diagnostic Assessment",
+      duration_mins: 60,
+      total_questions: 32,
+    };
 
-   setTest({ ...testInfo, class: userClass });
- };
+    setTest({ ...testInfo, class: userClass });
+  };
 
   const handleStartTest = () => {
     if (checked) navigate(`/test/${testId}`);

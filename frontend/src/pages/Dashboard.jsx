@@ -368,7 +368,7 @@ export default function Dashboard() {
   const fetchTests = async (token) => {
     try {
       const response = await fetch(
-        "http://localhost/pramyan-assessment-portal/backend/routes/get-tests.php",
+        "https://pramyan.com/assessment/backend_test/backend/routes/get-tests.php",
         {
           headers: {
             Authorization: `Bearer ${token}`,

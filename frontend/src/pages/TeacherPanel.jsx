@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
 import { getToken, removeToken } from "../utils/auth";
 
-const BASE = "http://localhost/pramyan-assessment-portal/backend/routes";
+const BASE = "https://pramyan.com/assessment/backend_test/backend/routes";
 
 function decodeJWT(t) {
   try {

@@ -38,13 +38,13 @@ VALUES
 (2, 'Math', 'Q21 (b): Find the length and breadth of the rectangle.', NULL, 'Length = 20 cm, Breadth = 8 cm', 'Length = 26 cm, Breadth = 10 cm', 'Length = 24 cm, Breadth = 12 cm', 'Length = 22 cm, Breadth = 10 cm', 'b', 'Linear Equations', 'L2', 'P2', 60),
 (2, 'Math', 'Q21 (c): If the sum of two consecutive numbers is 71 and one number is x, then the other number is:', NULL, 'x + (x+1) = 71', 'x + (x+2) = 71', 'x + x = 71', 'none of these', 'a', 'Linear Equations', 'L2', 'P2', 45),
 
-(2, 'Math', 'Q22 (a): Expand (3x + 4y)²', NULL, '9x² + 16y²', '9x² + 12xy + 16y²', '9x² + 24xy + 16y²', '6x² + 24xy + 8y²', 'b', 'Algebraic Expressions', 'L3', 'P3', 45),
+(2, 'Math', 'Q22 (a): Expand (3x + 4y)²', NULL, '9x² + 16y²', '9x² + 12xy + 16y²', '9x² + 24xy + 16y²', '6x² + 24xy + 8y²', 'c', 'Algebraic Expressions', 'L3', 'P3', 45),
 (2, 'Math', 'Q22 (b): Expand (5a - 2b)(5a + 2b)', NULL, '25a² + 4b²', '10a² - 4b²', '25a² - 4b²', '25a² - 20ab + 4b²', 'c', 'Algebraic Expressions', 'L3', 'P3', 45),
 (2, 'Math', 'Q22 (c): Using the result from (b), evaluate 98 × 102 without direct multiplication:', NULL, '9,996', '10,004', '9,604', '10,000', 'a', 'Algebraic Expressions', 'L3', 'P3', 60),
 
 (2, 'Math', 'Q23 (a): A cylindrical water tank has radius 7 m and height 5 m. The total surface area of the tank (use π = 22/7) is:', NULL, '440 m²', '528 m²', '264 m²', '308 m²', 'b', 'Mensuration', 'L2', 'P2', 60),
 (2, 'Math', 'Q23 (b): The volume of water the tank can hold is:', NULL, '154 m³', '385 m³', '770 m³', '1540 m³', 'c', 'Mensuration', 'L2', 'P2', 60),
-(2, 'Math', 'Q23 (c): If water is pumped in at 2 m³ per minute, the time to fill the tank is:', NULL, '385 min', '770 min', '154 min', '1540 min', 'd', 'Mensuration', 'L3', 'P3', 60),
+(2, 'Math', 'Q23 (c): If water is pumped in at 2 m³ per minute, the time to fill the tank is:', NULL, '385 min', '770 min', '154 min', '1540 min', 'a', 'Mensuration', 'L3', 'P3', 60),
 
 (2, 'Math', 'Q24 (a): Ramesh invests ₹10,000 for 2 years. Simple Interest at 8% per annum is:', NULL, '₹800', '₹1,200', '₹1,600', '₹2,000', 'c', 'Comparing Quantities', 'L3', 'P3', 45),
 (2, 'Math', 'Q24 (b): Compound Interest at 8% per annum (compounded annually) is:', NULL, '₹1,600', '₹1,664', '₹1,728', '₹1,856', 'b', 'Comparing Quantities', 'L3', 'P3', 60),

@@ -65,9 +65,10 @@ $correct = (int)$counts['correct'];
 $answered = (int)$counts['answered'];
 $wrong = $answered - $correct;
 
-$unanswered = 32 - $answered;
-$mathPct = round(($result['math_score'] / 16) * 100);
-$sciPct = round(($result['sci_score'] / 16) * 100);
+// ✨ FIXED: Changed 32 to 60, and 16 to 30 for the percentages
+$unanswered = 60 - $answered;
+$mathPct = round(($result['math_score'] / 30) * 100);
+$sciPct = round(($result['sci_score'] / 30) * 100);
 
 // Chapter & Bloom scores
 $chStmt = $pdo->prepare("SELECT chapter, score, max_score, pct, swot_category FROM chapter_scores WHERE result_id=? ORDER BY pct DESC");
@@ -93,12 +94,12 @@ echo json_encode([
     'student' => $student,
     'student_test_id' => $student_test_id,
     'total_score' => (int)$result['total_score'],
-    'max_score' => 32, 
+    'max_score' => 60,  
     'math_score' => (int)$result['math_score'],
-    'math_max' => 16, 
+    'math_max' => 30,   
     'math_pct' => $mathPct,
     'sci_score' => (int)$result['sci_score'],
-    'sci_max' => 16, 
+    'sci_max' => 30,    
     'sci_pct' => $sciPct,
     'overall_pct' => (float)$result['overall_pct'],
     'correct' => $correct,

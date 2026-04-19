@@ -46,7 +46,7 @@ STEP 1 — Redirect to Google login if no code yet
 */
 if (!isset($_GET['code'])) {
     $client_id = getenv("GOOGLE_CLIENT_ID");
-    $redirect_uri = "http://localhost/pramyan-assessment-portal/backend/routes/google-auth.php";
+    $redirect_uri = "https://pramyan.com/assessment/backend_test/backend/routes/google-auth.php";
     $google_url = "https://accounts.google.com/o/oauth2/v2/auth?"
         . "client_id=$client_id"
         . "&redirect_uri=" . urlencode($redirect_uri)

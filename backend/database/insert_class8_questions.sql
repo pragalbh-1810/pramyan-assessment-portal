@@ -30,7 +30,7 @@ VALUES
 
 (3, 'Math', 'Q9: [Math | Algebraic Expressions] What is the value of 3x² - 2x + 5 when x = 2?', NULL, '13', '9', '15', '17', 'a', 'Algebraic Expressions', 'L2', 'P2', 60),
 
-(3, 'Math', 'Q10: [Math | Exponents & Powers] What is the standard form of 0.000365?', NULL, '3.65 × 10⁻⁴', '3.65 × 10⁰', '36.5 × 10⁻³', '3.65 × 10⁻²', 'a', 'Exponents & Powers', 'L2', 'P2', 45),
+(3, 'Math', 'Q10: [Math | Exponents & Powers] What is the standard form of 0.000365?', NULL, '3.65 × 10⁻⁴', '3.65 × 10⁴', '36.5 × 10⁻³', '3.65 × 10⁻³', 'a', 'Exponents & Powers', 'L2', 'P2', 45),
 
 
 -- SECTION A: SCIENCE (10 Questions x 1 Mark = 10)
@@ -87,7 +87,7 @@ VALUES
 
 (3, 'Science', 'Q27 (a): [Science | Electric Current & its Effects] Which of the following is a property that makes an electromagnet DIFFERENT from a permanent magnet?', NULL, 'It attracts iron filings', 'Its magnetism can be switched on and off', 'It has a north and south pole', 'It is made of metal', 'b', 'Electric Current & its Effects', 'L3', 'P3', 60),
 (3, 'Science', 'Q27 (b): [Science | Electric Current & its Effects] A student wants to reduce the risk involved in an electric circuit. Which method should he adopt?', NULL, 'Use electricity from mains', 'Use an inverter for electricity', 'Use a generator for electricity', 'Use electric cells for electricity', 'd', 'Electric Current & its Effects', 'L3', 'P3', 60),
-(3, 'Science', 'Q27 (c): [Science | Electric Current & its Effects] Which of the following is a safety device used in household electric circuits?', NULL, 'Switch', 'Fuse', 'Bulb', 'Wire', 'b', 'Electric Current & its Effects', 'L2', 'P2', 30),
+(3, 'Science', 'Q27 (c): [Science | Electric Current & its Effects] Which of the following is a safety device used in household electric circuits?', NULL, 'Switch', 'Voltmeter', 'Fuse', 'Rheostat', 'c', 'Electric Current & its Effects', 'L2', 'P2', 30),
 
 (3, 'Science', 'Q28 (a): [Science | Physical & Chemical Changes] A candle burns — the wax melts AND it produces light and heat. This is:', NULL, 'Only a physical change', 'Only a chemical change', 'Both a physical and a chemical change', 'Neither physical nor chemical', 'c', 'Physical & Chemical Changes', 'L3', 'P3', 60),
 (3, 'Science', 'Q28 (b): [Science | Physical & Chemical Changes] Milk turns sour when left overnight. This is a:', NULL, 'Physical change', 'Chemical change', 'Reversible change', 'Both physical and chemical', 'b', 'Physical & Chemical Changes', 'L2', 'P2', 45),

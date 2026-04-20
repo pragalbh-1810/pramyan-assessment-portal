@@ -508,7 +508,6 @@ export default function Report() {
           <div className="report-topbar">
             <div className="topbar-logo">
               <img src={logo} alt="Pramyan" />
-              <span className="topbar-title">Pramyan Education</span>
             </div>
           </div>
           <div
@@ -543,7 +542,6 @@ export default function Report() {
           <div className="report-topbar">
             <div className="topbar-logo">
               <img src={logo} alt="Pramyan" />
-              <span className="topbar-title">Pramyan Education</span>
             </div>
           </div>
           <div
@@ -582,7 +580,6 @@ export default function Report() {
         <div className="report-topbar">
           <div className="topbar-logo">
             <img src={logo} alt="Pramyan" />
-            <span className="topbar-title">Pramyan Education</span>
           </div>
           <div className="topbar-student-info">
             <span className="topbar-name">{studentName}</span>

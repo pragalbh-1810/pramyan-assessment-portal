@@ -233,7 +233,7 @@ export default function AdminPanel() {
         <nav className="ap-nav">
           <div className="nav-brand">
             <img src={logo} className="nav-logo" alt="logo" />
-            <span className="nav-title">Pramyan Education</span>
+
             <span className="nav-chip">ADMIN</span>
           </div>
           <div className="nav-right">

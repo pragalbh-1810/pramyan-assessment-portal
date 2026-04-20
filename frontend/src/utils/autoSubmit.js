@@ -76,14 +76,33 @@ export function useAutoSubmit({
   const submitTest = async (isAuto = false) => {
     const token = getToken() || "test";
     try {
-      const saveResult = await saveAnswersToDB(
-        testId,
-        answersRef.current,
-        setSaveIndicator,
-        false,
+      // Always hit save-answers — even with zero answers, backend will
+      // create the student_test row (if missing) and return its ID.
+      // This ensures auto-submit works correctly even if the student
+      // answered nothing.
+      const saveRes = await fetch(
+        "https://pramyan.com/assessment/backend_test/backend/routes/save-answers.php",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            test_id: parseInt(testId),
+            answers: Object.entries(answersRef.current).map(
+              ([question_id, selected_option]) => ({
+                question_id: parseInt(question_id),
+                selected_option,
+                time_on_question: 0,
+              }),
+            ),
+          }),
+        },
       );
+      const saveResult = await saveRes.json().catch(() => null);
 
-      if (saveResult && saveResult.success) {
+      if (saveResult && saveResult.success && saveResult.student_test_id) {
         await fetch(
           "https://pramyan.com/assessment/backend_test/backend/routes/submit-test.php",
           {

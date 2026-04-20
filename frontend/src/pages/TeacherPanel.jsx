@@ -486,7 +486,7 @@ export default function TeacherPanel() {
       <nav className="tp-nav">
         <div className="nav-brand">
           <img src={logo} className="nav-logo" alt="logo" />
-          <span className="nav-title">Pramyan Education</span>
+
           <span className="nav-chip">TEACHER</span>
         </div>
         <div className="nav-right">

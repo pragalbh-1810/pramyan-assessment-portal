@@ -564,11 +564,54 @@ const styles = `
   }
 
   @media (max-width: 768px) {
+    .test-outer { padding: 0; }
+    .test-topbar {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 10px 12px;
+      gap: 8px;
+    }
+    .topbar-left,
+    .topbar-center,
+    .topbar-right {
+      width: 100%;
+      justify-content: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .topbar-testname { font-size: 13px; text-align: center; }
+    .topbar-student { font-size: 12px; }
+    .timer-box { font-size: 14px; padding: 6px 10px; }
+    .submit-top-btn { width: 100%; padding: 10px; }
+
     .test-body { flex-direction: column; padding: 10px; gap: 10px; }
-    .test-sidebar { width: 100%; flex-direction: row; overflow-x: auto; overflow-y: hidden; }
-    .palette-box { min-width: 200px; }
-    .legend-box { min-width: 150px; }
-    .stats-box { min-width: 180px; }
+    .test-sidebar { width: 100%; flex-direction: column; overflow: visible; gap: 10px; }
+    .palette-box,
+    .legend-box,
+    .stats-box { min-width: 0; width: 100%; box-sizing: border-box; }
+
+    .question-panel { padding: 14px; border-radius: 12px; }
+    .q-text { font-size: 15px; line-height: 1.5; }
+    .q-image-container img { max-width: 100%; height: auto; }
+    .option-item { padding: 12px 14px; font-size: 13px; }
+
+    .modal-box {
+      width: 92% !important;
+      max-width: 420px !important;
+      padding: 20px !important;
+    }
+    .modal-stats { flex-wrap: wrap; gap: 10px; }
+    .modal-stat { flex: 1 1 30%; }
+    .modal-btns { flex-direction: column; gap: 10px; }
+    .modal-cancel,
+    .modal-confirm { width: 100%; }
+
+    .upload-container { padding: 12px; }
+    .upload-label { font-size: 12.5px; }
+
+    .q-nav-btns { flex-wrap: wrap; gap: 8px; }
+    .nav-btn, .clear-btn { flex: 1 1 45%; padding: 10px; font-size: 13px; }
   }
 `;
 
@@ -620,7 +663,7 @@ export default function ActiveTest() {
 
   const [showWarningModal, setShowWarningModal] = useState(false);
   const warningsRef = useRef(0);
-  const MAX_WARNINGS = 2;
+  const MAX_WARNINGS = 4;
 
   const timerRef = useRef(null);
 
@@ -1014,7 +1057,8 @@ export default function ActiveTest() {
                   marginBottom: "14px",
                   textAlign: "center",
                 }}>
-                ⚠ Please upload your working sheet on the last question before submitting.
+                ⚠ Please upload your working sheet on the last question before
+                submitting.
               </div>
             )}
             <div className="modal-btns">
@@ -1028,9 +1072,7 @@ export default function ActiveTest() {
                 onClick={() => submitTest(false)}
                 disabled={!selectedFile}
                 style={
-                  !selectedFile
-                    ? { opacity: 0.5, cursor: "not-allowed" }
-                    : {}
+                  !selectedFile ? { opacity: 0.5, cursor: "not-allowed" } : {}
                 }>
                 Yes, Submit →
               </button>

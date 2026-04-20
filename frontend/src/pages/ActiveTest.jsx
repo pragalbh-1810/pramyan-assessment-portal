@@ -1014,8 +1014,7 @@ export default function ActiveTest() {
                   marginBottom: "14px",
                   textAlign: "center",
                 }}>
-                ⚠ Please upload your working sheet on the last question before
-                submitting.
+                ⚠ Please upload your working sheet on the last question before submitting.
               </div>
             )}
             <div className="modal-btns">
@@ -1029,7 +1028,9 @@ export default function ActiveTest() {
                 onClick={() => submitTest(false)}
                 disabled={!selectedFile}
                 style={
-                  !selectedFile ? { opacity: 0.5, cursor: "not-allowed" } : {}
+                  !selectedFile
+                    ? { opacity: 0.5, cursor: "not-allowed" }
+                    : {}
                 }>
                 Yes, Submit →
               </button>

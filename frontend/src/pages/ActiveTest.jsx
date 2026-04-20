@@ -829,7 +829,7 @@ export default function ActiveTest() {
             {currentQuestion?.q_image && (
               <div className="q-image-container">
                 <img
-                  src={`http://localhost/pramyan-assessment-portal/backend/assets/images/${currentQuestion.q_image}`}
+                  src={`https://pramyan.com/assessment/backend_test/backend/assets/images/${currentQuestion.q_image}`}
                   alt={`Figure for Question ${displayLabel}`}
                 />
               </div>

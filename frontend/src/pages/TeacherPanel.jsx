@@ -1043,7 +1043,65 @@ export default function TeacherPanel() {
                                   📝 Recommended Action Plan
                                 </div>
                                 <div className="action-text">
-                                  {report.action_plan}
+                                  {(() => {
+                                    let plan = null;
+                                    try {
+                                      plan =
+                                        typeof report.action_plan === "string"
+                                          ? JSON.parse(report.action_plan)
+                                          : report.action_plan;
+                                    } catch (e) {
+                                      // Not JSON — fall back to raw text
+                                      return report.action_plan;
+                                    }
+
+                                    if (plan && typeof plan === "object") {
+                                      const entries = Object.entries(plan);
+                                      return (
+                                        <ul
+                                          style={{
+                                            listStyle: "none",
+                                            padding: 0,
+                                            margin: 0,
+                                          }}>
+                                          {entries.map(([key, value]) => {
+                                            // Prettify key: "week1" -> "Week 1"
+                                            const label = key
+                                              .replace(
+                                                /([a-zA-Z]+)(\d+)/,
+                                                "$1 $2",
+                                              )
+                                              .replace(/^./, (c) =>
+                                                c.toUpperCase(),
+                                              );
+                                            return (
+                                              <li
+                                                key={key}
+                                                style={{
+                                                  padding: "10px 14px",
+                                                  marginBottom: "8px",
+                                                  background: "#f0f7ff",
+                                                  borderLeft:
+                                                    "3px solid #185FA5",
+                                                  borderRadius: "6px",
+                                                  fontSize: "13.5px",
+                                                  lineHeight: "1.5",
+                                                }}>
+                                                <strong
+                                                  style={{ color: "#185FA5" }}>
+                                                  {label}:
+                                                </strong>{" "}
+                                                <span style={{ color: "#333" }}>
+                                                  {value}
+                                                </span>
+                                              </li>
+                                            );
+                                          })}
+                                        </ul>
+                                      );
+                                    }
+                                    return report.action_plan;
+                                  })()}
                                 </div>
                               </div>
                             </>

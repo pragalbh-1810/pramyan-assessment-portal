@@ -428,7 +428,38 @@ const styles = `
   }
 
   @media (max-width: 768px) {
-    .report-topbar { padding: 0 16px; }
+    .report-topbar {
+      padding: 0 14px !important;
+      height: auto !important;
+      min-height: 56px !important;
+      margin: 8px !important;
+      border-radius: 12px !important;
+      flex-wrap: nowrap !important;
+      gap: 10px !important;
+    }
+    .topbar-logo img {
+      height: 30px !important;
+    }
+    .topbar-title { display: none !important; }
+    .topbar-student-info {
+      align-items: flex-end !important;
+      min-width: 0 !important;
+      flex: 1 1 auto !important;
+    }
+    .topbar-name {
+      font-size: 12.5px !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 180px !important;
+    }
+    .topbar-sub {
+      font-size: 10px !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 180px !important;
+    }
     .report-main { padding: 16px; }
     .hero-card { flex-direction: column; align-items: flex-start; }
     .hero-right { align-self: flex-end; }

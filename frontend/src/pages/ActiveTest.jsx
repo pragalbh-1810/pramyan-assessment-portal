@@ -1029,18 +1029,18 @@ export default function ActiveTest() {
             </div>
             <div className="modal-stats">
               <div className="modal-stat">
-                <span className="modal-stat-num blue">{questions.length}</span>
-                <span className="modal-stat-label">Total Parts</span>
+                <span className="modal-stat-num blue">{totalQuestions}</span>
+                <span className="modal-stat-label">Total Questions</span>
               </div>
               <div className="modal-stat">
                 <span className="modal-stat-num green">
-                  {Object.keys(answers).length}
+                  {answeredMainCount}
                 </span>
                 <span className="modal-stat-label">Answered</span>
               </div>
               <div className="modal-stat">
                 <span className="modal-stat-num gray">
-                  {questions.length - Object.keys(answers).length}
+                  {unansweredMainCount}
                 </span>
                 <span className="modal-stat-label">Left</span>
               </div>

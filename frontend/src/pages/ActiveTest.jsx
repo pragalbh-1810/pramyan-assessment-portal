@@ -258,6 +258,34 @@ const styles = `
     background: #185FA5;
     color: white;
   }
+  .upload-container {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border: 2px dashed #185FA5;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f0f7ff, #eaf3ff);
+  }
+  .upload-label {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #0d1f3c;
+    margin-bottom: 10px;
+  }
+  .file-input {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #c7d8ee;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .file-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
   /* Navigation buttons */
   .q-nav-btns {
@@ -822,7 +850,7 @@ export default function ActiveTest() {
             {currentIndex === questions.length - 1 && (
               <div className="upload-container">
                 <label className="upload-label">
-                  Step 3: Upload your rough work / working sheet (Optional)
+                  Step 3: Upload your rough work / working sheet (Required)
                 </label>
                 <input
                   type="file"
@@ -974,6 +1002,22 @@ export default function ActiveTest() {
                 <span className="modal-stat-label">Left</span>
               </div>
             </div>
+            {!selectedFile && (
+              <div
+                style={{
+                  background: "#fff4e5",
+                  border: "1px solid #f0ad4e",
+                  color: "#8a5a00",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  marginBottom: "14px",
+                  textAlign: "center",
+                }}>
+                ⚠ Please upload your working sheet on the last question before
+                submitting.
+              </div>
+            )}
             <div className="modal-btns">
               <button
                 className="modal-cancel"
@@ -982,7 +1026,11 @@ export default function ActiveTest() {
               </button>
               <button
                 className="modal-confirm"
-                onClick={() => submitTest(false)}>
+                onClick={() => submitTest(false)}
+                disabled={!selectedFile}
+                style={
+                  !selectedFile ? { opacity: 0.5, cursor: "not-allowed" } : {}
+                }>
                 Yes, Submit →
               </button>
             </div>

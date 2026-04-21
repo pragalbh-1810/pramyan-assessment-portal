@@ -1,3 +1,4 @@
+console.log("HELLO FROM LOCALHOST TEST 12345");
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
@@ -62,6 +63,7 @@ const styles = `
     font-size: 14px;
     font-weight: 700;
     color: white;
+    display: none !important;
   }
   .topbar-student-info {
     display: flex;
@@ -428,45 +430,148 @@ const styles = `
   }
 
   @media (max-width: 768px) {
+    /* ── HEADER ── */
     .report-topbar {
-      padding: 0 14px !important;
+      padding: 10px 14px !important;
       height: auto !important;
-      min-height: 56px !important;
+      min-height: 48px !important;
       margin: 8px !important;
       border-radius: 12px !important;
+      display: flex !important;
       flex-wrap: nowrap !important;
-      gap: 10px !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 8px !important;
+      position: static !important;
+    }
+    .topbar-logo {
+      flex-shrink: 0 !important;
+      min-width: 0 !important;
+      display: flex !important;
+      align-items: center !important;
     }
     .topbar-logo img {
-      height: 30px !important;
+      height: 24px !important;
+      max-width: 90px !important;
+      width: auto !important;
+      object-fit: contain !important;
+      background: white !important;
+      padding: 2px 4px !important;
+      border-radius: 6px !important;
     }
     .topbar-title { display: none !important; }
     .topbar-student-info {
-      align-items: flex-end !important;
+      flex: 0 1 auto !important;
       min-width: 0 !important;
-      flex: 1 1 auto !important;
+      text-align: right !important;
+      overflow: hidden !important;
     }
     .topbar-name {
+      display: block !important;
+      font-size: 12px !important;
+      line-height: 1.2 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 150px !important;
+    }
+    .topbar-sub { display: none !important; }
+
+    /* ── MAIN ── */
+    .report-main { padding: 14px 12px 32px !important; }
+
+    /* ── HERO SCORE CARD ── */
+    .hero-card {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      padding: 20px !important;
+      border-radius: 18px !important;
+      gap: 16px !important;
+      text-align: left !important;
+    }
+    .hero-left { text-align: left !important; align-items: flex-start !important; }
+    .hero-greeting { font-size: 12px !important; }
+    .hero-name { font-size: 20px !important; line-height: 1.25 !important; }
+    .hero-test { font-size: 11.5px !important; }
+    .hero-right {
+      align-self: stretch !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      gap: 12px !important;
+      padding-top: 8px !important;
+      border-top: 1px solid rgba(255,255,255,0.15) !important;
+    }
+    .performance-badge {
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 10px !important;
+      text-align: left !important;
+    }
+    .badge-emoji { font-size: 26px !important; }
+    .badge-label { font-size: 13px !important; }
+    .badge-sub { font-size: 10px !important; }
+    .score-circle { width: 72px !important; height: 72px !important; }
+    .score-num { font-size: 22px !important; }
+    .score-total { font-size: 11px !important; }
+
+    /* ── SUBJECT / STATS GRID ── */
+    .subject-row { grid-template-columns: 1fr !important; gap: 10px !important; }
+    .stats-row { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+    .stat-card { padding: 14px !important; }
+    .stat-value { font-size: 18px !important; }
+
+    /* ── NOTIFICATION BANNER ── */
+    .notify-banner {
+      flex-direction: row !important;
+      align-items: flex-start !important;
+      padding: 14px !important;
+      gap: 12px !important;
+      border-radius: 14px !important;
+      text-align: left !important;
+      flex-direction: column !important;
+    }
+    .notify-icon { width: 36px !important; height: 36px !important; font-size: 18px !important; }
+    .notify-content { flex: 1 1 auto !important; min-width: 0 !important; }
+    .notify-title {
       font-size: 12.5px !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      max-width: 180px !important;
+      line-height: 1.35 !important;
+      margin-bottom: 4px !important;
+      white-space: normal !important;
     }
-    .topbar-sub {
-      font-size: 10px !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      max-width: 180px !important;
+    .notify-text {
+      font-size: 11px !important;
+      line-height: 1.45 !important;
+      white-space: normal !important;
     }
-    .report-main { padding: 16px; }
-    .hero-card { flex-direction: column; align-items: flex-start; }
-    .hero-right { align-self: flex-end; }
-    .subject-row { grid-template-columns: 1fr; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
-    .score-circle { width: 80px; height: 80px; }
-    .score-num { font-size: 22px; }
+    .notify-badge {
+      align-self: flex-start !important;
+      font-size: 9.5px !important;
+      padding: 4px 8px !important;
+    }
+
+    /* ── SECTION LABEL ── */
+    .section-label { font-size: 9.5px !important; margin-bottom: 10px !important; }
+
+    /* ── SUBJECT CARDS ── */
+    .subject-card { padding: 16px !important; border-radius: 14px !important; }
+    .subject-pct { font-size: 20px !important; }
+    .subject-name { font-size: 13px !important; }
+    .subject-icon { width: 28px !important; height: 28px !important; font-size: 14px !important; }
+
+    /* ── BLURRED SECTIONS ── */
+    .blurred-card { padding: 16px !important; }
+    .blur-msg { padding: 14px 18px !important; max-width: 240px !important; }
+    .blur-msg-icon { font-size: 24px !important; }
+    .blur-msg-title { font-size: 12px !important; }
+    .blur-msg-text { font-size: 10.5px !important; }
+    .fake-label { width: 80px !important; }
+  }
+
+  @media (max-width: 400px) {
+    .topbar-name { max-width: 110px !important; font-size: 11px !important; }
+    .topbar-logo img { max-width: 75px !important; height: 22px !important; }
+    .hero-name { font-size: 17px !important; }
+    .notify-badge { display: none !important; }
   }
 `;
 

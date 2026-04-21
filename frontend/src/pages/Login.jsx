@@ -470,7 +470,7 @@ export default function Login() {
 
               <div className="form-title">
                 <h2>Sign In</h2>
-                <p>Welcome back — let's pick up where you left off</p>
+                <p>Welcome back — let me pick up where you left off</p>
               </div>
 
               <button

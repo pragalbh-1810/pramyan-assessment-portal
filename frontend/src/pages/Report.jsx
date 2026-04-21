@@ -1,4 +1,3 @@
-console.log("HELLO FROM LOCALHOST TEST 12345");
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
@@ -63,7 +62,6 @@ const styles = `
     font-size: 14px;
     font-weight: 700;
     color: white;
-    display: none !important;
   }
   .topbar-student-info {
     display: flex;
@@ -137,8 +135,10 @@ const styles = `
   .hero-right {
     display: flex;
     align-items: center;
-    gap: 24px;
+    gap: 112px;
     flex-shrink: 0;
+    align-content: stretch;
+    justify-content: space-between;
   }
   .score-circle {
     width: 100px;
@@ -292,6 +292,8 @@ const styles = `
     margin-bottom: 20px;
     box-shadow: 0 2px 12px rgba(24,95,165,0.06);
     animation: fadeInUp 0.5s ease 0.2s both;
+    flex-direction: column;
+    text-align: center;
   }
   .notify-icon {
     width: 40px;
@@ -465,17 +467,32 @@ const styles = `
       min-width: 0 !important;
       text-align: right !important;
       overflow: hidden !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-end !important;
+      gap: 2px !important;
     }
     .topbar-name {
       display: block !important;
-      font-size: 12px !important;
+      font-size: 13px !important;
+      font-weight: 700 !important;
+      color: white !important;
       line-height: 1.2 !important;
       white-space: nowrap !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
-      max-width: 150px !important;
+      max-width: 170px !important;
     }
-    .topbar-sub { display: none !important; }
+    .topbar-sub {
+      display: block !important;
+      font-size: 10px !important;
+      color: rgba(255,255,255,0.75) !important;
+      line-height: 1.2 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 170px !important;
+    }
 
     /* ── MAIN ── */
     .report-main { padding: 14px 12px 32px !important; }
@@ -522,31 +539,43 @@ const styles = `
 
     /* ── NOTIFICATION BANNER ── */
     .notify-banner {
-      flex-direction: row !important;
-      align-items: flex-start !important;
-      padding: 14px !important;
-      gap: 12px !important;
-      border-radius: 14px !important;
-      text-align: left !important;
       flex-direction: column !important;
+      align-items: center !important;
+      padding: 24px 20px !important;
+      gap: 12px !important;
+      border-radius: 16px !important;
+      text-align: center !important;
     }
-    .notify-icon { width: 36px !important; height: 36px !important; font-size: 18px !important; }
-    .notify-content { flex: 1 1 auto !important; min-width: 0 !important; }
-    .notify-title {
-      font-size: 12.5px !important;
-      line-height: 1.35 !important;
+    .notify-icon {
+      width: 44px !important;
+      height: 44px !important;
+      font-size: 22px !important;
       margin-bottom: 4px !important;
+    }
+    .notify-content {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      text-align: center !important;
+    }
+    .notify-title {
+      font-size: 14px !important;
+      line-height: 1.35 !important;
+      margin-bottom: 8px !important;
       white-space: normal !important;
+      color: #0d1f3c !important;
     }
     .notify-text {
-      font-size: 11px !important;
-      line-height: 1.45 !important;
+      font-size: 12px !important;
+      line-height: 1.5 !important;
       white-space: normal !important;
+      margin-bottom: 4px !important;
     }
     .notify-badge {
-      align-self: flex-start !important;
-      font-size: 9.5px !important;
-      padding: 4px 8px !important;
+      align-self: center !important;
+      font-size: 11px !important;
+      padding: 8px 20px !important;
+      margin-top: 8px !important;
+      border-radius: 22px !important;
     }
 
     /* ── SECTION LABEL ── */

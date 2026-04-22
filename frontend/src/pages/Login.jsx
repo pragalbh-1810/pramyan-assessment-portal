@@ -2,6 +2,7 @@ import { useState } from "react";
 import logo from "../assets/logo.jpeg";
 import { useNavigate } from "react-router-dom";
 import { setToken, setRole } from "../utils/auth";
+import { apiUrl } from "../utils/api";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -330,7 +331,7 @@ export default function Login() {
     setLoading(true);
     try {
       const response = await fetch(
-        "https://pramyan.com/assessment/backend_test/backend/routes/login.php",
+        apiUrl("login.php"),
         {
           method: "POST",
           headers: {
@@ -358,14 +359,14 @@ export default function Login() {
           // Fetch student's test and check if already submitted
           try {
             const testsRes = await fetch(
-              "https://pramyan.com/assessment/backend_test/backend/routes/get-tests.php",
+              apiUrl("get-tests.php"),
               { headers: { Authorization: `Bearer ${result.token}` } },
             );
             const testsData = await testsRes.json();
             if (testsData.success && testsData.tests.length > 0) {
               const testId = testsData.tests[0].id;
               const detailRes = await fetch(
-                `https://pramyan.com/assessment/backend_test/backend/routes/get-test-details.php?test_id=${testId}`,
+                apiUrl(`get-test-details.php?test_id=${testId}`),
                 { headers: { Authorization: `Bearer ${result.token}` } },
               );
               const detailData = await detailRes.json();
@@ -476,8 +477,8 @@ export default function Login() {
               <button
                 className="google-btn"
                 onClick={() => {
-                  window.location.href =
-                    "https://pramyan.com/assessment/backend_test/backend/routes/google-auth.php";
+                  const frontendOrigin = encodeURIComponent(window.location.origin);
+                  window.location.href = apiUrl(`google-auth.php?frontend_origin=${frontendOrigin}`);
                 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24">
                   <path

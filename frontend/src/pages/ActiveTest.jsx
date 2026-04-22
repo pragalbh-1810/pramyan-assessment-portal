@@ -4,6 +4,7 @@ import { getToken } from "../utils/auth";
 import { setupTabSwitchMonitor } from "../utils/tabSwitchMonitor";
 import { useAutoSubmit } from "../utils/autoSubmit";
 import { uploadWorkingSheet } from "../utils/fileUpload";
+import { apiUrl, API_BASE } from "../utils/api";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -692,7 +693,7 @@ export default function ActiveTest() {
   const fetchQuestions = async (token) => {
     try {
       const res = await fetch(
-        `https://pramyan.com/assessment/backend_test/backend/routes/get-questions.php?test_id=${testId}`,
+        apiUrl(`get-questions.php?test_id=${testId}`),
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const result = await res.json();
@@ -872,7 +873,7 @@ export default function ActiveTest() {
             {currentQuestion?.q_image && (
               <div className="q-image-container">
                 <img
-                  src={`https://pramyan.com/assessment/backend_test/backend/assets/images/${currentQuestion.q_image}`}
+                  src={`${API_BASE.replace(/\/routes\/?$/, "/assets/images")}/${currentQuestion.q_image}`}
                   alt={`Figure for Question ${displayLabel}`}
                 />
               </div>

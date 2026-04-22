@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
 import { getToken, removeToken } from "../utils/auth";
+import { apiUrl } from "../utils/api";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -368,7 +369,7 @@ export default function Dashboard() {
   const fetchTests = async (token) => {
     try {
       const response = await fetch(
-        "https://pramyan.com/assessment/backend_test/backend/routes/get-tests.php",
+        apiUrl("get-tests.php"),
         {
           headers: {
             Authorization: `Bearer ${token}`,

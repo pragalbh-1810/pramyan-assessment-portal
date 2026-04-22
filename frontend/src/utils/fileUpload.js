@@ -1,4 +1,5 @@
 import { getToken } from "./auth";
+import { apiUrl } from "./api";
 
 /**
  * Uploads a file for a specific student test attempt
@@ -19,7 +20,7 @@ export const uploadWorkingSheet = async (file, testId) => {
   try {
     const token = getToken();
     const response = await fetch(
-      "https://pramyan.com/assessment/backend_test/backend/routes/upload.php",
+      apiUrl("upload.php"),
       {
         method: "POST",
         headers: {

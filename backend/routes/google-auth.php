@@ -46,7 +46,7 @@ STEP 1 — Redirect to Google login if no code yet
 */
 if (!isset($_GET['code'])) {
     $client_id = getenv("GOOGLE_CLIENT_ID");
-    $redirect_uri = "https://pramyan.com/assessment/backend_test/backend/routes/google-auth.php";
+    $redirect_uri = getenv("GOOGLE_REDIRECT_URI");
     $google_url = "https://accounts.google.com/o/oauth2/v2/auth?"
         . "client_id=$client_id"
         . "&redirect_uri=" . urlencode($redirect_uri)
@@ -68,7 +68,7 @@ $post_fields = [
     "code"          => $code,
     "client_id"     => getenv("GOOGLE_CLIENT_ID"),
     "client_secret" => getenv("GOOGLE_CLIENT_SECRET"),
-    "redirect_uri"  => "https://pramyan.com/assessment/backend_test/backend/routes/google-auth.php",
+    "redirect_uri"  => getenv("GOOGLE_REDIRECT_URI"),
     "grant_type"    => "authorization_code"
 ];
 
@@ -155,7 +155,7 @@ $token = generateJWT([
 /*
 STEP 6 — Smart routing
 */
-$frontend_url = "http://localhost:5173";
+$frontend_url = getenv("FRONTEND_URL") ?: "http://localhost:5173";
 $encodedToken = rawurlencode($token);
 
 // Case 1: Profile incomplete → complete profile first

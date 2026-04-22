@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
 import { getToken, removeToken } from "../utils/auth";
-
-const BASE = "https://pramyan.com/assessment/backend_test/backend/routes";
+import { apiUrl } from "../utils/api";
 
 function decodeJWT(t) {
   try {
@@ -391,7 +390,7 @@ export default function TeacherPanel() {
   const loadStudents = async (token) => {
     setListLoading(true);
     try {
-      const res = await fetch(`${BASE}/get-all-students.php`, {
+      const res = await fetch(apiUrl("get-all-students.php"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -451,7 +450,7 @@ export default function TeacherPanel() {
     setReportLoading(true);
     try {
       const res = await fetch(
-        `${BASE}/get-student-report.php?student_id=${s.id}&test_id=${s.test_id}`,
+        apiUrl(`get-student-report.php?student_id=${s.id}&test_id=${s.test_id}`),
         {
           headers: { Authorization: `Bearer ${getToken()}` },
         },

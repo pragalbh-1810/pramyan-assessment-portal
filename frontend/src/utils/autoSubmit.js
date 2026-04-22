@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { getToken } from "../utils/auth.js"; // Adjust path if needed
+import { getToken } from "../utils/auth.js";
+import { apiUrl } from "../utils/api.js";
 
 // Extracted Save Logic
 export const saveAnswersToDB = async (
@@ -27,7 +28,7 @@ export const saveAnswersToDB = async (
 
   try {
     const saveRes = await fetch(
-      "https://pramyan.com/assessment/backend_test/backend/routes/save-answers.php",
+      apiUrl("save-answers.php"),
       {
         method: "POST",
         headers: {
@@ -81,7 +82,7 @@ export function useAutoSubmit({
       // This ensures auto-submit works correctly even if the student
       // answered nothing.
       const saveRes = await fetch(
-        "https://pramyan.com/assessment/backend_test/backend/routes/save-answers.php",
+        apiUrl("save-answers.php"),
         {
           method: "POST",
           headers: {
@@ -104,7 +105,7 @@ export function useAutoSubmit({
 
       if (saveResult && saveResult.success && saveResult.student_test_id) {
         await fetch(
-          "https://pramyan.com/assessment/backend_test/backend/routes/submit-test.php",
+          apiUrl("submit-test.php"),
           {
             method: "POST",
             headers: {

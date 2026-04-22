@@ -1,8 +1,8 @@
 import { useState } from "react";
 import logo from "../assets/logo.jpeg";
 import { useNavigate } from "react-router-dom";
-import api from "../api/axios";
 import { setToken, setRole } from "../utils/auth";
+import { apiUrl } from "../utils/api";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -354,7 +354,7 @@ export default function SignUp() {
 
     try {
       const response = await fetch(
-        "https://pramyan.com/assessment/backend_test/backend/routes/signup.php",
+        apiUrl("signup.php"),
         {
           method: "POST",
           headers: {
@@ -474,8 +474,8 @@ export default function SignUp() {
               <button
                 className="google-btn"
                 onClick={() => {
-                  window.location.href =
-                    "https://pramyan.com/assessment/backend_test/backend/routes/google-auth.php";
+                  const frontendOrigin = encodeURIComponent(window.location.origin);
+                  window.location.href = apiUrl(`google-auth.php?frontend_origin=${frontendOrigin}`);
                 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24">
                   <path

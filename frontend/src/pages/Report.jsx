@@ -135,10 +135,8 @@ const styles = `
   .hero-right {
     display: flex;
     align-items: center;
-    gap: 112px;
+    gap: 24px;
     flex-shrink: 0;
-    align-content: stretch;
-    justify-content: space-between;
   }
   .score-circle {
     width: 100px;
@@ -174,6 +172,7 @@ const styles = `
     font-size: 13px;
     font-weight: 700;
     color: white;
+    display:none;
   }
   .badge-sub {
     font-size: 10px;
@@ -292,8 +291,6 @@ const styles = `
     margin-bottom: 20px;
     box-shadow: 0 2px 12px rgba(24,95,165,0.06);
     animation: fadeInUp 0.5s ease 0.2s both;
-    flex-direction: column;
-    text-align: center;
   }
   .notify-icon {
     width: 40px;
@@ -432,8 +429,8 @@ const styles = `
   }
 
   @media (max-width: 768px) {
-    /* ── HEADER ── */
-    .report-topbar {
+    /* ========== HEADER ========== */
+    .report-outer .report-topbar {
       padding: 10px 14px !important;
       height: auto !important;
       min-height: 48px !important;
@@ -443,36 +440,42 @@ const styles = `
       flex-wrap: nowrap !important;
       align-items: center !important;
       justify-content: space-between !important;
-      gap: 8px !important;
+      gap: 10px !important;
       position: static !important;
     }
-    .topbar-logo {
-      flex-shrink: 0 !important;
+    .report-outer .report-topbar .topbar-logo {
+      flex: 0 0 auto !important;
       min-width: 0 !important;
       display: flex !important;
       align-items: center !important;
     }
-    .topbar-logo img {
+    .report-outer .report-topbar .topbar-logo img {
       height: 24px !important;
-      max-width: 90px !important;
+      max-width: 85px !important;
       width: auto !important;
       object-fit: contain !important;
       background: white !important;
       padding: 2px 4px !important;
       border-radius: 6px !important;
     }
-    .topbar-title { display: none !important; }
-    .topbar-student-info {
-      flex: 0 1 auto !important;
-      min-width: 0 !important;
-      text-align: right !important;
+    .report-outer .report-topbar .topbar-title {
+      display: none !important;
+      visibility: hidden !important;
+      width: 0 !important;
+      height: 0 !important;
       overflow: hidden !important;
+    }
+    .report-outer .report-topbar .topbar-student-info {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
       display: flex !important;
       flex-direction: column !important;
       align-items: flex-end !important;
+      text-align: right !important;
       gap: 2px !important;
+      overflow: hidden !important;
     }
-    .topbar-name {
+    .report-outer .report-topbar .topbar-name {
       display: block !important;
       font-size: 13px !important;
       font-weight: 700 !important;
@@ -483,124 +486,140 @@ const styles = `
       text-overflow: ellipsis !important;
       max-width: 170px !important;
     }
-    .topbar-sub {
+    .report-outer .report-topbar .topbar-sub {
       display: block !important;
-      font-size: 10px !important;
-      color: rgba(255,255,255,0.75) !important;
+      font-size: 10.5px !important;
+      color: rgba(255,255,255,0.78) !important;
       line-height: 1.2 !important;
       white-space: nowrap !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
       max-width: 170px !important;
+      font-family: 'Inter', sans-serif !important;
     }
 
-    /* ── MAIN ── */
-    .report-main { padding: 14px 12px 32px !important; }
+    /* ========== MAIN ========== */
+    .report-outer .report-main { padding: 14px 12px 32px !important; }
 
-    /* ── HERO SCORE CARD ── */
-    .hero-card {
+    /* ========== HERO SCORE CARD ========== */
+    .report-outer .hero-card {
       flex-direction: column !important;
       align-items: stretch !important;
-      padding: 20px !important;
-      border-radius: 18px !important;
-      gap: 16px !important;
+      padding: 22px 22px !important;
+      border-radius: 20px !important;
+      gap: 18px !important;
       text-align: left !important;
     }
-    .hero-left { text-align: left !important; align-items: flex-start !important; }
-    .hero-greeting { font-size: 12px !important; }
-    .hero-name { font-size: 20px !important; line-height: 1.25 !important; }
-    .hero-test { font-size: 11.5px !important; }
-    .hero-right {
+    .report-outer .hero-card .hero-left {
+      text-align: left !important;
+      align-items: flex-start !important;
+      gap: 4px !important;
+    }
+    .report-outer .hero-card .hero-greeting { font-size: 12px !important; }
+    .report-outer .hero-card .hero-name {
+      font-size: 21px !important;
+      line-height: 1.25 !important;
+    }
+    .report-outer .hero-card .hero-test { font-size: 11.5px !important; }
+    .report-outer .hero-card .hero-right {
       align-self: stretch !important;
+      display: flex !important;
+      flex-direction: row !important;
       justify-content: space-between !important;
       align-items: center !important;
-      gap: 12px !important;
-      padding-top: 8px !important;
-      border-top: 1px solid rgba(255,255,255,0.15) !important;
+      gap: 16px !important;
+      padding-top: 6px !important;
     }
-    .performance-badge {
-      flex-direction: row !important;
-      align-items: center !important;
-      gap: 10px !important;
+    .report-outer .hero-card .performance-badge {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 2px !important;
       text-align: left !important;
     }
-    .badge-emoji { font-size: 26px !important; }
-    .badge-label { font-size: 13px !important; }
-    .badge-sub { font-size: 10px !important; }
-    .score-circle { width: 72px !important; height: 72px !important; }
-    .score-num { font-size: 22px !important; }
-    .score-total { font-size: 11px !important; }
+    .report-outer .hero-card .badge-emoji { font-size: 30px !important; }
+    .report-outer .hero-card .badge-label { font-size: 15px !important; font-weight: 700 !important; }
+    .report-outer .hero-card .badge-sub { font-size: 11px !important; }
+    .report-outer .hero-card .score-circle { width: 78px !important; height: 78px !important; }
+    .report-outer .hero-card .score-num { font-size: 24px !important; }
+    .report-outer .hero-card .score-total { font-size: 11px !important; }
 
-    /* ── SUBJECT / STATS GRID ── */
-    .subject-row { grid-template-columns: 1fr !important; gap: 10px !important; }
-    .stats-row { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
-    .stat-card { padding: 14px !important; }
-    .stat-value { font-size: 18px !important; }
+    /* ========== SUBJECT / STATS GRIDS ========== */
+    .report-outer .subject-row { grid-template-columns: 1fr !important; gap: 10px !important; }
+    .report-outer .stats-row { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+    .report-outer .stat-card { padding: 14px !important; }
+    .report-outer .stat-value { font-size: 18px !important; }
 
-    /* ── NOTIFICATION BANNER ── */
-    .notify-banner {
+    /* ========== NOTIFICATION BANNER - CENTERED VERTICAL ========== */
+    .report-outer .notify-banner {
+      display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
-      padding: 24px 20px !important;
+      justify-content: center !important;
+      padding: 26px 20px !important;
       gap: 12px !important;
       border-radius: 16px !important;
       text-align: center !important;
     }
-    .notify-icon {
-      width: 44px !important;
-      height: 44px !important;
+    .report-outer .notify-banner .notify-icon {
+      width: 46px !important;
+      height: 46px !important;
       font-size: 22px !important;
-      margin-bottom: 4px !important;
+      margin: 0 auto !important;
+      flex-shrink: 0 !important;
     }
-    .notify-content {
-      flex: 1 1 auto !important;
+    .report-outer .notify-banner .notify-content {
+      flex: 0 1 auto !important;
       min-width: 0 !important;
       text-align: center !important;
+      width: 100% !important;
     }
-    .notify-title {
-      font-size: 14px !important;
+    .report-outer .notify-banner .notify-title {
+      font-size: 14.5px !important;
+      font-weight: 700 !important;
       line-height: 1.35 !important;
       margin-bottom: 8px !important;
       white-space: normal !important;
       color: #0d1f3c !important;
     }
-    .notify-text {
+    .report-outer .notify-banner .notify-text {
       font-size: 12px !important;
       line-height: 1.5 !important;
       white-space: normal !important;
-      margin-bottom: 4px !important;
+      color: #888 !important;
     }
-    .notify-badge {
+    .report-outer .notify-banner .notify-badge {
       align-self: center !important;
       font-size: 11px !important;
-      padding: 8px 20px !important;
+      padding: 9px 22px !important;
       margin-top: 8px !important;
       border-radius: 22px !important;
+      white-space: nowrap !important;
     }
 
-    /* ── SECTION LABEL ── */
-    .section-label { font-size: 9.5px !important; margin-bottom: 10px !important; }
+    /* ========== SECTION LABEL ========== */
+    .report-outer .section-label { font-size: 10px !important; margin-bottom: 10px !important; }
 
-    /* ── SUBJECT CARDS ── */
-    .subject-card { padding: 16px !important; border-radius: 14px !important; }
-    .subject-pct { font-size: 20px !important; }
-    .subject-name { font-size: 13px !important; }
-    .subject-icon { width: 28px !important; height: 28px !important; font-size: 14px !important; }
+    /* ========== SUBJECT CARDS ========== */
+    .report-outer .subject-card { padding: 16px !important; border-radius: 14px !important; }
+    .report-outer .subject-pct { font-size: 20px !important; }
+    .report-outer .subject-name { font-size: 13px !important; }
+    .report-outer .subject-icon { width: 28px !important; height: 28px !important; font-size: 14px !important; }
 
-    /* ── BLURRED SECTIONS ── */
-    .blurred-card { padding: 16px !important; }
-    .blur-msg { padding: 14px 18px !important; max-width: 240px !important; }
-    .blur-msg-icon { font-size: 24px !important; }
-    .blur-msg-title { font-size: 12px !important; }
-    .blur-msg-text { font-size: 10.5px !important; }
-    .fake-label { width: 80px !important; }
+    /* ========== BLURRED SECTIONS ========== */
+    .report-outer .blurred-card { padding: 16px !important; }
+    .report-outer .blur-msg { padding: 14px 18px !important; max-width: 240px !important; }
+    .report-outer .blur-msg-icon { font-size: 24px !important; }
+    .report-outer .blur-msg-title { font-size: 12px !important; }
+    .report-outer .blur-msg-text { font-size: 10.5px !important; }
+    .report-outer .fake-label { width: 80px !important; }
   }
 
   @media (max-width: 400px) {
-    .topbar-name { max-width: 110px !important; font-size: 11px !important; }
-    .topbar-logo img { max-width: 75px !important; height: 22px !important; }
-    .hero-name { font-size: 17px !important; }
-    .notify-badge { display: none !important; }
+    .report-outer .report-topbar .topbar-name { max-width: 120px !important; font-size: 12px !important; }
+    .report-outer .report-topbar .topbar-sub { max-width: 120px !important; font-size: 9.5px !important; }
+    .report-outer .report-topbar .topbar-logo img { max-width: 70px !important; height: 22px !important; }
+    .report-outer .hero-card .hero-name { font-size: 18px !important; }
   }
 `;
 

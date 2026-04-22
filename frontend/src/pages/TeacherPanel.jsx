@@ -332,6 +332,22 @@ animation:fadeUp .4s ease .2s both;
 .sub-grid { grid-template-columns:1fr; }
 .stat-row { grid-template-columns:repeat(2,1fr); }
 .skill-grid { grid-template-columns:1fr; }
+
+.hero-card {
+    background: linear-gradient(135deg, #1D9E75 0%, #185FA5 100%);
+    border-radius: 22px;
+    padding: 26px 28px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    box-shadow: 0 8px 28px rgba(24, 95, 165, .22);
+    animation: fadeUp .4s ease .05s both;
+    flex-direction: column !important;
+}
+         .nav-name{
+         display:none;}
 }
 `;
 
@@ -680,7 +696,7 @@ export default function TeacherPanel() {
                             </div>
                             <div className="hero-r">
                               <div className="perf">
-                                <span className="perf-em">{perf.emoji}</span>
+                                {/* <span className="perf-em">{perf.emoji}</span> */}
                                 <span className="perf-lbl">{perf.label}</span>
                                 <span className="perf-sub">Performance</span>
                               </div>

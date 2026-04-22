@@ -85,18 +85,6 @@ input, select, textarea, button { font-size: 16px; }
 
   .hide-on-mobile { display: none !important; }
 
-  .top-nav,
-  .nav-bar,
-  .topbar,
-  .report-topbar,
-  .test-topbar {
-    flex-wrap: wrap !important;
-    padding: 10px 12px !important;
-    gap: 8px !important;
-  }
-  .nav-title,
-  .topbar-title { display: none !important; }
-
   .full-mobile-btn,
   .primary-btn,
   .submit-btn {
@@ -121,6 +109,4 @@ input, select, textarea, button { font-size: 16px; }
   h1 { font-size: 22px; }
   h2 { font-size: 16px; }
   body { font-size: 14px; }
-  
 }
-

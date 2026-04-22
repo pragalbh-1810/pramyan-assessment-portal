@@ -258,6 +258,34 @@ const styles = `
     background: #185FA5;
     color: white;
   }
+  .upload-container {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border: 2px dashed #185FA5;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f0f7ff, #eaf3ff);
+  }
+  .upload-label {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #0d1f3c;
+    margin-bottom: 10px;
+  }
+  .file-input {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #c7d8ee;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .file-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 
   /* Navigation buttons */
   .q-nav-btns {
@@ -536,11 +564,54 @@ const styles = `
   }
 
   @media (max-width: 768px) {
+    .test-outer { padding: 0; }
+    .test-topbar {
+      flex-direction: column;
+      align-items: stretch;
+      padding: 10px 12px;
+      gap: 8px;
+    }
+    .topbar-left,
+    .topbar-center,
+    .topbar-right {
+      width: 100%;
+      justify-content: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .topbar-testname { font-size: 13px; text-align: center; }
+    .topbar-student { font-size: 12px; }
+    .timer-box { font-size: 14px; padding: 6px 10px; }
+    .submit-top-btn { width: 100%; padding: 10px; }
+
     .test-body { flex-direction: column; padding: 10px; gap: 10px; }
-    .test-sidebar { width: 100%; flex-direction: row; overflow-x: auto; overflow-y: hidden; }
-    .palette-box { min-width: 200px; }
-    .legend-box { min-width: 150px; }
-    .stats-box { min-width: 180px; }
+    .test-sidebar { width: 100%; flex-direction: column; overflow: visible; gap: 10px; }
+    .palette-box,
+    .legend-box,
+    .stats-box { min-width: 0; width: 100%; box-sizing: border-box; }
+
+    .question-panel { padding: 14px; border-radius: 12px; }
+    .q-text { font-size: 15px; line-height: 1.5; }
+    .q-image-container img { max-width: 100%; height: auto; }
+    .option-item { padding: 12px 14px; font-size: 13px; }
+
+    .modal-box {
+      width: 92% !important;
+      max-width: 420px !important;
+      padding: 20px !important;
+    }
+    .modal-stats { flex-wrap: wrap; gap: 10px; }
+    .modal-stat { flex: 1 1 30%; }
+    .modal-btns { flex-direction: column; gap: 10px; }
+    .modal-cancel,
+    .modal-confirm { width: 100%; }
+
+    .upload-container { padding: 12px; }
+    .upload-label { font-size: 12.5px; }
+
+    .q-nav-btns { flex-wrap: wrap; gap: 8px; }
+    .nav-btn, .clear-btn { flex: 1 1 45%; padding: 10px; font-size: 13px; }
   }
 `;
 
@@ -559,7 +630,7 @@ const parseQuestionData = (text) => {
   if (!text) return { label: null, body: "" };
   const match = text.match(/^Q(\d+(?:\s*\([a-zA-Z]\))?)\s*:\s*([\s\S]*)/i);
   if (match) {
-    return { label: match[1].replace(/\s+/g, ''), body: match[2] }; 
+    return { label: match[1].replace(/\s+/g, ""), body: match[2] };
   }
   return { label: null, body: text };
 };
@@ -571,7 +642,7 @@ export default function ActiveTest() {
   const [questions, setQuestions] = useState([]);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({}); 
+  const [answers, setAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
   const [showModal, setShowModal] = useState(false);
   const [studentName, setStudentName] = useState("Student");
@@ -579,7 +650,11 @@ export default function ActiveTest() {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const [saveIndicator, setSaveIndicator] = useState({ show: false, text: "", type: "" });
+  const [saveIndicator, setSaveIndicator] = useState({
+    show: false,
+    text: "",
+    type: "",
+  });
   const answersRef = useRef({});
 
   useEffect(() => {
@@ -588,7 +663,7 @@ export default function ActiveTest() {
 
   const [showWarningModal, setShowWarningModal] = useState(false);
   const warningsRef = useRef(0);
-  const MAX_WARNINGS = 2;
+  const MAX_WARNINGS = 4;
 
   const timerRef = useRef(null);
 
@@ -598,7 +673,7 @@ export default function ActiveTest() {
     submitted,
     setSubmitted,
     setSaveIndicator,
-    timerRef
+    timerRef,
   });
 
   useEffect(() => {
@@ -617,7 +692,7 @@ export default function ActiveTest() {
   const fetchQuestions = async (token) => {
     try {
       const res = await fetch(
-        `http://localhost/pramyan-assessment-portal/backend/routes/get-questions.php?test_id=${testId}`,
+        `https://pramyan.com/assessment/backend_test/backend/routes/get-questions.php?test_id=${testId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const result = await res.json();
@@ -640,7 +715,9 @@ export default function ActiveTest() {
       },
       onMaxViolations: () => {
         warningsRef.current = MAX_WARNINGS;
-        alert("You switched tabs/windows multiple times. Your test is now automatically submitted.");
+        alert(
+          "You switched tabs/windows multiple times. Your test is now automatically submitted.",
+        );
         handleAutoSubmit();
       },
     });
@@ -661,7 +738,9 @@ export default function ActiveTest() {
   }, [handleAutoSubmit]);
 
   const formatTime = (secs) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, "0");
+    const m = Math.floor(secs / 60)
+      .toString()
+      .padStart(2, "0");
     const s = (secs % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
@@ -670,9 +749,9 @@ export default function ActiveTest() {
 
   const currentQuestion = questions[currentIndex];
   const mainQuestionGroups = {};
-  questions.forEach(q => {
+  questions.forEach((q) => {
     const match = q.q_text.match(/^Q(\d+)/i);
-    const mainNum = match ? match[1] : q.id; 
+    const mainNum = match ? match[1] : q.id;
     if (!mainQuestionGroups[mainNum]) {
       mainQuestionGroups[mainNum] = [];
     }
@@ -681,8 +760,8 @@ export default function ActiveTest() {
 
   // 2. Count how many *Main* questions have ALL parts answered
   let answeredMainCount = 0;
-  Object.values(mainQuestionGroups).forEach(partIds => {
-    const isFullyAnswered = partIds.every(id => answers[id]);
+  Object.values(mainQuestionGroups).forEach((partIds) => {
+    const isFullyAnswered = partIds.every((id) => answers[id]);
     if (isFullyAnswered) {
       answeredMainCount++;
     }
@@ -690,7 +769,7 @@ export default function ActiveTest() {
 
   const unansweredMainCount = totalQuestions - answeredMainCount;
   const parsedCurrentQ = parseQuestionData(currentQuestion?.q_text);
-  const displayLabel = parsedCurrentQ.label || (currentIndex + 1);
+  const displayLabel = parsedCurrentQ.label || currentIndex + 1;
   const displayBody = parsedCurrentQ.body || "Loading question...";
 
   const handleOptionSelect = (option) => {
@@ -712,22 +791,35 @@ export default function ActiveTest() {
     const currentTestId = testId;
 
     setUploading(true);
-    setSaveIndicator({ show: true, text: "Uploading sheet...", type: "saving" });
+    setSaveIndicator({
+      show: true,
+      text: "Uploading sheet...",
+      type: "saving",
+    });
 
     const result = await uploadWorkingSheet(file, currentTestId);
 
     if (result.success) {
       setSelectedFile(file.name);
-      setSaveIndicator({ show: true, text: "Sheet Uploaded!", type: "success" });
+      setSaveIndicator({
+        show: true,
+        text: "Sheet Uploaded!",
+        type: "success",
+      });
     } else {
       setSaveIndicator({ show: true, text: "Upload Failed", type: "warn" });
     }
     setUploading(false);
-    
+
     setTimeout(() => setSaveIndicator({ show: false }), 3000);
   };
 
-  if (questions.length === 0) return <div style={{padding: '40px', textAlign: 'center'}}>Loading Test...</div>;
+  if (questions.length === 0)
+    return (
+      <div style={{ padding: "40px", textAlign: "center" }}>
+        Loading Test...
+      </div>
+    );
 
   return (
     <>
@@ -736,7 +828,9 @@ export default function ActiveTest() {
         {/* TOP BAR */}
         <div className="test-topbar">
           <div className="topbar-left">
-            <span className="topbar-testname">Pramyan Diagnostic Assessment</span>
+            <span className="topbar-testname">
+              Pramyan Diagnostic Assessment
+            </span>
             <span className="topbar-student">👤 {studentName}</span>
           </div>
 
@@ -753,7 +847,9 @@ export default function ActiveTest() {
           </div>
 
           <div className="topbar-right">
-            <button className="submit-top-btn" onClick={() => setShowModal(true)}>
+            <button
+              className="submit-top-btn"
+              onClick={() => setShowModal(true)}>
               Submit Test
             </button>
           </div>
@@ -775,8 +871,8 @@ export default function ActiveTest() {
 
             {currentQuestion?.q_image && (
               <div className="q-image-container">
-                <img 
-                  src={`http://localhost/pramyan-assessment-portal/backend/assets/images/${currentQuestion.q_image}`} 
+                <img
+                  src={`https://pramyan.com/assessment/backend_test/backend/assets/images/${currentQuestion.q_image}`}
                   alt={`Figure for Question ${displayLabel}`}
                 />
               </div>
@@ -794,25 +890,30 @@ export default function ActiveTest() {
               ))}
             </div>
 
-        {currentIndex === questions.length - 1 && (
-            <div className="upload-container">
+            {currentIndex === questions.length - 1 && (
+              <div className="upload-container">
                 <label className="upload-label">
-                    Step 3: Upload your rough work / working sheet (Optional)
+                  Step 3: Upload your rough work / working sheet (Required)
                 </label>
-                <input 
-                    type="file" 
-                    className="file-input" 
-                    onChange={handleFileChange}
-                    disabled={uploading}
-                    accept=".pdf,.jpg,.jpeg,.png"
+                <input
+                  type="file"
+                  className="file-input"
+                  onChange={handleFileChange}
+                  disabled={uploading}
+                  accept=".pdf,.jpg,.jpeg,.png"
                 />
                 {selectedFile && (
-                    <p style={{fontSize: '11px', color: '#1D9E75', marginTop: '5px'}}>
-                        ✓ {selectedFile} attached
-                    </p>
+                  <p
+                    style={{
+                      fontSize: "11px",
+                      color: "#1D9E75",
+                      marginTop: "5px",
+                    }}>
+                    ✓ {selectedFile} attached
+                  </p>
                 )}
-            </div>
-        )}
+              </div>
+            )}
 
             <div className="q-nav-btns">
               <button
@@ -852,16 +953,25 @@ export default function ActiveTest() {
 
             <div className="legend-box">
               <div className="legend-title">Legend</div>
-              <div className="legend-row"><div className="legend-dot dot-current" />Current</div>
-              <div className="legend-row"><div className="legend-dot dot-answered" />Answered</div>
-              <div className="legend-row"><div className="legend-dot dot-unanswered" />Not Answered</div>
+              <div className="legend-row">
+                <div className="legend-dot dot-current" />
+                Current
+              </div>
+              <div className="legend-row">
+                <div className="legend-dot dot-answered" />
+                Answered
+              </div>
+              <div className="legend-row">
+                <div className="legend-dot dot-unanswered" />
+                Not Answered
+              </div>
             </div>
 
             <div className="palette-box">
               <div className="palette-title">Question Palette</div>
               <div className="palette-grid">
                 {questions.map((q, i) => {
-                  const qLabel = parseQuestionData(q.q_text).label || (i + 1);
+                  const qLabel = parseQuestionData(q.q_text).label || i + 1;
                   return (
                     <button
                       key={q.id}
@@ -883,15 +993,24 @@ export default function ActiveTest() {
             <div className="modal-icon">⚠️</div>
             <div className="modal-title">Warning!</div>
             <div className="modal-text">
-              Navigating away from the test window is not allowed. <br/><br/>
-              <strong>Warning {warningsRef.current} of {MAX_WARNINGS}.</strong><br/>
-              If you leave this tab again, your test will be automatically submitted.
+              Navigating away from the test window is not allowed. <br />
+              <br />
+              <strong>
+                Warning {warningsRef.current} of {MAX_WARNINGS}.
+              </strong>
+              <br />
+              If you leave this tab again, your test will be automatically
+              submitted.
             </div>
             <div className="modal-btns">
               <button
                 className="modal-confirm"
                 onClick={() => setShowWarningModal(false)}
-                style={{ width: '100%', background: 'linear-gradient(135deg, #e24b4a, #c43a39)', boxShadow: '0 4px 14px rgba(226,75,74,0.25)' }}>
+                style={{
+                  width: "100%",
+                  background: "linear-gradient(135deg, #e24b4a, #c43a39)",
+                  boxShadow: "0 4px 14px rgba(226,75,74,0.25)",
+                }}>
                 I Understand
               </button>
             </div>
@@ -905,16 +1024,58 @@ export default function ActiveTest() {
             <div className="modal-icon">📋</div>
             <div className="modal-title">Submit Test?</div>
             <div className="modal-text">
-              Once submitted you cannot go back or change your answers. Are you sure you want to submit?
+              Once submitted you cannot go back or change your answers. Are you
+              sure you want to submit?
             </div>
             <div className="modal-stats">
-              <div className="modal-stat"><span className="modal-stat-num blue">{questions.length}</span><span className="modal-stat-label">Total Parts</span></div>
-              <div className="modal-stat"><span className="modal-stat-num green">{Object.keys(answers).length}</span><span className="modal-stat-label">Answered</span></div>
-              <div className="modal-stat"><span className="modal-stat-num gray">{questions.length - Object.keys(answers).length}</span><span className="modal-stat-label">Left</span></div>
+              <div className="modal-stat">
+                <span className="modal-stat-num blue">{totalQuestions}</span>
+                <span className="modal-stat-label">Total Questions</span>
+              </div>
+              <div className="modal-stat">
+                <span className="modal-stat-num green">
+                  {answeredMainCount}
+                </span>
+                <span className="modal-stat-label">Answered</span>
+              </div>
+              <div className="modal-stat">
+                <span className="modal-stat-num gray">
+                  {unansweredMainCount}
+                </span>
+                <span className="modal-stat-label">Left</span>
+              </div>
             </div>
+            {!selectedFile && (
+              <div
+                style={{
+                  background: "#fff4e5",
+                  border: "1px solid #f0ad4e",
+                  color: "#8a5a00",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  marginBottom: "14px",
+                  textAlign: "center",
+                }}>
+                ⚠ Please upload your working sheet on the last question before
+                submitting.
+              </div>
+            )}
             <div className="modal-btns">
-              <button className="modal-cancel" onClick={() => setShowModal(false)}>Go Back</button>
-              <button className="modal-confirm" onClick={() => submitTest(false)}>Yes, Submit →</button>
+              <button
+                className="modal-cancel"
+                onClick={() => setShowModal(false)}>
+                Go Back
+              </button>
+              <button
+                className="modal-confirm"
+                onClick={() => submitTest(false)}
+                disabled={!selectedFile}
+                style={
+                  !selectedFile ? { opacity: 0.5, cursor: "not-allowed" } : {}
+                }>
+                Yes, Submit →
+              </button>
             </div>
           </div>
         </div>

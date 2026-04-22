@@ -31,7 +31,7 @@ export default function GoogleCallback() {
     const checkAndRedirect = async () => {
       try {
         const testsRes = await fetch(
-          "http://localhost/pramyan-assessment-portal/backend/routes/get-tests.php",
+          "https://pramyan.com/assessment/backend_test/backend/routes/get-tests.php",
           { headers: { Authorization: `Bearer ${token}` } },
         );
         const testsData = await testsRes.json();
@@ -39,7 +39,7 @@ export default function GoogleCallback() {
         if (testsData.success && testsData.tests.length > 0) {
           const testId = testsData.tests[0].id;
           const detailRes = await fetch(
-            `http://localhost/pramyan-assessment-portal/backend/routes/get-test-details.php?test_id=${testId}`,
+            `https://pramyan.com/assessment/backend_test/backend/routes/get-test-details.php?test_id=${testId}`,
             { headers: { Authorization: `Bearer ${token}` } },
           );
           const detailData = await detailRes.json();

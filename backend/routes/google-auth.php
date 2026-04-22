@@ -68,7 +68,7 @@ $post_fields = [
     "code"          => $code,
     "client_id"     => getenv("GOOGLE_CLIENT_ID"),
     "client_secret" => getenv("GOOGLE_CLIENT_SECRET"),
-    "redirect_uri"  => "http://localhost/pramyan-assessment-portal/backend/routes/google-auth.php",
+    "redirect_uri"  => "https://pramyan.com/assessment/backend_test/backend/routes/google-auth.php",
     "grant_type"    => "authorization_code"
 ];
 

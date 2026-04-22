@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
 import { setToken, setRole } from "../utils/auth";
 
-const BASE = "http://localhost/pramyan-assessment-portal/backend/routes";
+const BASE = "https://pramyan.com/assessment/backend_test/backend/routes";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');

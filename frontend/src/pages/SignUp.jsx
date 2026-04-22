@@ -354,7 +354,7 @@ export default function SignUp() {
 
     try {
       const response = await fetch(
-        "http://localhost/pramyan-assessment-portal/backend/routes/signup.php",
+        "https://pramyan.com/assessment/backend_test/backend/routes/signup.php",
         {
           method: "POST",
           headers: {
@@ -475,7 +475,7 @@ export default function SignUp() {
                 className="google-btn"
                 onClick={() => {
                   window.location.href =
-                    "http://localhost/pramyan-assessment-portal/backend/routes/google-auth.php";
+                    "https://pramyan.com/assessment/backend_test/backend/routes/google-auth.php";
                 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24">
                   <path
@@ -567,7 +567,7 @@ export default function SignUp() {
                       value={form.class}
                       onChange={handleChange}>
                       <option value="">Select Class</option>
-                      {[ 8, 9, 10].map((c) => (
+                      {[8, 9, 10].map((c) => (
                         <option key={c} value={c}>
                           Class {c}
                         </option>
@@ -611,4 +611,3 @@ export default function SignUp() {
     </>
   );
 }
-

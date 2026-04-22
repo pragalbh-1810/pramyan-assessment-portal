@@ -172,6 +172,7 @@ const styles = `
     font-size: 13px;
     font-weight: 700;
     color: white;
+    display:none;
   }
   .badge-sub {
     font-size: 10px;
@@ -428,14 +429,197 @@ const styles = `
   }
 
   @media (max-width: 768px) {
-    .report-topbar { padding: 0 16px; }
-    .report-main { padding: 16px; }
-    .hero-card { flex-direction: column; align-items: flex-start; }
-    .hero-right { align-self: flex-end; }
-    .subject-row { grid-template-columns: 1fr; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
-    .score-circle { width: 80px; height: 80px; }
-    .score-num { font-size: 22px; }
+    /* ========== HEADER ========== */
+    .report-outer .report-topbar {
+      padding: 10px 14px !important;
+      height: auto !important;
+      min-height: 48px !important;
+      margin: 8px !important;
+      border-radius: 12px !important;
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 10px !important;
+      position: static !important;
+    }
+    .report-outer .report-topbar .topbar-logo {
+      flex: 0 0 auto !important;
+      min-width: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+    .report-outer .report-topbar .topbar-logo img {
+      height: 24px !important;
+      max-width: 85px !important;
+      width: auto !important;
+      object-fit: contain !important;
+      background: white !important;
+      padding: 2px 4px !important;
+      border-radius: 6px !important;
+    }
+    .report-outer .report-topbar .topbar-title {
+      display: none !important;
+      visibility: hidden !important;
+      width: 0 !important;
+      height: 0 !important;
+      overflow: hidden !important;
+    }
+    .report-outer .report-topbar .topbar-student-info {
+      flex: 1 1 auto !important;
+      min-width: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-end !important;
+      text-align: right !important;
+      gap: 2px !important;
+      overflow: hidden !important;
+    }
+    .report-outer .report-topbar .topbar-name {
+      display: block !important;
+      font-size: 13px !important;
+      font-weight: 700 !important;
+      color: white !important;
+      line-height: 1.2 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 170px !important;
+    }
+    .report-outer .report-topbar .topbar-sub {
+      display: block !important;
+      font-size: 10.5px !important;
+      color: rgba(255,255,255,0.78) !important;
+      line-height: 1.2 !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      max-width: 170px !important;
+      font-family: 'Inter', sans-serif !important;
+    }
+
+    /* ========== MAIN ========== */
+    .report-outer .report-main { padding: 14px 12px 32px !important; }
+
+    /* ========== HERO SCORE CARD ========== */
+    .report-outer .hero-card {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      padding: 22px 22px !important;
+      border-radius: 20px !important;
+      gap: 18px !important;
+      text-align: left !important;
+    }
+    .report-outer .hero-card .hero-left {
+      text-align: left !important;
+      align-items: flex-start !important;
+      gap: 4px !important;
+    }
+    .report-outer .hero-card .hero-greeting { font-size: 12px !important; }
+    .report-outer .hero-card .hero-name {
+      font-size: 21px !important;
+      line-height: 1.25 !important;
+    }
+    .report-outer .hero-card .hero-test { font-size: 11.5px !important; }
+    .report-outer .hero-card .hero-right {
+      align-self: stretch !important;
+      display: flex !important;
+      flex-direction: row !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      gap: 16px !important;
+      padding-top: 6px !important;
+    }
+    .report-outer .hero-card .performance-badge {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 2px !important;
+      text-align: left !important;
+    }
+    .report-outer .hero-card .badge-emoji { font-size: 30px !important; }
+    .report-outer .hero-card .badge-label { font-size: 15px !important; font-weight: 700 !important; }
+    .report-outer .hero-card .badge-sub { font-size: 11px !important; }
+    .report-outer .hero-card .score-circle { width: 78px !important; height: 78px !important; }
+    .report-outer .hero-card .score-num { font-size: 24px !important; }
+    .report-outer .hero-card .score-total { font-size: 11px !important; }
+
+    /* ========== SUBJECT / STATS GRIDS ========== */
+    .report-outer .subject-row { grid-template-columns: 1fr !important; gap: 10px !important; }
+    .report-outer .stats-row { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+    .report-outer .stat-card { padding: 14px !important; }
+    .report-outer .stat-value { font-size: 18px !important; }
+
+    /* ========== NOTIFICATION BANNER - CENTERED VERTICAL ========== */
+    .report-outer .notify-banner {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 26px 20px !important;
+      gap: 12px !important;
+      border-radius: 16px !important;
+      text-align: center !important;
+    }
+    .report-outer .notify-banner .notify-icon {
+      width: 46px !important;
+      height: 46px !important;
+      font-size: 22px !important;
+      margin: 0 auto !important;
+      flex-shrink: 0 !important;
+    }
+    .report-outer .notify-banner .notify-content {
+      flex: 0 1 auto !important;
+      min-width: 0 !important;
+      text-align: center !important;
+      width: 100% !important;
+    }
+    .report-outer .notify-banner .notify-title {
+      font-size: 14.5px !important;
+      font-weight: 700 !important;
+      line-height: 1.35 !important;
+      margin-bottom: 8px !important;
+      white-space: normal !important;
+      color: #0d1f3c !important;
+    }
+    .report-outer .notify-banner .notify-text {
+      font-size: 12px !important;
+      line-height: 1.5 !important;
+      white-space: normal !important;
+      color: #888 !important;
+    }
+    .report-outer .notify-banner .notify-badge {
+      align-self: center !important;
+      font-size: 11px !important;
+      padding: 9px 22px !important;
+      margin-top: 8px !important;
+      border-radius: 22px !important;
+      white-space: nowrap !important;
+    }
+
+    /* ========== SECTION LABEL ========== */
+    .report-outer .section-label { font-size: 10px !important; margin-bottom: 10px !important; }
+
+    /* ========== SUBJECT CARDS ========== */
+    .report-outer .subject-card { padding: 16px !important; border-radius: 14px !important; }
+    .report-outer .subject-pct { font-size: 20px !important; }
+    .report-outer .subject-name { font-size: 13px !important; }
+    .report-outer .subject-icon { width: 28px !important; height: 28px !important; font-size: 14px !important; }
+
+    /* ========== BLURRED SECTIONS ========== */
+    .report-outer .blurred-card { padding: 16px !important; }
+    .report-outer .blur-msg { padding: 14px 18px !important; max-width: 240px !important; }
+    .report-outer .blur-msg-icon { font-size: 24px !important; }
+    .report-outer .blur-msg-title { font-size: 12px !important; }
+    .report-outer .blur-msg-text { font-size: 10.5px !important; }
+    .report-outer .fake-label { width: 80px !important; }
+  }
+
+  @media (max-width: 400px) {
+    .report-outer .report-topbar .topbar-name { max-width: 120px !important; font-size: 12px !important; }
+    .report-outer .report-topbar .topbar-sub { max-width: 120px !important; font-size: 9.5px !important; }
+    .report-outer .report-topbar .topbar-logo img { max-width: 70px !important; height: 22px !important; }
+    .report-outer .hero-card .hero-name { font-size: 18px !important; }
   }
 `;
 
@@ -484,7 +668,7 @@ export default function Report() {
   const fetchReport = async (token) => {
     try {
       const res = await fetch(
-        `http://localhost/pramyan-assessment-portal/backend/routes/get-report.php?test_id=${testId}`,
+        `https://pramyan.com/assessment/backend_test/backend/routes/get-report.php?test_id=${testId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const result = await res.json();
@@ -508,7 +692,6 @@ export default function Report() {
           <div className="report-topbar">
             <div className="topbar-logo">
               <img src={logo} alt="Pramyan" />
-              <span className="topbar-title">Pramyan Education</span>
             </div>
           </div>
           <div
@@ -543,7 +726,6 @@ export default function Report() {
           <div className="report-topbar">
             <div className="topbar-logo">
               <img src={logo} alt="Pramyan" />
-              <span className="topbar-title">Pramyan Education</span>
             </div>
           </div>
           <div
@@ -582,7 +764,6 @@ export default function Report() {
         <div className="report-topbar">
           <div className="topbar-logo">
             <img src={logo} alt="Pramyan" />
-            <span className="topbar-title">Pramyan Education</span>
           </div>
           <div className="topbar-student-info">
             <span className="topbar-name">{studentName}</span>

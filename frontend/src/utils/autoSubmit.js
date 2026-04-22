@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { getToken } from "../utils/auth.js"; // Adjust path if needed
 
 // Extracted Save Logic
-export const saveAnswersToDB = async (testId, currentAnswers, setSaveIndicator, isAutoSave = false) => {
+export const saveAnswersToDB = async (
+  testId,
+  currentAnswers,
+  setSaveIndicator,
+  isAutoSave = false,
+) => {
   const token = getToken() || "test";
 
   const answersArray = Object.entries(currentAnswers).map(
@@ -11,7 +16,7 @@ export const saveAnswersToDB = async (testId, currentAnswers, setSaveIndicator, 
       question_id: parseInt(question_id),
       selected_option,
       time_on_question: 0,
-    })
+    }),
   );
 
   if (answersArray.length === 0) return null;
@@ -22,7 +27,7 @@ export const saveAnswersToDB = async (testId, currentAnswers, setSaveIndicator, 
 
   try {
     const saveRes = await fetch(
-      "http://localhost/pramyan-assessment-portal/backend/routes/save-answers.php",
+      "https://pramyan.com/assessment/backend_test/backend/routes/save-answers.php",
       {
         method: "POST",
         headers: {
@@ -33,7 +38,7 @@ export const saveAnswersToDB = async (testId, currentAnswers, setSaveIndicator, 
           test_id: parseInt(testId),
           answers: answersArray,
         }),
-      }
+      },
     );
     const saveResult = await saveRes.json();
 
@@ -50,24 +55,56 @@ export const saveAnswersToDB = async (testId, currentAnswers, setSaveIndicator, 
     }
     return saveResult;
   } catch (error) {
-    if (isAutoSave && setSaveIndicator) setSaveIndicator({ show: false, text: "", type: "" });
+    if (isAutoSave && setSaveIndicator)
+      setSaveIndicator({ show: false, text: "", type: "" });
     console.error("Network error during save:", error);
     return null;
   }
 };
 
 // Custom Hook to handle Auto-Save and Submissions
-export function useAutoSubmit({ testId, answersRef, submitted, setSubmitted, setSaveIndicator, timerRef }) {
+export function useAutoSubmit({
+  testId,
+  answersRef,
+  submitted,
+  setSubmitted,
+  setSaveIndicator,
+  timerRef,
+}) {
   const navigate = useNavigate();
 
   const submitTest = async (isAuto = false) => {
     const token = getToken() || "test";
     try {
-      const saveResult = await saveAnswersToDB(testId, answersRef.current, setSaveIndicator, false);
+      // Always hit save-answers — even with zero answers, backend will
+      // create the student_test row (if missing) and return its ID.
+      // This ensures auto-submit works correctly even if the student
+      // answered nothing.
+      const saveRes = await fetch(
+        "https://pramyan.com/assessment/backend_test/backend/routes/save-answers.php",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            test_id: parseInt(testId),
+            answers: Object.entries(answersRef.current).map(
+              ([question_id, selected_option]) => ({
+                question_id: parseInt(question_id),
+                selected_option,
+                time_on_question: 0,
+              }),
+            ),
+          }),
+        },
+      );
+      const saveResult = await saveRes.json().catch(() => null);
 
-      if (saveResult && saveResult.success) {
+      if (saveResult && saveResult.success && saveResult.student_test_id) {
         await fetch(
-          "http://localhost/pramyan-assessment-portal/backend/routes/submit-test.php",
+          "https://pramyan.com/assessment/backend_test/backend/routes/submit-test.php",
           {
             method: "POST",
             headers: {
@@ -77,7 +114,7 @@ export function useAutoSubmit({ testId, answersRef, submitted, setSubmitted, set
             body: JSON.stringify({
               student_test_id: saveResult.student_test_id,
             }),
-          }
+          },
         );
       }
     } catch (err) {
@@ -102,7 +139,7 @@ export function useAutoSubmit({ testId, answersRef, submitted, setSubmitted, set
 
     const intervalId = setInterval(() => {
       saveAnswersToDB(testId, answersRef.current, setSaveIndicator, true);
-    }, 30000); 
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, [submitted, testId, answersRef, setSaveIndicator]);

@@ -1,4 +1,4 @@
-USE pramyan;
+
 
 -- 1. Safely clean old dummy data for Test 2 (Class 9)
 SET FOREIGN_KEY_CHECKS = 0;

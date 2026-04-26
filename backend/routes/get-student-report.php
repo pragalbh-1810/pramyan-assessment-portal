@@ -18,99 +18,145 @@ if (!in_array($user['role'], ['teacher', 'admin'])) {
 }
 
 $student_id = (int)($_GET['student_id'] ?? 0);
-$test_id = (int)($_GET['test_id'] ?? 0);
+$test_id    = (int)($_GET['test_id']    ?? 0);
 
 if (!$student_id || !$test_id) {
-    echo json_encode(['success'=>false, 'message'=>'student_id and test_id required']);
+    echo json_encode(['success' => false, 'message' => 'student_id and test_id required']);
     exit();
 }
 
-// Get student info
-$stStmt = $pdo->prepare("SELECT id, name, email, class, parent_phone FROM users WHERE id=? AND role='student'");
+// ── 1. Student ─────────────────────────────────────────
+$stStmt = $pdo->prepare("
+    SELECT id, name, email, class, parent_phone 
+    FROM users 
+    WHERE id = ? AND role = 'student'
+");
 $stStmt->execute([$student_id]);
 $student = $stStmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$student) { echo json_encode(['success'=>false, 'message' => 'Student not found']); exit(); }
+if (!$student) {
+    echo json_encode(['success' => false, 'message' => 'Student not found']);
+    exit();
+}
 
-// Get latest submitted attempt
-$atStmt = $pdo->prepare("SELECT id FROM student_tests WHERE user_id=? AND test_id=? AND is_submitted=1 ORDER BY id DESC LIMIT 1");
+// ── 2. Attempt ─────────────────────────────────────────
+$atStmt = $pdo->prepare("
+    SELECT id, test_id 
+    FROM student_tests 
+    WHERE user_id = ? AND test_id = ? AND is_submitted = 1 
+    ORDER BY id DESC LIMIT 1
+");
 $atStmt->execute([$student_id, $test_id]);
 $attempt = $atStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$attempt) {
-    echo json_encode(['success'=>false, 'message'=>'No attempt found', 'student'=>$student]);
+    echo json_encode(['success' => false, 'message' => 'No attempt found']);
     exit();
 }
 
-$student_test_id = (int)$attempt['id'];
+$student_test_id  = (int)$attempt['id'];
+$resolved_test_id = (int)$attempt['test_id'];
 
-// Get result
-$rStmt = $pdo->prepare("SELECT * FROM results WHERE student_test_id=?");
+// ── 3. Result ──────────────────────────────────────────
+$rStmt = $pdo->prepare("SELECT * FROM results WHERE student_test_id = ?");
 $rStmt->execute([$student_test_id]);
 $result = $rStmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$result) { echo json_encode(['success'=>false, 'message' => 'Results not ready']); exit(); }
+if (!$result) {
+    echo json_encode(['success' => false, 'message' => 'Results not ready']);
+    exit();
+}
 
-// Count answers
-$cStmt = $pdo->prepare("
-    SELECT COUNT(*) AS answered,
-    SUM(CASE WHEN r.selected_option=q.correct THEN 1 ELSE 0 END) AS correct
-    FROM responses r JOIN questions q ON r.question_id=q.id
-    WHERE r.student_test_id=?
+// ── 4. Total Questions ─────────────────────────────────
+$qStmt = $pdo->prepare("
+    SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN section = 'Math' THEN 1 ELSE 0 END) as mathMax,
+        SUM(CASE WHEN section = 'Science' THEN 1 ELSE 0 END) as sciMax
+    FROM questions 
+    WHERE test_id = ?
 ");
-$cStmt->execute([$student_test_id]);
+$qStmt->execute([$resolved_test_id]);
+$qStats = $qStmt->fetch(PDO::FETCH_ASSOC);
+
+$total   = (int)$qStats['total'];
+$mathMax = (int)$qStats['mathMax'];
+$sciMax  = (int)$qStats['sciMax'];
+
+// ── 🔥 5. CORRECT COUNT LOGIC (FIXED) ─────────────────
+$cStmt = $pdo->prepare("
+    SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN r.selected_option IS NOT NULL AND r.selected_option != '' THEN 1 ELSE 0 END) as answered,
+        SUM(CASE WHEN r.selected_option = q.correct THEN 1 ELSE 0 END) as correct
+    FROM questions q
+    LEFT JOIN responses r 
+        ON r.question_id = q.id 
+        AND r.student_test_id = ?
+    WHERE q.test_id = ?
+");
+$cStmt->execute([$student_test_id, $resolved_test_id]);
 $counts = $cStmt->fetch(PDO::FETCH_ASSOC);
 
-$correct = (int)$counts['correct'];
 $answered = (int)$counts['answered'];
-$wrong = $answered - $correct;
+$correct  = (int)$counts['correct'];
+$wrong    = $answered - $correct;
+$unanswered = $total - $answered;
 
-// ✨ FIXED: Changed 32 to 60, and 16 to 30 for the percentages
-$unanswered = 60 - $answered;
-$mathPct = round(($result['math_score'] / 30) * 100);
-$sciPct = round(($result['sci_score'] / 30) * 100);
+// ── 6. Percentages ─────────────────────────────────────
+$mathPct    = $mathMax > 0 ? round(($result['math_score'] / $mathMax) * 100) : 0;
+$sciPct     = $sciMax  > 0 ? round(($result['sci_score']  / $sciMax)  * 100) : 0;
+$overallPct = $total   > 0 ? round(($correct / $total) * 100, 2) : 0;
 
-// Chapter & Bloom scores
-$chStmt = $pdo->prepare("SELECT chapter, score, max_score, pct, swot_category FROM chapter_scores WHERE result_id=? ORDER BY pct DESC");
-$chStmt->execute([$result['id']]);
-$chapterScores = $chStmt->fetchAll(PDO::FETCH_ASSOC);
-
-$blStmt = $pdo->prepare("SELECT bloom_level, score, max_score, pct FROM bloom_scores WHERE result_id=? ORDER BY bloom_level ASC");
-$blStmt->execute([$result['id']]);
-$bloomScores = $blStmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Question detail
-$qStmt = $pdo->prepare("
-    SELECT q.id as question_id, q.q_text, q.opt_a, q.opt_b, q.opt_c, q.opt_d, q.correct, q.chapter, q.bloom_level, q.skill_type, q.section,
-    r.selected_option, CASE WHEN r.selected_option=q.correct THEN 1 ELSE 0 END as is_correct
-    FROM questions q LEFT JOIN responses r
-    ON r.question_id=q.id AND r.student_test_id=? WHERE q.test_id=? ORDER BY q.section, q.id
+// ── 7. Chapter + Bloom ────────────────────────────────
+$chapterScores = $pdo->prepare("
+    SELECT chapter, score, max_score, pct, swot_category 
+    FROM chapter_scores 
+    WHERE result_id = ? 
+    ORDER BY pct DESC
 ");
-$qStmt->execute([$student_test_id, $test_id]);
-$questions = $qStmt->fetchAll(PDO::FETCH_ASSOC);
+$chapterScores->execute([$result['id']]);
 
+$bloomScores = $pdo->prepare("
+    SELECT bloom_level, score, max_score, pct 
+    FROM bloom_scores 
+    WHERE result_id = ? 
+    ORDER BY bloom_level ASC
+");
+$bloomScores->execute([$result['id']]);
+
+// ── 8. Questions ───────────────────────────────────────
+$qdStmt = $pdo->prepare("
+    SELECT 
+        q.id, q.q_text, q.chapter, q.section,
+        q.bloom_level, q.skill_type, q.correct,
+        r.selected_option,
+        CASE WHEN r.selected_option = q.correct THEN 1 ELSE 0 END as is_correct
+    FROM questions q
+    LEFT JOIN responses r 
+        ON r.question_id = q.id 
+        AND r.student_test_id = ?
+    WHERE q.test_id = ?
+");
+$qdStmt->execute([$student_test_id, $resolved_test_id]);
+$questions = $qdStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// ── 9. Response ───────────────────────────────────────
 echo json_encode([
     'success' => true,
     'student' => $student,
-    'student_test_id' => $student_test_id,
     'total_score' => (int)$result['total_score'],
-    'max_score' => 60,  
+    'max_score' => $total,
     'math_score' => (int)$result['math_score'],
-    'math_max' => 30,   
     'math_pct' => $mathPct,
     'sci_score' => (int)$result['sci_score'],
-    'sci_max' => 30,    
     'sci_pct' => $sciPct,
-    'overall_pct' => (float)$result['overall_pct'],
+    'overall_pct' => $overallPct,
     'correct' => $correct,
     'wrong' => $wrong,
     'unanswered' => $unanswered,
     'answered' => $answered,
-    'p1' => (float)($result['p1'] ?? 0),
-    'p2' => (float)($result['p2'] ?? 0),
-    'p3' => (float)($result['p3'] ?? 0),
-    'action_plan' => $result['action_plan'],
-    'chapter_scores' => $chapterScores,
-    'bloom_scores' => $bloomScores,
+    'chapter_scores' => $chapterScores->fetchAll(PDO::FETCH_ASSOC),
+    'bloom_scores' => $bloomScores->fetchAll(PDO::FETCH_ASSOC),
     'questions' => $questions
 ]);

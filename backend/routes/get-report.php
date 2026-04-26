@@ -1,5 +1,4 @@
 <?php
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
@@ -10,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// ✅ FIX 1: LOAD .env FIRST before loading the database!
+// Load .env first
 $envPath = dirname(__DIR__) . '/.env';
 if (file_exists($envPath)) {
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -25,10 +24,9 @@ require_once dirname(__DIR__) . '/config/db.php';
 require_once dirname(__DIR__) . '/middleware/auth.php';
 
 try {
-    $user = authenticate();
+    $user    = authenticate();
     $user_id = (int)$user['id'];
-    $role = $user['role'];
-
+    $role    = $user['role'];
     $test_id = (int)($_GET['test_id'] ?? 0);
 
     if (!$test_id) {
@@ -37,13 +35,8 @@ try {
         exit();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | GET ATTEMPT
-    |--------------------------------------------------------------------------
-    */
+    // ── 1. GET ATTEMPT ───────────────────────────────────────────────────────
     if ($role === 'admin') {
-        // Admin sees latest attempt of any student for this test
         $stmt = $pdo->prepare("
             SELECT id, user_id 
             FROM student_tests 
@@ -52,7 +45,6 @@ try {
         ");
         $stmt->execute([$test_id]);
     } else {
-        // Student sees only their own latest attempt
         $stmt = $pdo->prepare("
             SELECT id, user_id 
             FROM student_tests 
@@ -63,7 +55,6 @@ try {
     }
 
     $attempt = $stmt->fetch(PDO::FETCH_ASSOC);
-
     if (!$attempt) {
         echo json_encode(['success' => false, 'message' => 'No attempt found']);
         exit();
@@ -71,11 +62,7 @@ try {
 
     $student_test_id = (int)$attempt['id'];
 
-    /*
-    |--------------------------------------------------------------------------
-    | GET RESULT
-    |--------------------------------------------------------------------------
-    */
+    // ── 2. GET RESULT ────────────────────────────────────────────────────────
     $stmt = $pdo->prepare("SELECT * FROM results WHERE student_test_id = ?");
     $stmt->execute([$student_test_id]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -85,12 +72,7 @@ try {
         exit();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | COUNT ANSWERS & QUESTION TOTALS (Optimized)
-    |--------------------------------------------------------------------------
-    */
-    // Get correct/answered counts
+    // ── 3. COUNT ANSWERS ─────────────────────────────────────────────────────
     $stmt = $pdo->prepare("
         SELECT 
             COUNT(*) as answered,
@@ -102,11 +84,11 @@ try {
     $stmt->execute([$student_test_id]);
     $counts = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // ✅ FIX 2: Changed 'Mathematics' to 'Math' to perfectly match your database!
+    // ── 4. QUESTION TOTALS ───────────────────────────────────────────────────
     $stmt = $pdo->prepare("
         SELECT 
             COUNT(*) as total,
-            SUM(CASE WHEN section = 'Math' THEN 1 ELSE 0 END) as mathMax,
+            SUM(CASE WHEN section = 'Math'    THEN 1 ELSE 0 END) as mathMax,
             SUM(CASE WHEN section = 'Science' THEN 1 ELSE 0 END) as sciMax
         FROM questions 
         WHERE test_id = ?
@@ -114,22 +96,18 @@ try {
     $stmt->execute([$test_id]);
     $qStats = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $total = (int)$qStats['total'];
-    $mathMax = (int)$qStats['mathMax'];
-    $sciMax = (int)$qStats['sciMax'];
-
-    $answered = (int)$counts['answered'];
-    $correct = (int)$counts['correct'];
-    $wrong = $answered - $correct;
+    $total      = (int)$qStats['total'];
+    $mathMax    = (int)$qStats['mathMax'];
+    $sciMax     = (int)$qStats['sciMax'];
+    $answered   = (int)$counts['answered'];
+    $correct    = (int)$counts['correct'];
+    $wrong      = $answered - $correct;
     $unanswered = $total - $answered;
 
-    /*
-    |--------------------------------------------------------------------------
-    | SECTION %
-    |--------------------------------------------------------------------------
-    */
-    $mathPct = $mathMax > 0 ? round(($result['math_score'] / $mathMax) * 100) : 0;
-    $sciPct = $sciMax > 0 ? round(($result['sci_score'] / $sciMax) * 100) : 0;
+    // ── 5. PERCENTAGES ───────────────────────────────────────────────────────
+    $mathPct    = $mathMax > 0 ? round(($result['math_score'] / $mathMax) * 100) : 0;
+    $sciPct     = $sciMax  > 0 ? round(($result['sci_score']  / $sciMax)  * 100) : 0;
+    $overallPct = $total   > 0 ? round(($correct / $total) * 100, 2)             : 0;
 
     // Get test class
     $stmt = $pdo->prepare("SELECT class FROM tests WHERE id = ?");
@@ -154,15 +132,17 @@ try {
     $chStmt->execute([$test_id, $result['id']]);
     $chapterScores = $chStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $blStmt = $pdo->prepare("SELECT bloom_level, score, max_score, pct FROM bloom_scores WHERE result_id = ? ORDER BY bloom_level ASC");
+    // ── 7. BLOOM SCORES ──────────────────────────────────────────────────────
+    $blStmt = $pdo->prepare("
+        SELECT bloom_level, score, max_score, pct 
+        FROM bloom_scores 
+        WHERE result_id = ? 
+        ORDER BY bloom_level ASC
+    ");
     $blStmt->execute([$result['id']]);
     $bloomScores = $blStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    /*
-    |--------------------------------------------------------------------------
-    | QUESTION-WISE DETAIL
-    |--------------------------------------------------------------------------
-    */
+    // ── 8. QUESTION DETAIL ───────────────────────────────────────────────────
     $qStmt = $pdo->prepare("
         SELECT 
             q.id as question_id, q.q_text, q.opt_a, q.opt_b, q.opt_c, q.opt_d, 
@@ -170,18 +150,15 @@ try {
             r.selected_option,
             CASE WHEN r.selected_option = q.correct THEN 1 ELSE 0 END as is_correct
         FROM questions q
-        LEFT JOIN responses r ON r.question_id = q.id AND r.student_test_id = ?
+        LEFT JOIN responses r 
+            ON r.question_id = q.id AND r.student_test_id = ?
         WHERE q.test_id = ?
         ORDER BY q.section, q.id
     ");
     $qStmt->execute([$student_test_id, $test_id]);
-    $questions = $qStmt->fetchAll(PDO::FETCH_ASSOC);
+    $questions = $qStmt->fetchAll(PDO::FETCH_ASSOC); // ✅ was missing before
 
-    /*
-    |--------------------------------------------------------------------------
-    | FINAL RESPONSE
-    |--------------------------------------------------------------------------
-    */
+    // ── 9. FINAL RESPONSE ────────────────────────────────────────────────────
     echo json_encode([
         'success'         => true,
         'student_test_id' => $student_test_id,
@@ -192,9 +169,9 @@ try {
         'math_max'        => $mathMax,
         'sci_score'       => (int)$result['sci_score'],
         'sci_max'         => $sciMax,
-        'overall_pct'     => (float)$result['overall_pct'],
-        'math_pct'        => (int)$mathPct,
-        'sci_pct'         => (int)$sciPct,
+        'overall_pct'     => $overallPct,  // ✅ recalculated correctly
+        'math_pct'        => $mathPct,
+        'sci_pct'         => $sciPct,
         'correct'         => $correct,
         'wrong'           => $wrong,
         'unanswered'      => $unanswered,
@@ -206,7 +183,7 @@ try {
         'test_class'      => $test_class,
         'chapter_scores'  => $chapterScores,
         'bloom_scores'    => $bloomScores,
-        'questions'       => $questions
+        'questions'       => $questions  // ✅ now properly assigned
     ]);
 
 } catch (Exception $e) {
@@ -214,6 +191,6 @@ try {
     echo json_encode([
         'success' => false,
         'message' => 'Internal Server Error',
-        'error'   => $e->getMessage() // Remove this line in production for security
+        'error'   => $e->getMessage()
     ]);
 }

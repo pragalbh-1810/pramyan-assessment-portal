@@ -126,8 +126,11 @@ try {
     // =========================================
     // CALCULATE PERCENTAGES
     // =========================================
-    $totalQ = count($responses);
-    $pct    = $totalQ > 0 ? round(($total / $totalQ) * 100, 2) : 0;
+   // ✅ Count ALL questions in test, not just answered ones
+$allQStmt = $pdo->prepare("SELECT COUNT(*) FROM questions WHERE test_id = (SELECT test_id FROM student_tests WHERE id = ?)");
+$allQStmt->execute([$student_test_id]);
+$totalQuestions = (int)$allQStmt->fetchColumn();
+$pct = $totalQuestions > 0 ? round(($total / $totalQuestions) * 100, 2) : 0;
 
     $p1 = $skillStats['P1']['total'] > 0
         ? round(($skillStats['P1']['score'] / $skillStats['P1']['total']) * 100, 2) : 0;

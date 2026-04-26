@@ -17,6 +17,18 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once dirname(__DIR__) . '/config/db.php';
 
+// Load .env for JWT secret consistency with middleware/auth.php
+$envPath = dirname(__DIR__) . '/.env';
+if (file_exists($envPath)) {
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        if (strpos($line, '=') === false) continue;
+        [$name, $value] = explode('=', $line, 2);
+        putenv(trim($name) . '=' . trim($value));
+    }
+}
+
 function generateJWT($payload, $secret) {
     $header    = rtrim(base64_encode(json_encode(['alg' => 'HS256', 'typ' => 'JWT'])), '=');
     $payload   = rtrim(base64_encode(json_encode($payload)), '=');
@@ -95,13 +107,17 @@ $parent_phone
 $userId = $pdo->lastInsertId();
 
 // generate jwt
-$secret = "pramyan_super_secret_key_2026";
+$secret = trim((string)getenv("JWT_SECRET"), " \t\n\r\0\x0B\"'");
+if ($secret === '') {
+    $secret = "pramyan_super_secret_key_2026";
+}
 
 $token = generateJWT([
 "id" => (int)$userId,
 "email"=>$email,
 "name" => $name,
 "role"=>"student",
+"class" => (int)$class,
 "iat"=>time(),
 "exp"=>time()+604800
 ],$secret);
@@ -115,6 +131,7 @@ echo json_encode([
 "id"=>(int)$userId,
 "name"=>$name,
 "email"=>$email,
-"role"=>"student"
+"role"=>"student",
+"class"=>(int)$class
 ]
 ]);

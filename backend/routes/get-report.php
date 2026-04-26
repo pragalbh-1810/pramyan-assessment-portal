@@ -131,13 +131,27 @@ try {
     $mathPct = $mathMax > 0 ? round(($result['math_score'] / $mathMax) * 100) : 0;
     $sciPct = $sciMax > 0 ? round(($result['sci_score'] / $sciMax) * 100) : 0;
 
+    // Get test class
+    $stmt = $pdo->prepare("SELECT class FROM tests WHERE id = ?");
+    $stmt->execute([$test_id]);
+    $testRow = $stmt->fetch(PDO::FETCH_ASSOC);
+    $test_class = $testRow ? (int)$testRow['class'] : 0;
+
     /*
     |--------------------------------------------------------------------------
     | CHAPTER & BLOOM SCORES
     |--------------------------------------------------------------------------
     */
-    $chStmt = $pdo->prepare("SELECT chapter, score, max_score, pct, swot_category FROM chapter_scores WHERE result_id = ? ORDER BY pct DESC");
-    $chStmt->execute([$result['id']]);
+    $chStmt = $pdo->prepare("
+        SELECT cs.chapter, cs.score, cs.max_score, cs.pct, cs.swot_category,
+               MAX(q.section) as subject, MAX(q.risk_if_weak) as risk_if_weak
+        FROM chapter_scores cs
+        LEFT JOIN questions q ON q.chapter = cs.chapter AND q.test_id = ?
+        WHERE cs.result_id = ? 
+        GROUP BY cs.chapter, cs.score, cs.max_score, cs.pct, cs.swot_category
+        ORDER BY cs.pct DESC
+    ");
+    $chStmt->execute([$test_id, $result['id']]);
     $chapterScores = $chStmt->fetchAll(PDO::FETCH_ASSOC);
 
     $blStmt = $pdo->prepare("SELECT bloom_level, score, max_score, pct FROM bloom_scores WHERE result_id = ? ORDER BY bloom_level ASC");
@@ -171,6 +185,7 @@ try {
     echo json_encode([
         'success'         => true,
         'student_test_id' => $student_test_id,
+        'test_class'      => $test_class,
         'total_score'     => (int)$result['total_score'],
         'max_score'       => $total,
         'math_score'      => (int)$result['math_score'],
@@ -188,6 +203,7 @@ try {
         'p2'              => (float)($result['p2'] ?? 0),
         'p3'              => (float)($result['p3'] ?? 0),
         'action_plan'     => $result['action_plan'] ?? "",
+        'test_class'      => $test_class,
         'chapter_scores'  => $chapterScores,
         'bloom_scores'    => $bloomScores,
         'questions'       => $questions

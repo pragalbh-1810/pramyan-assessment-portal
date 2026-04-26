@@ -4,8 +4,44 @@ import logo from "../assets/logo.jpeg";
 import { getToken } from "../utils/auth";
 import { apiUrl } from "../utils/api";
 
+function decodeToken(token) {
+  try {
+    return JSON.parse(atob(token.split(".")[1]));
+  } catch {
+    return null;
+  }
+}
+
+function getPerf(pct) {
+  if (pct >= 80) return { label: "Excellent", emoji: "🏆", color: "#1D9E75" };
+  if (pct >= 60) return { label: "Good", emoji: "👍", color: "#185FA5" };
+  if (pct >= 40) return { label: "Average", emoji: "📈", color: "#e07b2a" };
+  return { label: "Needs Work", emoji: "💪", color: "#e24b4a" };
+}
+
+function getStatus(pct) {
+  if (pct >= 80) return { label: "✅ Strong", bg: "#e6f7f1", color: "#1D9E75" };
+  if (pct >= 50) return { label: "⚠️ Average", bg: "#fff4e0", color: "#d97706" };
+  return { label: "❌ Needs Work", bg: "#fff0f0", color: "#e24b4a" };
+}
+
+function getChapterStatus(pct) {
+  const p = parseFloat(pct);
+  if (p >= 70) return { label: "Strength", bg: "#e6f7f1", color: "#1D9E75" };
+  if (p >= 40) return { label: "Gap area", bg: "#fff4e0", color: "#d97706" };
+  return { label: "Priority", bg: "#fff0f0", color: "#e24b4a" };
+}
+
+const BLOOM_LEVELS = [
+  { level: 'L1', name: 'Remember', barColor: '#185FA5' },
+  { level: 'L2', name: 'Understand', barColor: '#2563a8' },
+  { level: 'L3', name: 'Apply', barColor: '#3a7bd5' },
+  { level: 'L4', name: 'Analyze', barColor: '#1D9E75' },
+  { level: 'L5', name: 'Evaluate', barColor: '#e07b2a' },
+];
+
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -31,7 +67,7 @@ const styles = `
 
   /* ── TOPBAR ── */
   .report-topbar {
-    background: linear-gradient(145deg, #1D9E75 0%, #185FA5 100%);
+    background: linear-gradient(135deg, #1D9E75 0%, #185FA5 100%);
     padding: 0 28px;
     height: 64px;
     display: flex;
@@ -64,6 +100,7 @@ const styles = `
     font-size: 13px;
     font-weight: 600;
     color: white;
+    font-family: 'Inter', sans-serif;
   }
   .topbar-sub {
     font-size: 11px;
@@ -75,557 +112,110 @@ const styles = `
   .report-main {
     max-width: 900px;
     margin: 0 auto;
-    padding: 28px 20px 48px;
+    padding: 32px 20px 60px;
     animation: fadeIn 0.5s ease both;
   }
 
   /* ── SECTION TITLE ── */
-  .section-label {
-    font-size: 10px;
-    font-weight: 700;
-    color: #185FA5;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-bottom: 12px;
-    font-family: 'Inter', sans-serif;
+  .eyebrow {
+    font-size: 16px; 
+    font-weight: 800; 
+    color: #185FA5; 
+    margin: 36px 0 20px 0; 
+    font-family: 'Sora', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
   /* ── HERO SCORE CARD ── */
   .hero-card {
-    background: linear-gradient(145deg, #1D9E75 0%, #185FA5 100%);
+    background: linear-gradient(135deg, #1D9E75 0%, #185FA5 100%);
     border-radius: 24px;
-    padding: 28px 32px;
-    margin-bottom: 20px;
+    padding: 32px;
+    margin-bottom: 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-    box-shadow: 0 8px 32px rgba(24,95,165,0.2);
-    animation: fadeInUp 0.5s ease both;
+    gap: 18px;
+    box-shadow: 0 8px 32px rgba(24,95,165,.2);
+    animation: fadeUp .4s ease .05s both;
   }
-  .hero-left {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    text-align: left;
+  .hero-l { display: flex; flex-direction: column; gap: 5px; }
+  .hero-tag { font-size: 12px; color: rgba(255,255,255,.8); font-family: 'Inter', sans-serif; }
+  .hero-name { font-size: 22px; font-weight: 800; color: #fff; margin: 4px 0; }
+  .hero-sub { font-size: 12px; color: rgba(255,255,255,.7); font-family: 'Inter', sans-serif; }
+  .hero-r { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+  .perf-lbl { font-size: 14px; font-weight: 700; color: #fff; }
+  .score-ring {
+    width: 96px; height: 96px; border-radius: 50%;
+    background: rgba(255,255,255,.15); border: 3px solid rgba(255,255,255,.4);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
   }
-  .hero-greeting {
-    font-size: 13px;
-    color: rgba(255,255,255,0.8);
-    font-family: 'Inter', sans-serif;
-  }
-  .hero-name {
-    font-size: 22px;
-    font-weight: 700;
-    color: white;
-  }
-  .hero-test {
-    font-size: 12px;
-    color: rgba(255,255,255,0.7);
-    font-family: 'Inter', sans-serif;
-  }
-  .hero-right {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    flex-shrink: 0;
-  }
-  .score-circle {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    border: 3px solid rgba(255,255,255,0.4);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .score-num {
-    font-size: 28px;
-    font-weight: 700;
-    color: white;
-    line-height: 1;
-  }
-  .score-total {
-    font-size: 12px;
-    color: rgba(255,255,255,0.7);
-    font-family: 'Inter', sans-serif;
-  }
+  .ring-num { font-size: 28px; font-weight: 800; color: #fff; line-height: 1; }
+  .ring-den { font-size: 12px; color: rgba(255,255,255,.7); font-family: 'DM Sans', sans-serif; }
 
   /* ── SUBJECT CARDS ── */
-  .subject-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 20px;
-    animation: fadeInUp 0.5s ease 0.1s both;
-  }
-  .subject-card {
-    background: white;
-    border-radius: 18px;
-    padding: 20px;
-    box-shadow: 0 2px 16px rgba(24,95,165,0.07);
-    border: 1.5px solid #f0f4fb;
-  }
-  .subject-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .subject-name {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 700;
-    color: #0d1f3c;
-  }
-  .subject-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-  }
-  .subject-pct {
-    font-size: 22px;
-    font-weight: 700;
-  }
-  .progress-bar-wrap {
-    height: 8px;
-    background: #f0f4fb;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 10px;
-  }
-  .progress-bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 1s ease;
-  }
-  .subject-stats {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: #888;
-    font-family: 'Inter', sans-serif;
-  }
+  .sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; animation: fadeUp .4s ease .08s both; }
+  .sub-card { background: #fff; border-radius: 18px; padding: 24px; box-shadow: 0 4px 16px rgba(24,95,165,.05); border: 1px solid #e2edf8; }
+  .sub-name { font-size: 15px; font-weight: 700; color: #0d1f3c; display: flex; align-items: center; gap: 8px;}
+  .sub-ico { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .sub-pct { font-size: 20px; font-weight: 800; }
+  .bar-bg { height: 8px; background: #f0f4fb; border-radius: 4px; margin: 12px 0; overflow: hidden; }
+  .bar-fg { height: 100%; border-radius: 4px; transition: width 1.2s ease; }
+  .sub-bot { display: flex; justify-content: space-between; font-size: 11px; color: #aaa; font-family: 'DM Sans', sans-serif; align-items: center;}
+  .sub-st { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
 
   /* ── STATS ROW ── */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-    animation: fadeInUp 0.5s ease 0.15s both;
-  }
-  .stat-card {
-    background: white;
-    border-radius: 14px;
-    padding: 16px;
-    text-align: center;
-    box-shadow: 0 2px 12px rgba(24,95,165,0.06);
-    border: 1.5px solid #f0f4fb;
-  }
-  .stat-icon { font-size: 20px; margin-bottom: 6px; }
-  .stat-value { font-size: 20px; font-weight: 700; color: #0d1f3c; margin-bottom: 2px; }
-  .stat-label { font-size: 10px; color: #999; font-family: 'Inter', sans-serif; text-transform: uppercase; }
-
-  /* ── SWOT CHAPTER ANALYSIS ── */
-  .swot-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-    animation: fadeInUp 0.5s ease 0.2s both;
-  }
-  .swot-card {
-    border-radius: 18px;
-    padding: 20px;
-    border: 1.5px solid transparent;
-    display: flex;
-    flex-direction: column;
-  }
-  .swot-card.strength { background: #f0fdf4; border-color: #bbf7d0; }
-  .swot-card.opportunity { background: #fffbeb; border-color: #fef08a; }
-  .swot-card.weakness { background: #fef2f2; border-color: #fecaca; }
-
-  .swot-header {
-    font-weight: 700;
-    font-size: 15px;
-    color: #0d1f3c;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .swot-desc {
-    font-size: 11px;
-    color: #666;
-    margin-bottom: 16px;
-    font-family: 'Inter', sans-serif;
-    line-height: 1.4;
-  }
-  .swot-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
-  }
-  .swot-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: white;
-    padding: 12px 14px;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-  }
-  .swot-item-name { font-size: 12px; font-weight: 600; color: #1a1a1a; line-height: 1.3;}
-  .swot-item-score { font-size: 13px; font-weight: 700; }
-
-  /* ── BLOOM'S ANALYSIS TABLE ── */
-  .bloom-container {
-    background: white;
-    padding: 0;
-    border: none;
-    box-shadow: none;
-    margin-bottom: 24px;
-    animation: fadeInUp 0.5s ease 0.25s both;
-  }
-  .bloom-header-text {
-    font-size: 24px;
-    font-weight: 700;
-    color: #185FA5;
-    margin-bottom: 8px;
-    font-family: 'Inter', sans-serif;
-  }
-  .bloom-desc-text {
-    font-size: 13px;
-    color: #444;
-    margin-bottom: 16px;
-    font-family: 'Inter', sans-serif;
-    line-height: 1.5;
-  }
-  .bloom-purple-quote {
-    background-color: #efebf5;
-    border-left: 4px solid #8e62b6;
-    padding: 16px;
-    margin-bottom: 24px;
-    font-style: italic;
-    color: #49335e;
-    font-size: 13px;
-    font-family: 'Inter', sans-serif;
-    line-height: 1.5;
-  }
-  .bloom-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    margin-bottom: 24px;
-  }
-  .bloom-table th {
-    background: #234674;
-    color: white;
-    font-weight: 600;
-    padding: 12px;
-    text-align: center;
-    border: 1px solid #234674;
-  }
-  .bloom-table td {
-    padding: 12px;
-    border: 1px solid #e2edf8;
-    text-align: center;
-    color: #333;
-  }
-  .bloom-table td.left-align {
-    text-align: left;
-    font-weight: 600;
-  }
-  .bloom-chart-section {
-    margin-bottom: 24px;
-  }
-  .bloom-chart-title {
-    font-weight: 700;
-    font-size: 14px;
-    margin-bottom: 16px;
-    font-family: 'Inter', sans-serif;
-    color: #1a1a1a;
-  }
-  .bloom-bar-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 12px;
-    gap: 16px;
-  }
-  .bloom-bar-label {
-    width: 140px;
-    font-size: 13px;
-    font-family: 'Inter', sans-serif;
-    text-align: right;
-  }
-  .bloom-bar-bg {
-    flex: 1;
-    height: 12px;
-    background: #e2edf8;
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .bloom-bar-fill {
-    height: 100%;
-    border-radius: 6px;
-  }
-  .bloom-bar-pct {
-    width: 40px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'Inter', sans-serif;
-    text-align: right;
-  }
-  .bloom-actions-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    margin-bottom: 24px;
-  }
-  .bloom-actions-table td {
-    padding: 12px;
-    border: 1px solid #e2edf8;
-    line-height: 1.5;
-    background: white;
-  }
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; animation: fadeUp .4s ease .1s both; }
+  .stat-box { background: #fff; border-radius: 16px; padding: 20px; text-align: center; border: 1px solid #e2edf8; box-shadow: 0 2px 10px rgba(24,95,165,.05); }
+  .stat-ico { font-size: 18px; margin-bottom: 5px; }
+  .stat-val { font-size: 22px; font-weight: 800; margin: 6px 0 2px; }
+  .stat-lbl { font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: .3px; font-family: 'DM Sans', sans-serif; }
 
   /* ── NOTIFICATION BANNER ── */
   .notify-banner {
-    background: white;
-    border: 1.5px solid #d4e4f7;
-    border-radius: 16px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 12px rgba(24,95,165,0.06);
-    animation: fadeInUp 0.5s ease 0.3s both;
+    background: white; border: 1.5px solid #d4e4f7; border-radius: 16px; padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px; margin-bottom: 32px;
+    box-shadow: 0 4px 16px rgba(24,95,165,0.05); animation: fadeInUp 0.5s ease 0.3s both;
   }
-  .notify-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: #EEF4FF;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
-  }
+  .notify-icon { width: 40px; height: 40px; border-radius: 12px; background: #EEF4FF; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
   .notify-content { flex: 1; }
   .notify-title { font-size: 13px; font-weight: 700; color: #0d1f3c; margin-bottom: 2px; }
   .notify-text { font-size: 11.5px; color: #888; font-family: 'Inter', sans-serif; line-height: 1.5; }
-  .notify-badge {
-    background: linear-gradient(135deg, #1D9E75, #185FA5);
-    color: white;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-family: 'Inter', sans-serif;
-    white-space: nowrap;
-  }
+  .notify-badge { background: linear-gradient(135deg, #1D9E75, #185FA5); color: white; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; font-family: 'Inter', sans-serif; white-space: nowrap; flex-shrink: 0; }
 
   /* ── BLURRED SECTIONS ── */
-  .blurred-section {
-    position: relative;
-    margin-bottom: 20px;
-    border-radius: 18px;
-    overflow: hidden;
-    animation: fadeInUp 0.5s ease 0.35s both;
-  }
-  .blur-content { filter: blur(5px); pointer-events: none; user-select: none; }
-  .blur-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(238,244,255,0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    border-radius: 18px;
-    backdrop-filter: blur(2px);
-  }
-  .blur-msg {
-    background: white;
-    border-radius: 16px;
-    padding: 16px 24px;
-    text-align: center;
-    box-shadow: 0 8px 24px rgba(24,95,165,0.15);
-    border: 1.5px solid #d4e4f7;
-    max-width: 280px;
-  }
+  .blurred-section { position: relative; margin-bottom: 24px; border-radius: 20px; overflow: hidden; animation: fadeInUp 0.5s ease 0.35s both; }
+  .blur-content { filter: blur(6px); pointer-events: none; user-select: none; }
+  .blur-overlay { position: absolute; inset: 0; background: rgba(238,244,255,0.6); display: flex; align-items: center; justify-content: center; z-index: 10; border-radius: 20px; backdrop-filter: blur(2px); }
+  .blur-msg { background: white; border-radius: 16px; padding: 20px 24px; text-align: center; box-shadow: 0 8px 24px rgba(24,95,165,0.15); border: 1.5px solid #d4e4f7; max-width: 280px; }
   .blur-msg-icon { font-size: 28px; margin-bottom: 6px; }
-  .blur-msg-title { font-size: 13px; font-weight: 700; color: #0d1f3c; margin-bottom: 4px; }
-  .blur-msg-text { font-size: 11px; color: #888; font-family: 'Inter', sans-serif; line-height: 1.5; }
+  .blur-msg-title { font-size: 14px; font-weight: 700; color: #0d1f3c; margin-bottom: 4px; }
+  .blur-msg-text { font-size: 11.5px; color: #888; font-family: 'Inter', sans-serif; line-height: 1.5; }
 
-  .blurred-card {
-    background: white;
-    border-radius: 18px;
-    padding: 20px;
-    box-shadow: 0 2px 16px rgba(24,95,165,0.07);
-    border: 1.5px solid #f0f4fb;
-  }
-  .blurred-title { font-size: 14px; font-weight: 700; color: #0d1f3c; margin-bottom: 16px; }
-  .fake-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .fake-cell { height: 60px; background: #f0f4fb; border-radius: 10px; }
-  .fake-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .fake-label { width: 120px; height: 12px; background: #e2edf8; border-radius: 4px; flex-shrink: 0; }
-  .fake-bar { flex: 1; height: 12px; border-radius: 4px; }
-  .fake-pct { width: 36px; height: 12px; background: #e2edf8; border-radius: 4px; flex-shrink: 0; }
-
-  /* ── CHAPTER ANALYSIS TABLE ── */
-  .chapter-container {
-    background: white;
-    padding: 0;
-    border: none;
-    box-shadow: none;
-    margin-bottom: 24px;
-    animation: fadeInUp 0.5s ease 0.2s both;
-  }
-  .chapter-header-text {
-    font-size: 24px;
-    font-weight: 700;
-    color: #185FA5;
-    margin-bottom: 8px;
-    font-family: 'Inter', sans-serif;
-  }
-  .chapter-desc-text {
-    font-size: 13px;
-    color: #444;
-    margin-bottom: 16px;
-    font-family: 'Inter', sans-serif;
-    line-height: 1.5;
-  }
-  .chapter-purple-quote {
-    background-color: #efebf5;
-    border-left: 4px solid #8e62b6;
-    padding: 16px;
-    margin-bottom: 24px;
-    font-style: italic;
-    color: #49335e;
-    font-size: 13px;
-    font-family: 'Inter', sans-serif;
-    line-height: 1.5;
-  }
-  .chapter-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    margin-bottom: 24px;
-  }
-  .chapter-table th {
-    background: #234674;
-    color: white;
-    font-weight: 600;
-    padding: 12px;
-    text-align: center;
-    border: 1px solid #234674;
-  }
-  .chapter-table td {
-    padding: 12px;
-    border: 1px solid #e2edf8;
-    text-align: center;
-    color: #333;
-  }
-  .chapter-table td.left-align {
-    text-align: left;
-    font-weight: 600;
-  }
-  .chapter-table td.risk-text {
-    text-align: left;
-    color: #666;
-    font-size: 12px;
-  }
-  .chapter-status-badge {
-    font-weight: 700;
-  }
-  .chapter-green-note {
-    background-color: #e6f7f1;
-    border: 2px solid #a3e6cd;
-    padding: 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    color: #1a4f3e;
-    font-family: 'Inter', sans-serif;
-    line-height: 1.5;
-    margin-bottom: 24px;
-  }
+  .blurred-card { background: white; border-radius: 20px; padding: 32px; box-shadow: 0 4px 24px rgba(24,95,165,0.06); border: 1px solid #e2edf8; }
+  .blurred-title { font-size: 16px; font-weight: 800; color: #0d1f3c; margin-bottom: 20px; font-family:'Sora', sans-serif; }
+  .fake-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .fake-cell { height: 80px; background: #f0f4fb; border-radius: 12px; }
+  .fake-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .fake-label { width: 140px; height: 14px; background: #e2edf8; border-radius: 4px; flex-shrink: 0; }
+  .fake-bar { flex: 1; height: 14px; border-radius: 4px; }
+  .fake-pct { width: 40px; height: 14px; background: #e2edf8; border-radius: 4px; flex-shrink: 0; }
 
   @media (max-width: 768px) {
-    .swot-grid { grid-template-columns: 1fr; gap: 12px; }
-    .report-outer .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .report-outer .subject-row { grid-template-columns: 1fr; gap: 10px; }
-    .report-outer .hero-card { flex-direction: column; text-align: left; align-items: stretch; }
-    .report-outer .hero-right { align-self: stretch; justify-content: space-between; }
-    
-    .report-outer .notify-banner {
-      flex-direction: column; text-align: center; padding: 20px;
-    }
-    .chapter-table, .bloom-table, .bloom-actions-table { display: block; overflow-x: auto; white-space: nowrap; }
+    .report-outer .report-topbar { padding: 10px 16px !important; margin: 10px !important; }
+    .hero-card { flex-direction: column; align-items: stretch; padding: 24px; text-align: left; }
+    .hero-r { flex-direction: row; justify-content: space-between; align-items: center; width: 100%; margin-top: 10px;}
+    .hero-r > div { text-align: left !important; }
+    .sub-grid { grid-template-columns: 1fr; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .notify-banner { flex-direction: column; text-align: center; padding: 24px 20px; }
+    .notify-badge { align-self: center; margin-top: 8px;}
+    .fake-grid { grid-template-columns: 1fr; }
+    .fake-label { width: 80px; }
   }
 `;
-
-function decodeToken(token) {
-  try {
-    return JSON.parse(atob(token.split(".")[1]));
-  } catch {
-    return null;
-  }
-}
-
-function getPerformanceLabel(pct) {
-  if (pct >= 80) return { label: "Excellent", emoji: "🏆", color: "#1D9E75" };
-  if (pct >= 60) return { label: "Good", emoji: "👍", color: "#185FA5" };
-  if (pct >= 40) return { label: "Average", emoji: "📈", color: "#e07b2a" };
-  return { label: "Needs Work", emoji: "💪", color: "#e24b4a" };
-}
-
-function getSubjectStatus(pct) {
-  if (pct >= 80) return { label: "✅ Strong", bg: "#e6f7f1", color: "#1D9E75" };
-  if (pct >= 50) return { label: "⚠️ Average", bg: "#fff4e6", color: "#e07b2a" };
-  return { label: "❌ Needs Work", bg: "#fff0f0", color: "#e24b4a" };
-}
-
-function getBloomResult(pct) {
-  if (pct === 'N/A') return { label: '-', bg: 'transparent', color: '#444' };
-  const p = parseFloat(pct);
-  if (p >= 70) return { label: "Strong", bg: "#e6f7f1", color: "#1D9E75" };
-  if (p >= 40) return { label: "On track", bg: "#eef4ff", color: "#185fa5" };
-  if (p >= 20) return { label: "Needs work", bg: "#fcebc5", color: "#a06a1b" };
-  return { label: "Critical gap", bg: "#fbeae9", color: "#c94a4a" };
-}
-
-// FIX: ADDED MISSING BRACE HERE
-function getChapterStatus(pct) {
-  const p = parseFloat(pct);
-  if (p >= 70) return { label: "Strength", bg: "#e6f7f1", color: "#1D9E75" };
-  if (p >= 40) return { label: "Gap area", bg: "#fcebc5", color: "#a06a1b" };
-  return { label: "Priority", bg: "#fbeae9", color: "#c94a4a" };
-}
-
-const BLOOM_LEVELS = [
-  { level: 'L1', name: 'Remember', meaning: 'Recall facts & definitions', action: 'Memory gaps. Daily 10-minute flashcard drill — key terms, definitions, facts from each chapter.', barColor: '#E88E35' },
-  { level: 'L2', name: 'Understand', meaning: 'Explain & interpret concepts', action: 'Memorised without meaning. Always ask \'why?\' and \'how?\'. Use real-life examples and drawings.', barColor: '#E25844' },
-  { level: 'L3', name: 'Apply', meaning: 'Use formulas to solve', action: 'Cannot execute procedures. Walk through NCERT solved examples one step at a time — identify exactly which step fails.', barColor: '#E85F2C' },
-  { level: 'L4', name: 'Analyze', meaning: 'Reason across multiple steps', action: 'Cannot think in multiple steps. Teach: read -> identify what is given -> plan -> solve. Practice multi-step problems.', barColor: '#E85F2C' },
-  { level: 'L5', name: 'Evaluate', meaning: 'Judge & synthesise ideas', action: 'No higher-order thinking yet. Practice HOTS and competency-based questions from CBSE Class 5 & 6 banks.', barColor: '#4A8CDB' },
-];
 
 export default function Report() {
   const navigate = useNavigate();
@@ -633,6 +223,7 @@ export default function Report() {
   const [report, setReport] = useState(null);
   const [studentName, setStudentName] = useState("Student");
   
+  // Role verification state
   const [userRole, setUserRole] = useState("student");
   const [loading, setLoading] = useState(true);
 
@@ -702,21 +293,111 @@ export default function Report() {
     );
   }
 
-  const perf = getPerformanceLabel(report.overall_pct);
-  const mathStatus = getSubjectStatus(report.math_pct);
-  const sciStatus = getSubjectStatus(report.sci_pct);
+  // 👇 ========================================================
+  // DYNAMIC RECALCULATION ENGINE 
+  // ========================================================
+  let activeReport = { ...report };
+  
+  if (report.questions && report.questions.length > 0) {
+    const qs = report.questions;
+    const totalMax = qs.length;
+    let totalScore = 0;
+    let mathMax = 0, mathScore = 0;
+    let sciMax = 0, sciScore = 0;
+    let skipped = 0;
 
-  const chapters = report.chapter_scores || [];
-  const strengths = chapters.filter(c => c.pct >= 70);
-  const opportunities = chapters.filter(c => c.pct >= 40 && c.pct < 70);
-  const weaknesses = chapters.filter(c => c.pct < 40);
+    const bMap = {};
+    const cMap = {};
+    let p1m=0, p1s=0, p2m=0, p2s=0, p3m=0, p3s=0;
 
+    qs.forEach(q => {
+      const ok = parseInt(q.is_correct) === 1;
+      if (ok) totalScore++;
+      if (!q.selected_option) skipped++;
+
+      // Subjects
+      const sec = (q.section || '').toLowerCase();
+      if (sec.includes('math')) { mathMax++; if(ok) mathScore++; }
+      else if (sec.includes('sci')) { sciMax++; if(ok) sciScore++; }
+
+      // Bloom
+      const lvl = (q.bloom_level || 'UNKNOWN').toUpperCase();
+      if(!bMap[lvl]) bMap[lvl] = { max_score: 0, score: 0 };
+      bMap[lvl].max_score++;
+      if(ok) bMap[lvl].score++;
+
+      // Chapters
+      const ch = q.chapter || 'Unknown';
+      if(!cMap[ch]) cMap[ch] = { chapter: ch, subject: q.section, swot_category: '', max_score: 0, score: 0, risk_if_weak: q.risk_if_weak || '' };
+      cMap[ch].max_score++;
+      if(ok) cMap[ch].score++;
+
+      // Skills
+      const sk = (q.skill_type || '').toUpperCase();
+      if (sk.includes('P1') || sk.includes('CONCEPT')) { p1m++; if(ok) p1s++; }
+      else if (sk.includes('P2') || sk.includes('PROCED')) { p2m++; if(ok) p2s++; }
+      else if (sk.includes('P3') || sk.includes('APPLIC')) { p3m++; if(ok) p3s++; }
+    });
+
+    // Build fresh Bloom Array
+    const bloom_scores = Object.keys(bMap).map(k => ({
+      bloom_level: k,
+      score: bMap[k].score,
+      max_score: bMap[k].max_score,
+      pct: bMap[k].max_score > 0 ? ((bMap[k].score / bMap[k].max_score) * 100).toFixed(2) : 0
+    }));
+
+    // Build fresh Chapter Array
+    const chapter_scores = Object.values(cMap).map(c => {
+      const calcPct = c.max_score > 0 ? ((c.score / c.max_score) * 100).toFixed(2) : 0;
+      let swotCat = "weakness";
+      if (calcPct >= 70) swotCat = "strength";
+      else if (calcPct >= 40) swotCat = "opportunity";
+
+      return {
+        ...c,
+        pct: calcPct,
+        swot_category: swotCat
+      };
+    }).sort((a,b) => b.pct - a.pct);
+
+    // Overwrite bad data
+    activeReport = {
+      ...activeReport,
+      total_score: totalScore,
+      max_score: totalMax,
+      overall_pct: totalMax > 0 ? ((totalScore/totalMax)*100).toFixed(2) : 0,
+      math_score: mathScore,
+      math_max: mathMax,
+      math_pct: mathMax > 0 ? Math.round((mathScore/mathMax)*100) : 0,
+      sci_score: sciScore,
+      sci_max: sciMax,
+      sci_pct: sciMax > 0 ? Math.round((sciScore/sciMax)*100) : 0,
+      bloom_scores: bloom_scores,
+      chapter_scores: chapter_scores,
+      p1: p1m > 0 ? Math.round((p1s/p1m)*100) : 0,
+      p2: p2m > 0 ? Math.round((p2s/p2m)*100) : 0,
+      p3: p3m > 0 ? Math.round((p3s/p3m)*100) : 0,
+      correct: totalScore,
+      unanswered: skipped,
+      wrong: totalMax - totalScore - skipped
+    };
+  }
+  // ========================================================
+
+  const perf = getPerf(activeReport.overall_pct);
+  const mathSt = getStatus(activeReport.math_pct);
+  const sciSt = getStatus(activeReport.sci_pct);
+
+  // BOOLEAN TO CHECK IF USER IS PRIVILEGED
+  // Change to "true" manually here if you want to test the unlocked state on your machine
   const isAuthorized = userRole === "admin" || userRole === "teacher";
 
   return (
     <>
       <style>{styles}</style>
       <div className="report-outer">
+        
         {/* TOPBAR */}
         <div className="report-topbar">
           <div className="topbar-logo">
@@ -729,81 +410,86 @@ export default function Report() {
         </div>
 
         <div className="report-main">
+          
           {/* HERO SCORE CARD */}
-          <div className="section-label">📊 Your Result</div>
+          <div className="eyebrow">📊 Overall Score</div>
           <div className="hero-card">
-            <div className="hero-left">
-              <span className="hero-greeting">Test Completed!</span>
-              <span className="hero-name">{studentName.split(" ")[0]}, here's your score</span>
-              <span className="hero-test">Pramyan Diagnostic Assessment</span>
+            <div className="hero-l">
+              <span className="hero-tag">Diagnostic Assessment Result</span>
+              <span className="hero-name">{studentName.split(" ")[0]}'s Report</span>
+              <span className="hero-sub">Pramyan Foundational Assessment</span>
             </div>
-            <div className="hero-right">
-              <div className="score-circle">
-                <span className="score-num">{report.total_score}</span>
-                <span className="score-total">/ {report.max_score}</span>
+            <div className="hero-r">
+              <div style={{textAlign:'right'}}>
+                <div className="perf-lbl">{perf.label}</div>
+                <div style={{fontSize:'12px', color:'rgba(255,255,255,0.7)'}}>Performance</div>
+              </div>
+              <div className="score-ring">
+                <span className="ring-num">{activeReport.total_score}</span>
+                <span className="ring-den">/ {activeReport.max_score}</span>
               </div>
             </div>
           </div>
 
           {/* SUBJECT CARDS */}
-          <div className="section-label">📚 Subject-wise Score</div>
-          <div className="subject-row">
-            <div className="subject-card">
-              <div className="subject-header">
-                <div className="subject-name">
-                  <div className="subject-icon" style={{ background: "#EEF4FF" }}>📐</div>
+          <div className="eyebrow">📚 Subject-wise Score</div>
+          <div className="sub-grid">
+            <div className="sub-card">
+              <div className="sub-top">
+                <div className="sub-name">
+                  <div className="sub-ico" style={{ background: "#EEF4FF" }}>📐</div>
                   Mathematics
                 </div>
-                <span className="subject-pct" style={{ color: "#185FA5" }}>{report.math_pct}%</span>
+                <span className="sub-pct" style={{ color: "#185FA5" }}>{activeReport.math_pct}%</span>
               </div>
-              <div className="progress-bar-wrap">
-                <div className="progress-bar-fill" style={{ width: `${report.math_pct}%`, background: "linear-gradient(90deg, #185FA5, #1D9E75)" }} />
+              <div className="bar-bg">
+                <div className="bar-fg" style={{ width: `${activeReport.math_pct}%`, background: "linear-gradient(90deg, #185FA5, #1D9E75)" }} />
               </div>
-              <div className="subject-stats">
-                <span>{report.math_score} / {report.math_max} marks</span>
-                <span className="subject-status" style={{ background: mathStatus.bg, color: mathStatus.color }}>{mathStatus.label}</span>
+              <div className="sub-bot">
+                <span>{activeReport.math_score} / {activeReport.math_max} marks</span>
+                <span className="sub-st" style={{ background: mathSt.bg, color: mathSt.color }}>{mathSt.label}</span>
               </div>
             </div>
 
-            <div className="subject-card">
-              <div className="subject-header">
-                <div className="subject-name">
-                  <div className="subject-icon" style={{ background: "#e6f7f1" }}>🔬</div>
+            <div className="sub-card">
+              <div className="sub-top">
+                <div className="sub-name">
+                  <div className="sub-ico" style={{ background: "#e6f7f1" }}>🔬</div>
                   Science
                 </div>
-                <span className="subject-pct" style={{ color: "#1D9E75" }}>{report.sci_pct}%</span>
+                <span className="sub-pct" style={{ color: "#1D9E75" }}>{activeReport.sci_pct}%</span>
               </div>
-              <div className="progress-bar-wrap">
-                <div className="progress-bar-fill" style={{ width: `${report.sci_pct}%`, background: "linear-gradient(90deg, #1D9E75, #185FA5)" }} />
+              <div className="bar-bg">
+                <div className="bar-fg" style={{ width: `${activeReport.sci_pct}%`, background: "linear-gradient(90deg, #1D9E75, #185FA5)" }} />
               </div>
-              <div className="subject-stats">
-                <span>{report.sci_score} / {report.sci_max} marks</span>
-                <span className="subject-status" style={{ background: sciStatus.bg, color: sciStatus.color }}>{sciStatus.label}</span>
+              <div className="sub-bot">
+                <span>{activeReport.sci_score} / {activeReport.sci_max} marks</span>
+                <span className="sub-st" style={{ background: sciSt.bg, color: sciSt.color }}>{sciSt.label}</span>
               </div>
             </div>
           </div>
 
           {/* STATS ROW */}
-          <div className="stats-row">
-            <div className="stat-card">
-              <div className="stat-icon">✅</div>
-              <div className="stat-value" style={{ color: "#1D9E75" }}>{report.correct}</div>
-              <div className="stat-label">Correct</div>
+          <div className="stat-row">
+            <div className="stat-box">
+              <div className="stat-ico">✅</div>
+              <div className="stat-val" style={{ color: "#1D9E75" }}>{activeReport.correct}</div>
+              <div className="stat-lbl">Correct</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-icon">❌</div>
-              <div className="stat-value" style={{ color: "#e24b4a" }}>{report.wrong}</div>
-              <div className="stat-label">Wrong</div>
+            <div className="stat-box">
+              <div className="stat-ico">❌</div>
+              <div className="stat-val" style={{ color: "#e24b4a" }}>{activeReport.wrong}</div>
+              <div className="stat-lbl">Wrong</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-icon">⬜</div>
-              <div className="stat-value" style={{ color: "#aaa" }}>{report.unanswered}</div>
-              <div className="stat-label">Skipped</div>
+            <div className="stat-box">
+              <div className="stat-ico">⬜</div>
+              <div className="stat-val" style={{ color: "#aaa" }}>{activeReport.unanswered}</div>
+              <div className="stat-lbl">Skipped</div>
             </div>
-            <div className="stat-card">
-              <div className="stat-icon">🎯</div>
-              <div className="stat-value">{report.overall_pct}%</div>
-              <div className="stat-label">Overall</div>
+            <div className="stat-box">
+              <div className="stat-ico">🎯</div>
+              <div className="stat-val">{activeReport.overall_pct}%</div>
+              <div className="stat-lbl">Overall</div>
             </div>
           </div>
 
@@ -821,82 +507,17 @@ export default function Report() {
             </div>
           )}
 
-          {/* 🚀 EXACT MATCH: CHAPTER-WISE ANALYSIS TABLE */}
-          <div className="section-label">📈 Chapter Analysis — All {chapters.length} Chapters</div>
+          {/* BLURRED — CHAPTER ANALYSIS */}
+          <div className="eyebrow">📈 Chapter-wise Analysis</div>
           {isAuthorized ? (
-            chapters.length > 0 ? (
-              <div className="chapter-container">
-                <div className="chapter-desc-text" style={{ padding: '0' }}>
-                  Walk through the full chapter breakdown so the parent can see exactly where {studentName.split(" ")[0]} stands in every topic.
-                </div>
-
-                <div className="chapter-purple-quote" style={{ margin: '16px 0' }}>
-                  "We tested {chapters.length} chapters from the Class {report.test_class || '10'} syllabus. Each chapter is scored and placed in one of three bands. Let me walk you through all of them so you have the complete picture."
-                </div>
-
-                <div className="chapter-table-wrap" style={{ overflowX: 'auto' }}>
-                  <table className="chapter-table" style={{ width: '100%' }}>
-                    <thead>
-                      <tr>
-                        <th>Chapter</th>
-                        <th>Subject</th>
-                        <th>Marks</th>
-                        <th>Score %</th>
-                        <th>Status</th>
-                        <th>Class {report.test_class || '10'} Risk if Weak</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {chapters.map((ch, i) => {
-                        const status = getChapterStatus(ch.pct);
-                        
-                        let subject = ch.subject;
-                        let risk = ch.risk_if_weak;
-                        
-                        if (!subject || !risk) {
-                          const qMatch = report.questions?.find(q => q.chapter === ch.chapter);
-                          if (qMatch) {
-                            if (!subject) subject = qMatch.section;
-                            if (!risk) risk = qMatch.risk_if_weak;
-                          }
-                        }
-                        
-                        subject = subject || "N/A";
-                        risk = risk || `Class ${report.test_class || '10'} related topics`;
-
-                        return (
-                          <tr key={i}>
-                            <td className="left-align">{ch.chapter}</td>
-                            <td style={{fontWeight: '600'}}>{subject}</td>
-                            <td style={{fontWeight: '600'}}>{ch.score} / {ch.max_score}</td>
-                            <td style={{fontWeight: '700', color: status.color}}>{ch.pct}%</td>
-                            <td style={{background: status.bg, color: status.color}} className="chapter-status-badge">
-                              {status.label}
-                            </td>
-                            <td className="risk-text">{risk}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="chapter-purple-quote">
-                  "{weaknesses.length} out of {chapters.length} chapters are in the Priority zone. This tells us {studentName.split(" ")[0]} needs structured support before Class {report.test_class || '10'} begins, not after. The good news is that {opportunities.length} chapters are Gap chapters — {opportunities.map(o => o.chapter).join(", ") || 'none'}. Just 2-3 focused sessions each can convert these into Strengths. These are our biggest quick wins."
-                </div>
-
-                <div className="chapter-green-note">
-                  <strong>Important note for parents:</strong> This report is not a judgment — it is a map. It tells us exactly where to go next. {studentName.split(" ")[0]} has shown they understand Math concepts (P1 at {report.p1 || 0}%) — that is a real strength we can build on. With focused effort and the right plan, they will enter Class {report.test_class || '10'} on a much stronger footing.
-                </div>
-              </div>
-            ) : (
-              <p style={{fontSize: '12px', color: '#888'}}>No Chapter Analysis data available for this test.</p>
-            )
+             <div className="blurred-card">
+                 <div className="blurred-title">To view exact Chapter details, log in as a Teacher.</div>
+             </div>
           ) : (
             <div className="blurred-section">
               <div className="blur-content">
                 <div className="blurred-card">
-                  <div className="blurred-title">📈 Chapter-wise Performance</div>
+                  <div className="blurred-title">📈 Chapter Performance Matrix</div>
                   {[...Array(5)].map((_, i) => (
                     <div className="fake-bar-row" key={i}>
                       <div className="fake-label" />
@@ -911,160 +532,19 @@ export default function Report() {
                   <div className="blur-msg-icon">🔒</div>
                   <div className="blur-msg-title">Teacher Only</div>
                   <div className="blur-msg-text">
-                    Chapter analysis is available only to your teacher and admin. Contact your teacher to see this report.
+                    Detailed Chapter SWOT Matrix (Strengths, Weaknesses, Opportunities, Threats) is locked. Contact your teacher.
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* 🚀 EXACT MATCH: BLOOM'S COGNITIVE ANALYSIS TABLE */}
-          <div className="section-label">🌸 Bloom's Taxonomy — Cognitive Level Analysis</div>
+          {/* BLURRED — SKILL ANALYSIS */}
+          <div className="eyebrow">🎯 Concept vs Procedure</div>
           {isAuthorized ? (
-            <div className="bloom-container">
-              <div className="bloom-header-text">What is Bloom's Taxonomy Analysis?</div>
-              <div className="bloom-desc-text">
-                Bloom's tells us how deeply {studentName.split(" ")[0]} thinks — not just what they know, but at which cognitive level they can operate. There are 5 levels tested in this paper.
-              </div>
-              
-              <div className="bloom-purple-quote">
-                "Beyond chapters and skills, we also measure how deeply {studentName.split(" ")[0]} processes information. Think of it as five floors of a building. Most students only live on the ground floor (remembering facts). Class {report.test_class || '10'} expects students on floors 3 and 4 regularly. Let me show you where {studentName.split(" ")[0]} currently stands."
-              </div>
-
-              <div className="bloom-table-wrap">
-                <table className="bloom-table">
-                  <thead>
-                    <tr>
-                      <th style={{width: '20%'}}>Level</th>
-                      <th style={{width: '35%'}}>What it means</th>
-                      <th style={{width: '15%'}}>Marks</th>
-                      <th style={{width: '15%'}}>Score %</th>
-                      <th style={{width: '15%'}}>Result</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {BLOOM_LEVELS.map((levelObj, i) => {
-                      const dbScore = report.bloom_scores?.find(b => b.bloom_level.toUpperCase().includes(levelObj.level));
-                      const maxMarks = dbScore ? dbScore.max_score : 0;
-                      const scored = dbScore ? dbScore.score : 0;
-                      const pct = dbScore ? dbScore.pct : 0;
-                      const result = getBloomResult(pct);
-
-                      return (
-                        <tr key={i}>
-                          <td className="left-align">{levelObj.level} — {levelObj.name}</td>
-                          <td className="left-align">{levelObj.meaning}</td>
-                          <td>{scored} / {maxMarks}</td>
-                          <td style={{fontWeight: '700'}}>{pct}%</td>
-                          <td style={{background: result.bg, color: result.color, fontWeight: '600'}}>
-                            {result.label}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="bloom-chart-section">
-                <div className="bloom-chart-title">Visual score at each cognitive level:</div>
-                {BLOOM_LEVELS.map((levelObj, i) => {
-                  const dbScore = report.bloom_scores?.find(b => b.bloom_level.toUpperCase().includes(levelObj.level));
-                  const pct = dbScore ? dbScore.pct : 0;
-
-                  return (
-                    <div className="bloom-bar-row" key={i}>
-                      <div className="bloom-bar-label">{levelObj.level} — {levelObj.name}</div>
-                      <div className="bloom-bar-bg">
-                        <div className="bloom-bar-fill" style={{ width: `${pct}%`, background: levelObj.barColor }} />
-                      </div>
-                      <div className="bloom-bar-pct">{pct}%</div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="bloom-chart-section">
-                <div className="bloom-chart-title">What to do at each level — specific actions:</div>
-                <div className="bloom-table-wrap">
-                  <table className="bloom-actions-table">
-                    <tbody>
-                      {BLOOM_LEVELS.map((levelObj, i) => {
-                        const dbScore = report.bloom_scores?.find(b => b.bloom_level.toUpperCase().includes(levelObj.level));
-                        const pct = dbScore ? dbScore.pct : 0;
-                        const result = getBloomResult(pct);
-
-                        return (
-                          <tr key={i}>
-                            <td style={{width: '20%', fontWeight: '700', color: result.color, textAlign: 'center'}}>
-                              {levelObj.level} — {pct}%
-                            </td>
-                            <td style={{width: '80%'}}>
-                              {levelObj.action}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="bloom-purple-quote">
-                "{studentName.split(" ")[0]} currently struggles at every level — including basic recall (L1 at {report.bloom_scores?.find(b => b.bloom_level.toUpperCase().includes('L1'))?.pct || 0}%). The most urgent fix is L2 — they scored {report.bloom_scores?.find(b => b.bloom_level.toUpperCase().includes('L2'))?.score || 0} here, which means they are memorising facts without truly understanding them. This explains why they know a concept but cannot solve a problem with it. Fixing L2 will automatically lift L3, L4 and L5 over time."
-              </div>
-            </div>
-          ) : (
-            <div className="blurred-section">
-              <div className="blur-content">
-                <div className="blurred-card">
-                  <div className="blurred-title">🌸 Bloom's Taxonomy Report</div>
-                  <table className="bloom-table" style={{ width: '100%', filter: 'blur(2px)' }}>
-                    <thead>
-                      <tr><th>Level</th><th>Name</th><th>Max Marks</th><th>Score %</th></tr>
-                    </thead>
-                    <tbody>
-                      {[...Array(5)].map((_, i) => (
-                        <tr key={i}>
-                          <td>L{i+1}</td>
-                          <td>Loading...</td>
-                          <td>0</td>
-                          <td>0%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div className="blur-overlay">
-                <div className="blur-msg">
-                  <div className="blur-msg-icon">🔒</div>
-                  <div className="blur-msg-title">Teacher Only</div>
-                  <div className="blur-msg-text">
-                    Bloom's cognitive level analysis is available to your teacher only. Ask them to share your results!
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SKILL ANALYSIS */}
-          <div className="section-label">🎯 Skill Analysis</div>
-          {isAuthorized ? (
-            <div className="stats-row">
-              <div className="stat-card">
-                <div className="stat-value" style={{color: '#1D9E75'}}>{report.p1}%</div>
-                <div className="stat-label">P1 Concepts</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value" style={{color: '#185FA5'}}>{report.p2}%</div>
-                <div className="stat-label">P2 Procedures</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value" style={{color: '#e07b2a'}}>{report.p3}%</div>
-                <div className="stat-label">P3 Application</div>
-              </div>
-            </div>
+            <div className="blurred-card">
+                 <div className="blurred-title">To view exact Skill breakdown, log in as a Teacher.</div>
+             </div>
           ) : (
             <div className="blurred-section">
               <div className="blur-content">
@@ -1082,40 +562,51 @@ export default function Report() {
                   <div className="blur-msg-icon">🔒</div>
                   <div className="blur-msg-title">Teacher Only</div>
                   <div className="blur-msg-text">
-                    Skill analysis (P1 Concepts, P2 Procedure, P3 Application) is visible to your teacher only.
+                    Skill analysis (P1 Conceptual Clarity, P2 Procedural Accuracy, P3 Application) is visible to your teacher only.
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* SCORE ENTRY / QUESTION BREAKDOWN */}
-          <div className="section-label">📋 Question-wise Breakdown</div>
+          {/* BLURRED — BLOOM'S ANALYSIS */}
+          <div className="eyebrow">🌸 Bloom's Taxonomy</div>
           {isAuthorized ? (
-            <div className="subject-card" style={{overflowX: 'auto', padding: '16px'}}>
-              <table style={{width: '100%', fontSize: '12px', borderCollapse: 'collapse', minWidth: '500px'}}>
-                <thead>
-                  <tr style={{borderBottom: '2px solid #e2edf8', color: '#888', textAlign: 'left'}}>
-                    <th style={{padding: '10px 8px'}}>Q No.</th>
-                    <th style={{padding: '10px 8px'}}>Chapter</th>
-                    <th style={{padding: '10px 8px'}}>Skill Type</th>
-                    <th style={{padding: '10px 8px'}}>Result</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {report.questions?.map(q => (
-                    <tr key={q.question_id} style={{borderBottom: '1px solid #f0f4fb'}}>
-                      <td style={{padding: '10px 8px', fontWeight: '600'}}>{q.question_id}</td>
-                      <td style={{padding: '10px 8px'}}>{q.chapter}</td>
-                      <td style={{padding: '10px 8px'}}>{q.skill_type || 'N/A'}</td>
-                      <td style={{padding: '10px 8px', color: q.is_correct ? '#1D9E75' : '#e24b4a', fontWeight: 'bold'}}>
-                        {q.is_correct ? '✅ Correct' : '❌ Wrong'}
-                      </td>
-                    </tr>
+            <div className="blurred-card">
+                 <div className="blurred-title">To view exact Bloom's levels, log in as a Teacher.</div>
+             </div>
+          ) : (
+            <div className="blurred-section">
+              <div className="blur-content">
+                <div className="blurred-card">
+                  <div className="blurred-title">🌸 Bloom's Cognitive Levels</div>
+                  {BLOOM_LEVELS.map((level, i) => (
+                    <div className="fake-bar-row" key={i}>
+                      <div className="fake-label" />
+                      <div className="fake-bar" style={{ background: `hsl(${160 + i * 15}, 50%, 75%)` }} />
+                      <div className="fake-pct" />
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </div>
+              <div className="blur-overlay">
+                <div className="blur-msg">
+                  <div className="blur-msg-icon">🔒</div>
+                  <div className="blur-msg-title">Teacher Only</div>
+                  <div className="blur-msg-text">
+                    Bloom's cognitive level analysis (L1 Remember to L5 Evaluate) is available to your teacher only.
+                  </div>
+                </div>
+              </div>
             </div>
+          )}
+
+          {/* BLURRED — SCORE ENTRY */}
+          <div className="eyebrow">📋 Question-wise Breakdown</div>
+          {isAuthorized ? (
+            <div className="blurred-card">
+                 <div className="blurred-title">To view the raw question data, log in as a Teacher.</div>
+             </div>
           ) : (
             <div className="blurred-section">
               <div className="blur-content">
@@ -1133,7 +624,7 @@ export default function Report() {
                   <div className="blur-msg-icon">🔒</div>
                   <div className="blur-msg-title">Teacher Only</div>
                   <div className="blur-msg-text">
-                    Detailed question-wise score entry is visible to your teacher and admin only.
+                    Detailed question-by-question breakdown, including correct/incorrect options, is locked.
                   </div>
                 </div>
               </div>

@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
 import { setToken, setRole } from "../utils/auth";
-
-const BASE = "https://pramyan.com/assessment/backend_test/backend/routes";
+import { apiUrl } from "../utils/api";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -119,7 +118,7 @@ export default function CompleteProfile() {
     if (!validate()) return;
     setLoading(true);
     try {
-      const res = await fetch(`${BASE}/update-profile.php`, {
+      const res = await fetch(apiUrl("update-profile.php"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

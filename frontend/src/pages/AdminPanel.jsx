@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
 import { getToken, removeToken } from "../utils/auth";
-
-const BASE = "https://pramyan.com/assessment/backend_test/backend/routes";
+import { apiUrl } from "../utils/api";
 function decodeJWT(t) {
   try {
     return JSON.parse(atob(t.split(".")[1]));
@@ -150,7 +149,7 @@ export default function AdminPanel() {
   const loadTeachers = async (token) => {
     setLoading(true);
     try {
-      const res = await fetch(`${BASE}/manage-teachers.php`, {
+      const res = await fetch(apiUrl("manage-teachers.php"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -177,7 +176,7 @@ export default function AdminPanel() {
     if (!validate()) return;
     setAdding(true);
     try {
-      const res = await fetch(`${BASE}/add-teacher.php`, {
+      const res = await fetch(apiUrl("add-teacher.php"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -203,7 +202,7 @@ export default function AdminPanel() {
   const handleDelete = async () => {
     if (!delTarget) return;
     try {
-      const res = await fetch(`${BASE}/manage-teachers.php`, {
+      const res = await fetch(apiUrl("manage-teachers.php"), {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

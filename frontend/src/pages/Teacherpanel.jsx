@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.jpeg";
 import { getToken, removeToken } from "../utils/auth";
-
-const BASE = "https://pramyan.com/assessment/backend_test/backend/routes";
+import { apiUrl } from "../utils/api";
 
 function decodeJWT(t) {
   try {
@@ -38,6 +37,132 @@ const BLOOM_COLOR = {
   L4: "#9b59b6",
   L5: "#e24b4a",
 };
+
+const THREAT_HINTS = {
+  Fractions: "Class 6 fractions",
+  Decimals: "Class 6 decimals",
+  Percentages: "Ratio and proportion",
+  Geometry: "Class 6 geometry",
+  "Geometry & symmetry": "Class 6 geometry",
+  "Area & perimeter": "Mensuration",
+  Average: "Data handling",
+  "Food - sources & nutrition": "Class 6 food and nutrition",
+  "Separation of substances": "Class 6 separation methods",
+  "Changes around us": "Class 6 changes around us",
+  "Getting to know plants": "Class 6 plants",
+  "Body movements": "Class 6 skeletal system",
+  "Living & non-living things": "Class 6 living world",
+  Water: "Class 7 water chapter",
+};
+
+function buildChapterSectionMap(questions = []) {
+  const map = {};
+  questions.forEach((q) => {
+    if (!q?.chapter || !q?.section) return;
+    if (!map[q.chapter]) map[q.chapter] = q.section;
+  });
+  return map;
+}
+
+function buildSwotBuckets(chapterScores = [], chapterSectionMap = {}) {
+  const toItem = (ch) => {
+    const pct = Math.round(Number(ch?.pct || 0));
+    const section = chapterSectionMap[ch.chapter] || "General";
+    const category = String(ch?.swot_category || "").toLowerCase();
+    return {
+      chapter: ch.chapter,
+      pct,
+      section,
+      category,
+      label: `${ch.chapter} (${section} - ${pct}%)`,
+    };
+  };
+
+  const items = chapterScores.map(toItem);
+  const strength = items.filter((x) => x.category === "strength");
+  const opportunity = items.filter((x) => x.category === "opportunity");
+  const weakness = items.filter((x) => x.category === "weakness");
+
+  const threats = weakness.map((x) => {
+    const hint = THREAT_HINTS[x.chapter] || `next-grade ${x.section.toLowerCase()} progression`;
+    return `${x.chapter} weak -> ${hint} at risk`;
+  });
+
+  return { strength, opportunity, weakness, threats };
+}
+
+function buildSkillRows(questions = []) {
+  const bucket = {
+    Math: { P1: { total: 0, score: 0 }, P2: { total: 0, score: 0 }, P3: { total: 0, score: 0 } },
+    Science: { P1: { total: 0, score: 0 }, P2: { total: 0, score: 0 }, P3: { total: 0, score: 0 } },
+  };
+
+  questions.forEach((q) => {
+    const section = q?.section;
+    const skill = q?.skill_type;
+    if (!bucket[section] || !bucket[section][skill]) return;
+    bucket[section][skill].total += 1;
+    if (q?.selected_option && q?.correct && q.selected_option === q.correct) {
+      bucket[section][skill].score += 1;
+    }
+  });
+
+  const pct = (s, k) => {
+    const x = bucket[s][k];
+    return x.total > 0 ? Math.round((x.score / x.total) * 100) : 0;
+  };
+
+  return [
+    { code: "P1", title: "Math - conceptual clarity", pct: pct("Math", "P1"), color: "#21a179" },
+    { code: "P1", title: "Science - conceptual clarity", pct: pct("Science", "P1"), color: "#3b82f6" },
+    { code: "P2", title: "Math - procedural accuracy", pct: pct("Math", "P2"), color: "#e07b2a" },
+    { code: "P2", title: "Science - procedural accuracy", pct: pct("Science", "P2"), color: "#d65d33" },
+    { code: "P3", title: "Math - application (HOTS)", pct: pct("Math", "P3"), color: "#7c83fd" },
+    { code: "P3", title: "Science - application (HOTS)", pct: pct("Science", "P3"), color: "#5c6ac4" },
+  ];
+}
+
+function buildSkillInsight(name, skillRows = []) {
+  const getPct = (titleStart) => {
+    const row = skillRows.find((r) => r.title.startsWith(titleStart));
+    return Number(row?.pct || 0);
+  };
+
+  const mathP1 = getPct("Math - conceptual clarity");
+  const sciP1 = getPct("Science - conceptual clarity");
+  const mathP2 = getPct("Math - procedural accuracy");
+  const sciP2 = getPct("Science - procedural accuracy");
+  const mathP3 = getPct("Math - application (HOTS)");
+  const sciP3 = getPct("Science - application (HOTS)");
+
+  const mathExecPeak = Math.max(mathP2, mathP3);
+  const mathDrop = Math.max(0, mathP1 - mathExecPeak);
+  const person = name || "Student";
+
+  const conceptText =
+    mathP1 >= 70
+      ? "she understands concepts reasonably well"
+      : mathP1 >= 45
+        ? "her concept clarity in Math is moderate"
+        : "her concept layer in Math needs rebuilding";
+
+  const mathExecText =
+    mathDrop >= 20
+      ? `But as soon as she executes a calculation (P2) or applies it to a word problem (P3), the score drops sharply.`
+      : `Her transition from concept (P1) to execution and application (P2/P3) is comparatively stable.`;
+
+  const scienceText =
+    sciP1 < 35
+      ? `In Science, even the concept layer is weak at ${sciP1}%.`
+      : `In Science, the concept layer is ${sciP1}%, with further gains needed in P2 and P3.`;
+
+  const closeText =
+    sciP1 < 35 && mathDrop >= 20
+      ? "We have two different problems to fix."
+      : "This gives us a clear focus for revision planning.";
+
+  return `Notice: ${person}'s P1 in Math is ${mathP1}% - ${conceptText}. ${mathExecText} ${scienceText} ${closeText}`;
+}
 
 /* ─────────────── STYLES ─────────────── */
 const css = `
@@ -318,6 +443,117 @@ animation:fadeUp .4s ease .2s both;
 }
 .action-text { font-size:13px; color:#444; font-family:'DM Sans',sans-serif; line-height:1.7; white-space:pre-line; }
 
+/* SWOT + Skill teacher report blocks */
+.report-block {
+background:#fff; border:1.5px solid #e4edf8; border-radius:16px;
+padding:18px 20px; margin-bottom:16px; animation:fadeUp .4s ease .12s both;
+}
+.block-chip {
+display:inline-flex; align-items:center; gap:6px;
+font-size:10px; font-weight:700; color:#fff;
+background:#0f9c8c; padding:4px 10px; border-radius:999px;
+letter-spacing:.4px; text-transform:uppercase; margin-bottom:10px;
+font-family:'DM Sans',sans-serif;
+}
+.block-title {
+font-size:30px; font-weight:800; color:#1e4979;
+margin-bottom:6px; line-height:1.2;
+}
+.block-desc {
+font-size:12px; color:#6b7280; line-height:1.6;
+font-family:'DM Sans',sans-serif; margin-bottom:10px;
+}
+.guide-quote {
+background:#f2f1ff; border-left:4px solid #7c83fd;
+color:#4a4f8a; border-radius:6px;
+padding:10px 12px; font-size:12px;
+font-family:'DM Sans',sans-serif; font-style:italic; line-height:1.6;
+margin-bottom:12px;
+}
+
+.swot-grid {
+display:grid; grid-template-columns:1fr 1fr; gap:12px;
+}
+.swot-box {
+border:2px solid; border-radius:6px; padding:12px;
+background:#fff;
+}
+.swot-box h4 {
+font-size:14px; color:#24364a; margin-bottom:8px; font-weight:800;
+}
+.swot-box p {
+font-size:11px; color:#6b7280; line-height:1.5; font-family:'DM Sans',sans-serif;
+}
+.swot-zone-title {
+margin-top:10px; margin-bottom:6px; font-size:11px; color:#4b5563; font-weight:700;
+font-family:'DM Sans',sans-serif;
+}
+.swot-list {
+font-size:11px; color:#374151; line-height:1.7; font-family:'DM Sans',sans-serif;
+}
+.swot-list div { margin-bottom:2px; }
+
+.swot-strength { border-color:#7bd7b5; background:#edf8f2; }
+.swot-opportunity { border-color:#f0b66a; background:#fff7eb; }
+.swot-weakness { border-color:#f2b3a7; background:#fff2ef; }
+.swot-threat { border-color:#9ec0ea; background:#eef5ff; }
+
+.skill-level-wrap { margin-top:10px; display:grid; gap:8px; }
+.skill-level-card {
+border:1.5px solid; border-radius:6px; padding:10px 12px;
+}
+.skill-level-top {
+display:flex; align-items:center; gap:8px; margin-bottom:4px;
+}
+.skill-code {
+font-weight:800; font-size:22px; line-height:1; width:34px;
+}
+.skill-head {
+font-size:14px; font-weight:700; color:#24364a;
+}
+.skill-copy {
+font-size:11px; color:#4b5563; font-family:'DM Sans',sans-serif; line-height:1.55;
+}
+
+.skill-c1 { background:#eef6ff; border-color:#9ec0ea; }
+.skill-c1 .skill-code { color:#2d68b1; }
+.skill-c2 { background:#fff6e8; border-color:#e8c28d; }
+.skill-c2 .skill-code { color:#b8742e; }
+.skill-c3 { background:#f2efff; border-color:#b6b0f0; }
+.skill-c3 .skill-code { color:#645cc8; }
+
+.skill-bars {
+margin-top:12px; background:#fff; border:1.5px solid #e4edf8;
+border-radius:8px; padding:12px;
+}
+.skill-bars h5 {
+font-size:14px; color:#24364a; margin-bottom:10px; font-weight:800;
+}
+.skill-row {
+display:grid; grid-template-columns:40px 1fr 48px; gap:10px;
+align-items:center; margin-bottom:8px;
+}
+.skill-tag {
+background:#eef2f7; color:#566074; border-radius:999px;
+font-size:10px; font-weight:800; text-align:center; padding:3px 0;
+font-family:'DM Sans',sans-serif;
+}
+.skill-bar-main { min-width:0; }
+.skill-label {
+font-size:11px; color:#3f4a5b; font-family:'DM Sans',sans-serif;
+margin-bottom:4px;
+}
+.skill-track {
+height:10px; border-radius:999px; background:#eef2f7; overflow:hidden;
+}
+.skill-fill {
+height:100%; border-radius:999px;
+}
+.skill-pct {
+text-align:right; font-size:11px; color:#374151; font-weight:700;
+font-family:'DM Sans',sans-serif;
+}
+
 /* Loading */
 .loading { display:flex; gap:7px; justify-content:center; padding:60px; }
 .loading span { width:9px; height:9px; border-radius:50%; background:#185FA5; animation:blink 1.2s ease infinite; }
@@ -332,6 +568,8 @@ animation:fadeUp .4s ease .2s both;
 .sub-grid { grid-template-columns:1fr; }
 .stat-row { grid-template-columns:repeat(2,1fr); }
 .skill-grid { grid-template-columns:1fr; }
+.swot-grid { grid-template-columns:1fr; }
+.block-title { font-size:24px; }
 
 .hero-card {
     background: linear-gradient(135deg, #1D9E75 0%, #185FA5 100%);
@@ -391,7 +629,7 @@ export default function TeacherPanel() {
   const loadStudents = async (token) => {
     setListLoading(true);
     try {
-      const res = await fetch(`${BASE}/get-all-students.php`, {
+      const res = await fetch(apiUrl("get-all-students.php"), {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -451,7 +689,7 @@ export default function TeacherPanel() {
     setReportLoading(true);
     try {
       const res = await fetch(
-        `${BASE}/get-student-report.php?student_id=${s.id}&test_id=${s.test_id}`,
+        apiUrl(`get-student-report.php?student_id=${s.id}&test_id=${s.test_id}`),
         {
           headers: { Authorization: `Bearer ${getToken()}` },
         },
@@ -837,102 +1075,195 @@ export default function TeacherPanel() {
                           </div>
 
                           {/* P1 P2 P3 */}
-                          <div className="eyebrow">🎯 Skill Analysis</div>
-                          <div className="skill-card">
-                            <div className="card-title">
-                              🎯 P1 / P2 / P3 Skill Breakdown
-                            </div>
-                            <div className="skill-grid">
-                              {[
-                                {
-                                  k: "p1",
-                                  ico: "💡",
-                                  lbl: "P1 · Conceptual",
-                                  sub: "Recall & Concept",
-                                  c: "#185FA5",
-                                  bg: "#EEF4FF",
-                                },
-                                {
-                                  k: "p2",
-                                  ico: "⚙️",
-                                  lbl: "P2 · Procedural",
-                                  sub: "Method & Procedure",
-                                  c: "#1D9E75",
-                                  bg: "#e6f7f1",
-                                },
-                                {
-                                  k: "p3",
-                                  ico: "🚀",
-                                  lbl: "P3 · Application",
-                                  sub: "Real-world Apply",
-                                  c: "#e07b2a",
-                                  bg: "#fff4e0",
-                                },
-                              ].map((sk) => (
-                                <div
-                                  className="skill-box"
-                                  key={sk.k}
-                                  style={{
-                                    background: sk.bg,
-                                    borderColor: sk.bg,
-                                  }}>
-                                  <div className="sk-ico">{sk.ico}</div>
-                                  <div className="sk-lbl">{sk.lbl}</div>
-                                  <div
-                                    className="sk-val"
-                                    style={{ color: sk.c }}>
-                                    {report[sk.k]}%
-                                  </div>
-                                  <div className="sk-sub">{sk.sub}</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                          {(() => {
+                            const chapterSectionMap = buildChapterSectionMap(
+                              report.questions || [],
+                            );
+                            const swot = buildSwotBuckets(
+                              report.chapter_scores || [],
+                              chapterSectionMap,
+                            );
+                            const skillRows = buildSkillRows(
+                              report.questions || [],
+                            );
+                            const studentName = activeStudent?.name || "Student";
+                            const firstName = studentName.split(" ")[0] || "Student";
+                            const skillInsight = buildSkillInsight(firstName, skillRows);
+                            const classNum = Number(activeStudent?.class);
+                            const hasClassNum = Number.isFinite(classNum) && classNum > 0;
+                            const currentClass = hasClassNum
+                              ? `Class ${classNum}`
+                              : "current class";
+                            const nextClass = hasClassNum
+                              ? `Class ${classNum + 1}`
+                              : "next class";
+                            const strengthCount = swot.strength.length;
+                            const priorityCount = swot.weakness.length;
 
-                          {/* CHAPTER */}
-                          {report.chapter_scores?.length > 0 && (
-                            <>
-                              <div className="eyebrow">📈 Chapter Analysis</div>
-                              <div className="chapter-card">
-                                <div className="card-title">
-                                  📈 Chapter-wise Performance
-                                </div>
-                                {report.chapter_scores.map((ch, i) => {
-                                  const p = parseFloat(ch.pct) || 0;
-                                  const c =
-                                    p >= 75
-                                      ? "#1D9E75"
-                                      : p >= 50
-                                        ? "#e07b2a"
-                                        : "#e24b4a";
-                                  const sc =
-                                    ch.swot_category === "Strength"
-                                      ? "sw-S"
-                                      : ch.swot_category === "Opportunity"
-                                        ? "sw-O"
-                                        : "sw-W";
-                                  return (
-                                    <div className="ch-row" key={i}>
-                                      <div className="ch-lbl">{ch.chapter}</div>
-                                      <div className="ch-bg">
-                                        <div
-                                          className="ch-fill"
-                                          style={{
-                                            width: `${p}%`,
-                                            background: c,
-                                          }}
-                                        />
-                                      </div>
-                                      <div className="ch-pct">{p}%</div>
-                                      <div className={`swot-tag ${sc}`}>
-                                        {ch.swot_category}
+                            return (
+                              <>
+                                <div className="report-block">
+                                  <div className="block-chip">BLOCK 1 - SWOT</div>
+                                  <div className="block-title">What is SWOT Analysis?</div>
+                                  <div className="block-desc">
+                                    This section explains chapter-wise placement in four zones so
+                                    parents clearly understand transition readiness.
+                                  </div>
+                                  <div className="guide-quote">
+                                    {`We don't just give a pass or fail mark. We use a SWOT analysis - a 360 degrees framework to show exactly where ${firstName} stands today. SWOT stands for four things - let me explain each one.`}
+                                  </div>
+
+                                  <div className="swot-grid">
+                                    <div className="swot-box swot-strength">
+                                      <h4>S - Strength</h4>
+                                      <p>Chapters scoring 70% or above.</p>
+                                      <div className="swot-zone-title">Chapters in this zone:</div>
+                                      <div className="swot-list">
+                                        {swot.strength.length > 0 ? (
+                                          swot.strength.map((x) => (
+                                            <div key={`s-${x.chapter}`}>- {x.label}</div>
+                                          ))
+                                        ) : (
+                                          <div>- No chapters in this zone yet</div>
+                                        )}
                                       </div>
                                     </div>
-                                  );
-                                })}
-                              </div>
-                            </>
-                          )}
+
+                                    <div className="swot-box swot-opportunity">
+                                      <h4>O - Opportunity</h4>
+                                      <p>Chapters scoring 40% to 69%.</p>
+                                      <div className="swot-zone-title">Chapters in this zone:</div>
+                                      <div className="swot-list">
+                                        {swot.opportunity.length > 0 ? (
+                                          swot.opportunity.map((x) => (
+                                            <div key={`o-${x.chapter}`}>- {x.label}</div>
+                                          ))
+                                        ) : (
+                                          <div>- No chapters in this zone yet</div>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div className="swot-box swot-weakness">
+                                      <h4>W - Weakness</h4>
+                                      <p>Chapters scoring below 40%.</p>
+                                      <div className="swot-zone-title">Chapters in this zone:</div>
+                                      <div className="swot-list">
+                                        {swot.weakness.length > 0 ? (
+                                          swot.weakness.map((x) => (
+                                            <div key={`w-${x.chapter}`}>- {x.label}</div>
+                                          ))
+                                        ) : (
+                                          <div>- No chapters in this zone</div>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div className="swot-box swot-threat">
+                                      <h4>T - Threat</h4>
+                                      <p>Higher-grade concepts directly at risk from weak areas.</p>
+                                      <div className="swot-zone-title">Likely consequences:</div>
+                                      <div className="swot-list">
+                                        {swot.threats.length > 0 ? (
+                                          swot.threats.map((t, idx) => (
+                                            <div key={`t-${idx}`}>- {t}</div>
+                                          ))
+                                        ) : (
+                                          <div>- No immediate threat pattern detected</div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="guide-quote" style={{ marginTop: "12px", marginBottom: 0 }}>
+                                    {`Think of it like a building. If the foundation (${currentClass}) has cracks, we cannot safely build the first floor (${nextClass}) on top of it. Right now ${firstName} has ${strengthCount} Strength chapters and ${priorityCount} Priority chapters. That is why we are having this conversation today.`}
+                                  </div>
+                                </div>
+
+                                <div className="report-block">
+                                  <div className="block-chip">BLOCK 2 - SKILL</div>
+                                  <div className="block-title">What is Skill Analysis? (P1 / P2 / P3)</div>
+                                  <div className="block-desc">
+                                    This section shows why errors happened, not just how many.
+                                    The same score can come from very different skill gaps.
+                                  </div>
+                                  <div className="guide-quote">
+                                    {`Every question was tagged with one of three skill levels - P1, P2 or P3. This tells us not just what ${firstName} got wrong, but why. That is far more useful for planning ${firstName}'s revision.`}
+                                  </div>
+
+                                  <div className="skill-level-wrap">
+                                    <div className="skill-level-card skill-c1">
+                                      <div className="skill-level-top">
+                                        <div className="skill-code">P1</div>
+                                        <div className="skill-head">
+                                          Conceptual clarity - understanding why
+                                        </div>
+                                      </div>
+                                      <div className="skill-copy">
+                                        Can the child recall concepts, classify, and identify core
+                                        ideas before solving?
+                                      </div>
+                                    </div>
+
+                                    <div className="skill-level-card skill-c2">
+                                      <div className="skill-level-top">
+                                        <div className="skill-code">P2</div>
+                                        <div className="skill-head">
+                                          Procedural accuracy - executing steps correctly
+                                        </div>
+                                      </div>
+                                      <div className="skill-copy">
+                                        Can the child apply methods in sequence without missing
+                                        required steps?
+                                      </div>
+                                    </div>
+
+                                    <div className="skill-level-card skill-c3">
+                                      <div className="skill-level-top">
+                                        <div className="skill-code">P3</div>
+                                        <div className="skill-head">
+                                          Application - solving new, real-world problems
+                                        </div>
+                                      </div>
+                                      <div className="skill-copy">
+                                        Can the child transfer concepts to unfamiliar situations and
+                                        HOTS-style questions?
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="skill-bars">
+                                    <h5>
+                                      {(activeStudent?.name || "Student") +
+                                        "'s skill breakdown - Mathematics and Science"}
+                                    </h5>
+                                    {skillRows.map((row, idx) => (
+                                      <div className="skill-row" key={`sr-${idx}`}>
+                                        <div className="skill-tag">{row.code}</div>
+                                        <div className="skill-bar-main">
+                                          <div className="skill-label">{row.title}</div>
+                                          <div className="skill-track">
+                                            <div
+                                              className="skill-fill"
+                                              style={{
+                                                width: `${row.pct}%`,
+                                                background: row.color,
+                                              }}
+                                            />
+                                          </div>
+                                        </div>
+                                        <div className="skill-pct">{row.pct}%</div>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  <div className="guide-quote" style={{ marginTop: "12px", marginBottom: 0 }}>
+                                    {`"${skillInsight}"`}
+                                  </div>
+                                </div>
+                              </>
+                            );
+                          })()}
 
                           {/* BLOOM */}
                           {report.bloom_scores?.length > 0 && (

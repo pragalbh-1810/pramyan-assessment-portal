@@ -4,6 +4,7 @@ import { getToken } from "../utils/auth";
 import { setupTabSwitchMonitor } from "../utils/tabSwitchMonitor";
 import { useAutoSubmit } from "../utils/autoSubmit";
 import { uploadWorkingSheet } from "../utils/fileUpload";
+import { apiUrl, API_BASE } from "../utils/api";
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
@@ -641,6 +642,8 @@ export default function ActiveTest() {
 
   const [questions, setQuestions] = useState([]);
   const [totalQuestions, setTotalQuestions] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
@@ -690,18 +693,37 @@ export default function ActiveTest() {
   }, [testId]);
 
   const fetchQuestions = async (token) => {
+    setIsLoading(true);
+    setLoadError("");
     try {
       const res = await fetch(
-        `https://pramyan.com/assessment/backend_test/backend/routes/get-questions.php?test_id=${testId}`,
+        apiUrl(`get-questions.php?test_id=${testId}`),
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      const result = await res.json();
+      const result = await res.json().catch(() => null);
+
+      if (res.status === 401) {
+        setLoadError("Session expired. Please sign in again.");
+        setTimeout(() => navigate("/"), 800);
+        return;
+      }
+
+      if (!result) {
+        setLoadError("Could not load test data. Please refresh and try again.");
+        return;
+      }
+
       if (result.success && result.questions?.length > 0) {
         setQuestions(result.questions);
         setTotalQuestions(result.total_questions);
+      } else {
+        setLoadError(result.message || "No questions found for this test.");
       }
     } catch (err) {
       console.error(err);
+      setLoadError("Network error while loading test. Check server and try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -814,10 +836,32 @@ export default function ActiveTest() {
     setTimeout(() => setSaveIndicator({ show: false }), 3000);
   };
 
-  if (questions.length === 0)
+  if (isLoading)
     return (
       <div style={{ padding: "40px", textAlign: "center" }}>
         Loading Test...
+      </div>
+    );
+
+  if (loadError)
+    return (
+      <div style={{ padding: "40px", textAlign: "center", color: "#d14343" }}>
+        <div style={{ marginBottom: "12px", fontWeight: 600 }}>{loadError}</div>
+        <button
+          onClick={() => {
+            const token = getToken() || "test";
+            fetchQuestions(token);
+          }}
+          style={{
+            border: "none",
+            borderRadius: "8px",
+            padding: "10px 16px",
+            background: "#185FA5",
+            color: "white",
+            cursor: "pointer",
+          }}>
+          Retry
+        </button>
       </div>
     );
 
@@ -872,7 +916,7 @@ export default function ActiveTest() {
             {currentQuestion?.q_image && (
               <div className="q-image-container">
                 <img
-                  src={`https://pramyan.com/assessment/backend_test/backend/assets/images/${currentQuestion.q_image}`}
+                  src={`${API_BASE.replace(/\/routes\/?$/, "/assets/images")}/${currentQuestion.q_image}`}
                   alt={`Figure for Question ${displayLabel}`}
                 />
               </div>

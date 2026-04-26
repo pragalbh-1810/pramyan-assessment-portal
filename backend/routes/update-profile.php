@@ -48,7 +48,10 @@ try {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     // Generate fresh JWT with correct class
-    $secret = getenv("JWT_SECRET") ?: "pramyan_super_secret_key_2026";
+    $secret = trim((string)getenv("JWT_SECRET"), " \t\n\r\0\x0B\"'");
+    if ($secret === '') {
+        $secret = "pramyan_super_secret_key_2026";
+    }
     $token = generateJWT([
         "id"    => (int)$user['id'],
         "email" => $user['email'],

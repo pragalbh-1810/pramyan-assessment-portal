@@ -119,7 +119,6 @@ export default function ActiveTest() {
     setIsLoading(true);
     setLoadError("");
     try {
-<<<<<<< HEAD
       const res = await fetch(
         apiUrl(`get-questions.php?test_id=${testId}`),
         { headers: { Authorization: `Bearer ${token}` } },
@@ -137,12 +136,6 @@ export default function ActiveTest() {
         return;
       }
 
-=======
-      const res = await fetch(apiUrl(`get-questions.php?test_id=${testId}`), {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const result = await res.json();
->>>>>>> 04b8d5ecedfc9d684996fd8e3a32bd6587b2042f
       if (result.success && result.questions?.length > 0) {
         setQuestions(result.questions);
         setTotalQuestions(result.total_questions);
@@ -275,12 +268,7 @@ export default function ActiveTest() {
     setTimeout(() => setSaveIndicator({ show: false }), 3000);
   };
 
-<<<<<<< HEAD
   if (isLoading)
-=======
-  // Loading state
-  if (questions.length === 0)
->>>>>>> 04b8d5ecedfc9d684996fd8e3a32bd6587b2042f
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#EEF4FF] font-['Sora',sans-serif]">
         <div className="flex items-center gap-3 text-[#185FA5]">

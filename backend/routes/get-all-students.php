@@ -17,11 +17,7 @@ if (!in_array($user['role'], ['teacher', 'admin'])) {
     exit();
 }
 
-<<<<<<< HEAD
 // ✅ Single correct query — matches test class to student class
-=======
-// ✅ Matches test class to student class and sorts by newest added
->>>>>>> 04b8d5ecedfc9d684996fd8e3a32bd6587b2042f
 $stmt = $pdo->prepare("
     SELECT 
         u.id, 
@@ -56,10 +52,6 @@ $stmt = $pdo->prepare("
     WHERE u.role = 'student'
     ORDER BY u.id DESC 
 ");
-<<<<<<< HEAD
-=======
-// Note: Change 'ORDER BY u.id DESC' to 'ORDER BY u.id ASC' if you want oldest first instead of newest first.
->>>>>>> 04b8d5ecedfc9d684996fd8e3a32bd6587b2042f
 
 $stmt->execute();
 $students = $stmt->fetchAll(PDO::FETCH_ASSOC);

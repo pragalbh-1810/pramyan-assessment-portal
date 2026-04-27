@@ -67,40 +67,47 @@ if (!$result) {
     exit();
 }
 
-// ── 4. Total Questions ─────────────────────────────────
-$qStmt = $pdo->prepare("
+
+// ── 3. TOTAL QUESTIONS (count unique parent questions, not sub-parts) ──────
+$stmt = $pdo->prepare("
     SELECT 
-        COUNT(*) as total,
-        SUM(CASE WHEN section = 'Math' THEN 1 ELSE 0 END) as mathMax,
-        SUM(CASE WHEN section = 'Science' THEN 1 ELSE 0 END) as sciMax
+        COUNT(DISTINCT question_number) as total,
+        COUNT(DISTINCT CASE WHEN section = 'Math'    AND question_number IS NOT NULL THEN question_number END) as mathMax,
+        COUNT(DISTINCT CASE WHEN section = 'Science' AND question_number IS NOT NULL THEN question_number END) as sciMax
     FROM questions 
     WHERE test_id = ?
 ");
-$qStmt->execute([$resolved_test_id]);
-$qStats = $qStmt->fetch(PDO::FETCH_ASSOC);
+$stmt->execute([$test_id]);
+$qStats = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $total   = (int)$qStats['total'];
 $mathMax = (int)$qStats['mathMax'];
 $sciMax  = (int)$qStats['sciMax'];
 
-// ── 🔥 5. CORRECT COUNT LOGIC (FIXED) ─────────────────
-$cStmt = $pdo->prepare("
+// ── 4. CORRECT COUNT — score per parent question (all sub-parts must be correct) ──
+$stmt = $pdo->prepare("
     SELECT 
-        COUNT(*) as total,
-        SUM(CASE WHEN r.selected_option IS NOT NULL AND r.selected_option != '' THEN 1 ELSE 0 END) as answered,
-        SUM(CASE WHEN r.selected_option = q.correct THEN 1 ELSE 0 END) as correct
+        q.question_number,
+        MAX(CASE WHEN r.selected_option IS NOT NULL AND r.selected_option != '' THEN 1 ELSE 0 END) as was_answered,
+        MIN(CASE WHEN r.selected_option = q.correct THEN 1 ELSE 0 END) as all_correct
     FROM questions q
     LEFT JOIN responses r 
         ON r.question_id = q.id 
         AND r.student_test_id = ?
     WHERE q.test_id = ?
+      AND q.question_number IS NOT NULL
+    GROUP BY q.question_number
 ");
-$cStmt->execute([$student_test_id, $resolved_test_id]);
-$counts = $cStmt->fetch(PDO::FETCH_ASSOC);
+$stmt->execute([$student_test_id, $test_id]);
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$answered = (int)$counts['answered'];
-$correct  = (int)$counts['correct'];
-$wrong    = $answered - $correct;
+$answered = 0;
+$correct  = 0;
+foreach ($rows as $row) {
+    if ($row['was_answered']) $answered++;
+    if ($row['all_correct'])  $correct++;
+}
+$wrong      = $answered - $correct;
 $unanswered = $total - $answered;
 
 // ── 6. Percentages ─────────────────────────────────────

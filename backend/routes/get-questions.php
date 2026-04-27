@@ -1,46 +1,28 @@
 <?php
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit(); }
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
-    echo json_encode([
-        "success" => false,
-        "message" => "Method not allowed"
-    ]);
+    echo json_encode(["success" => false, "message" => "Method not allowed"]);
     exit();
 }
 
 require_once dirname(__DIR__) . '/config/db.php';
 require_once dirname(__DIR__) . '/middleware/auth.php';
 
-
-// STEP 1: verify login token
-$user = authenticate();
-
-
-// STEP 2: get test_id from URL
+$user    = authenticate();
 $test_id = $_GET['test_id'] ?? null;
 
 if (!$test_id) {
     http_response_code(400);
-    echo json_encode([
-        "success" => false,
-        "message" => "test_id is required"
-    ]);
+    echo json_encode(["success" => false, "message" => "test_id is required"]);
     exit();
 }
 
-
-// STEP 3: fetch questions (without correct answer)
 $stmt = $pdo->prepare("
     SELECT 
         id,
@@ -53,27 +35,44 @@ $stmt = $pdo->prepare("
         opt_d,
         chapter,
         bloom_level,
-        skill_type
+        skill_type,
+        question_number,
+        sub_part
     FROM questions
     WHERE test_id = ?
+    ORDER BY question_number ASC, sub_part ASC
 ");
-
 $stmt->execute([$test_id]);
 $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// FIX: Count unique main questions dynamically (Outputs 32)
-$main_questions = [];
+// Count unique main question numbers (e.g. Q1, Q2...Q32)
+$uniqueMainQuestions = array_unique(
+    array_filter(array_column($questions, 'question_number'))
+);
+$actual_total = count($uniqueMainQuestions);
+
+// Group sub-parts under their parent question number
+$grouped = [];
 foreach ($questions as $q) {
-    if (preg_match('/^Q(\d+)/i', $q['q_text'], $matches)) {
-        $main_questions[$matches[1]] = true;
+    $qNum = $q['question_number'];
+    if ($qNum) {
+        if (!isset($grouped[$qNum])) {
+            $grouped[$qNum] = [
+                'question_number' => (int)$qNum,
+                'sub_parts'       => []
+            ];
+        }
+        $grouped[$qNum]['sub_parts'][] = $q;
+    } else {
+        // Fallback: questions without a number go flat
+        $grouped[] = ['question_number' => null, 'sub_parts' => [$q]];
     }
 }
-$actual_total = count($main_questions);
 
-// STEP 4: return response
 echo json_encode([
-    "success" => true,
-    "test_id" => (int)$test_id,
-    "total_questions" => $actual_total, // Now sends exactly 32
-    "questions" => $questions
+    "success"          => true,
+    "test_id"          => (int)$test_id,
+    "total_questions"  => $actual_total,
+    "questions"        => array_values($questions),   // flat list for test-taking UI
+    "grouped_questions"=> array_values($grouped),      // grouped for report display
 ]);

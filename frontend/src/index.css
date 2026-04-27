@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -45,14 +47,14 @@ h1,
 h2 {
   font-family: var(--heading);
   font-weight: 500;
-  color: var(--text-h);
+  
 }
 
 h1 { font-size: 40px; margin: 24px 0; }
 h2 { font-size: 20px; margin: 0 0 8px; }
-p  { margin: 0; }
 
-img, video { max-width: 100%; height: auto; }
+
+/* img, video { max-width: 100%; height: auto; } */
 table { max-width: 100%; }
 
 input, select, textarea, button { font-size: 16px; }

@@ -1,316 +1,75 @@
 import { useState } from "react";
-import logo from "../assets/logo.jpeg";
 import { useNavigate } from "react-router-dom";
+import {
+  Zap,
+  Layers,
+  Target,
+  Bell,
+  Eye,
+  EyeOff,
+  ChevronDown,
+} from "lucide-react";
+import logo from "../assets/logo.jpeg";
 import { setToken, setRole } from "../utils/auth";
 import { apiUrl } from "../utils/api";
 
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  @keyframes fadeInUp {
+// Keyframes that aren't in Tailwind by default — kept tiny and scoped.
+const keyframes = `
+  @keyframes signup-fade-up {
     from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  @keyframes fadeInLeft {
+  @keyframes signup-fade-left {
     from { opacity: 0; transform: translateX(-16px); }
-    to { opacity: 1; transform: translateX(0); }
+    to   { opacity: 1; transform: translateX(0); }
   }
-  @keyframes float {
+  @keyframes signup-float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+    50%      { transform: translateY(-8px); }
   }
-  @keyframes orbit1 {
+  @keyframes signup-orbit-1 {
     from { transform: rotate(0deg) translateX(100px) rotate(0deg); }
-    to { transform: rotate(360deg) translateX(100px) rotate(-360deg); }
+    to   { transform: rotate(360deg) translateX(100px) rotate(-360deg); }
   }
-  @keyframes orbit2 {
+  @keyframes signup-orbit-2 {
     from { transform: rotate(180deg) translateX(75px) rotate(-180deg); }
-    to { transform: rotate(540deg) translateX(75px) rotate(-540deg); }
+    to   { transform: rotate(540deg) translateX(75px) rotate(-540deg); }
   }
-
-  html, body { height: 100%; margin: 0; background: #EEF4FF; font-family: 'Sora', sans-serif; overflow: hidden; }
-
-  .signup-outer {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: #EEF4FF;
-  }
-
-  .signup-card {
-    display: flex;
-    width: 100%;
-    max-width: 980px;
-    min-height: 600px;
-    border-radius: 28px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(74,144,217,0.15), 0 4px 16px rgba(0,0,0,0.06);
-    animation: fadeInUp 0.6s ease both;
-  }
-
-  /* ── LEFT ── */
-  .signup-left {
-    width: 40%;
-    background: linear-gradient(145deg, #1D9E75 0%, #185FA5 100%);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2.5rem 2rem;
-    overflow: hidden;
-  }
-  .left-blob1 {
-    position: absolute; top: -60px; right: -60px;
-    width: 200px; height: 200px; border-radius: 50%;
-    background: rgba(255,255,255,0.08);
-  }
-  .left-blob2 {
-    position: absolute; bottom: -40px; left: -40px;
-    width: 160px; height: 160px; border-radius: 50%;
-    background: rgba(255,255,255,0.06);
-  }
-  .left-blob3 {
-    position: absolute; top: 40%; left: -20px;
-    width: 100px; height: 100px; border-radius: 50%;
-    background: rgba(255,255,255,0.05);
-  }
-  .orbit-wrap {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 220px; height: 220px; pointer-events: none;
-  }
-  .orbit-ring {
-    position: absolute; inset: 0; border-radius: 50%;
-    border: 1px dashed rgba(255,255,255,0.15);
-  }
-  .orbit-ring2 {
-    position: absolute; inset: 22px; border-radius: 50%;
-    border: 1px dashed rgba(255,255,255,0.1);
-  }
-  .orb1 {
-    position: absolute; top: 50%; left: 50%;
-    width: 8px; height: 8px; border-radius: 50%;
-    background: white; margin: -4px;
-    animation: orbit1 9s linear infinite;
-    box-shadow: 0 0 8px rgba(255,255,255,0.8);
-  }
-  .orb2 {
-    position: absolute; top: 50%; left: 50%;
-    width: 6px; height: 6px; border-radius: 50%;
-    background: rgba(255,255,255,0.7); margin: -3px;
-    animation: orbit2 6s linear infinite;
-  }
-
-  .logo-wrap {
-    position: relative; z-index: 2;
-    animation: float 4s ease-in-out infinite;
-    margin-bottom: 22px; width: 100%;
-  }
-  .logo-img-wrap {
-    background: white; border-radius: 20px;
-    padding: 12px 18px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .logo-real {
-    width: 100%; max-width: 180px;
-    height: auto; display: block; margin: 0 auto;
-  }
-
-  .left-text {
-    position: relative; z-index: 2; text-align: center;
-    animation: fadeInLeft 0.8s ease 0.3s both; margin-bottom: 20px;
-  }
-  .left-text h2 {
-    color: white; font-size: 17px; font-weight: 600;
-    line-height: 1.6; margin-bottom: 6px;
-  }
-  .left-text p { color: rgba(255,255,255,0.7); font-size: 12px; font-family: 'Inter', sans-serif; }
-
-  .features {
-    position: relative; z-index: 2;
-    display: flex; flex-direction: column; gap: 8px;
-    width: 100%;
-    animation: fadeInLeft 0.8s ease 0.5s both;
-    margin-bottom: 20px;
-  }
-  .feat-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 14px; border-radius: 12px;
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.18);
-    color: white; font-size: 12px;
-    font-family: 'Inter', sans-serif;
-    transition: all 0.2s; cursor: default;
-  }
-  .feat-item:hover {
-    background: rgba(255,255,255,0.2);
-    transform: translateX(3px);
-  }
-  .feat-icon {
-    width: 24px; height: 24px; border-radius: 8px;
-    background: rgba(255,255,255,0.2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; flex-shrink: 0;
-  }
-
-  .bottom-tag {
-    position: relative; z-index: 2;
-    display: flex; align-items: center; gap: 10px;
-    animation: fadeInLeft 0.8s ease 0.7s both;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 30px; padding: 6px 14px 6px 8px;
-  }
-  .avatar-stack { display: flex; }
-  .av {
-    width: 24px; height: 24px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.3); margin-left: -5px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 8px; font-weight: 700; color: white;
-  }
-  .av:first-child { margin-left: 0; }
-  .bottom-tag p { font-size: 11px; color: rgba(255,255,255,0.85); font-family: 'Inter', sans-serif; }
-  .bottom-tag strong { color: white; }
-
-  /* ── RIGHT ── */
-  .signup-right {
-  flex: 1; background: white;
-  display: flex; align-items: center; justify-content: center;
-  padding: 2.5rem 3rem;
-  position: relative; overflow: hidden;
-}
-  .signup-right::before {
-    content: ''; position: absolute; top: -60px; right: -60px;
-    width: 220px; height: 220px; border-radius: 50%;
-    background: #EEF4FF; opacity: 0.6; pointer-events: none;
-  }
-  .signup-right::after {
-    content: ''; position: absolute; bottom: -40px; left: -40px;
-    width: 160px; height: 160px; border-radius: 50%;
-    background: #E1F5EE; opacity: 0.5; pointer-events: none;
-  }
-
-  .form-wrap {
-    width: 100%; max-width: 370px;
-    animation: fadeInUp 0.6s ease 0.2s both;
-    position: relative; z-index: 1;
-  }
-
-  .top-bar {
-    display: flex; justify-content: space-around; align-items: center;
-    margin-bottom: 22px;
-  }
-  .step-pills { display: flex; gap: 5px; align-items: center; }
-  .pill { height: 4px; border-radius: 2px; }
-  .pill-done { width: 28px; background: #1D9E75; }
-  .pill-active { width: 36px; background: #185FA5; }
-  .pill-next { width: 18px; background: #dde8f8; }
-  .sign-in-link { font-size: 11.5px; color: #888; font-family: 'Inter', sans-serif; }
-  .sign-in-link a { color: #185FA5; font-weight: 500; text-decoration: none; }
-  .sign-in-link a:hover { text-decoration: underline; }
-
-  .form-title { margin-bottom: 18px; }
-  .form-title h2 { font-size: 22px; font-weight: 700; color: #0d1f3c; margin-bottom: 4px; }
-  .form-title p { font-size: 12px; color: #999; font-family: 'Inter', sans-serif; }
-
-  .google-btn {
-    width: 100%; height: 42px;
-    background: #f8fbff; border: 1.5px solid #d4e4f7;
-    border-radius: 12px; font-size: 13px;
-    font-family: 'Sora', sans-serif; font-weight: 500;
-    color: #1a1a1a; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    margin-bottom: 14px; transition: all 0.2s;
-  }
-  .google-btn:hover {
-    border-color: #185FA5; background: white;
-    box-shadow: 0 4px 16px rgba(24,95,165,0.1);
-    transform: translateY(-1px);
-  }
-
-  .divider {
-    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
-  }
-  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #f0f4fb; }
-  .divider span { font-size: 11px; color: #bbb; font-family: 'Inter', sans-serif; white-space: nowrap; }
-
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .field { margin-bottom: 11px; }
-  .field label {
-    display: block; font-size: 10px; font-weight: 700;
-    color: #185FA5; margin-bottom: 4px;
-    padding: 2px 2px; 
-    letter-spacing: 0.5px; text-transform: uppercase;
-    text-align: left;
-  }
-  .field input, .field select {
-    width: 100%; height: 38px;
-    border: 1.5px solid #e2edf8; border-radius: 10px;
-    padding: 0 12px; font-size: 12.5px;
-    font-family: 'Inter', sans-serif; color: #1a1a1a;
-    background: #f8fbff; outline: none;
-    transition: all 0.2s; appearance: none;
-    text-align: left;
-  }
-  .field input::placeholder { color: #b8cce0; font-size: 12px; }
-  .field input:focus, .field select:focus {
-    border-color: #185FA5; background: white;
-    box-shadow: 0 0 0 3px rgba(24,95,165,0.08);
-  }
-  .field input:hover:not(:focus), .field select:hover:not(:focus) { border-color: #a8c4e8; }
-  .select-wrap { position: relative; }
-  .select-wrap::after {
-    content: '▾'; position: absolute; right: 11px; top: 50%;
-    transform: translateY(-50%); color: #185FA5; font-size: 11px; pointer-events: none;
-  }
-  .select-wrap select { padding-right: 26px; cursor: pointer; }
-
-  .submit-btn {
-    width: 100%; height: 44px; border: none; border-radius: 12px;
-    font-size: 13.5px; font-weight: 600; font-family: 'Sora', sans-serif;
-    color: white; cursor: pointer; margin-top: 4px;
-    background: linear-gradient(135deg, #1D9E75 0%, #185FA5 100%);
-    transition: all 0.3s; position: relative; overflow: hidden;
-  }
-  .submit-btn::before {
-    content: ''; position: absolute; top: 0; left: -100%;
-    width: 60%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
-  }
-  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(24,95,165,0.3); }
-  .submit-btn:hover::before { left: 150%; }
-  .submit-btn:active { transform: translateY(0); }
-  .submit-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-
-  .error-msg { color: #e24b4a; font-size: 10.5px; margin-top: 3px; font-family: 'Inter', sans-serif; }
-
-  .terms {
-    text-align: center; font-size: 10px; color: #bbb;
-    margin-top: 10px; line-height: 1.7; font-family: 'Inter', sans-serif;
-  }
-  .terms a { color: #185FA5; text-decoration: none; }
-  .terms a:hover { text-decoration: underline; }
-
-  @media (max-width: 768px) {
-  .signup-outer { padding: 12px; align-items: flex-start; overflow-y: auto; }
-  .signup-card { flex-direction: column; min-height: auto; border-radius: 20px; }
-  .signup-left { width: 100%; padding: 1.5rem; min-height: auto; }
-  .signup-left .orbit-wrap { display: none; }
-  .signup-left .features { display: none; }
-  .signup-left .bottom-tag { display: none; }
-  .signup-right { padding: 1.5rem; overflow-y: auto; }
-  .form-wrap { max-width: 100%; }
-  .grid2 { grid-template-columns: 1fr; }
-  html, body { overflow: auto; }
-}
+  .anim-fade-up   { animation: signup-fade-up 0.6s ease both; }
+  .anim-fade-left { animation: signup-fade-left 0.8s ease both; }
+  .anim-float     { animation: signup-float 4s ease-in-out infinite; }
+  .anim-orbit-1   { animation: signup-orbit-1 9s linear infinite; }
+  .anim-orbit-2   { animation: signup-orbit-2 6s linear infinite; }
+  .anim-d-300     { animation-delay: 0.3s; }
+  .anim-d-500     { animation-delay: 0.5s; }
+  .anim-d-700     { animation-delay: 0.7s; }
 `;
+
+const FEATURES = [
+  { Icon: Zap, text: "Instant diagnostic reports" },
+  { Icon: Layers, text: "Chapter-wise SWOT analysis" },
+  { Icon: Target, text: "Personalised 4-week study plan" },
+  { Icon: Bell, text: "Updates to parents" },
+];
+
+const AVATARS = [
+  ["R", "#1D9E75"],
+  ["A", "#3a7bd5"],
+  ["K", "#0a5a45"],
+  ["S", "#2563a8"],
+];
+
+// Shared input/select styling (factored out for cleanliness — applied via className)
+const inputCls =
+  "w-full h-[38px] border-[1.5px] border-[#e2edf8] rounded-[10px] px-3 text-[12.5px] " +
+  "font-['Inter',sans-serif] text-[#1a1a1a] bg-[#f8fbff] outline-none transition-all " +
+  "appearance-none text-left placeholder:text-[#b8cce0] placeholder:text-xs " +
+  "hover:border-[#a8c4e8] focus:border-[#185FA5] focus:bg-white focus:ring-[3px] focus:ring-[#185FA5]/10";
+
+const labelCls =
+  "block text-[10px] font-bold text-[#185FA5] mb-1 tracking-wider uppercase px-0.5 text-left";
+
+const errorCls = "text-[#e24b4a] text-[10.5px] font-['Inter',sans-serif] mt-1";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -324,6 +83,7 @@ export default function SignUp() {
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -344,140 +104,187 @@ export default function SignUp() {
 
   const handleSubmit = async () => {
     const newErrors = validate();
-
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-
     setLoading(true);
-
     try {
-      const response = await fetch(
-        apiUrl("signup.php"),
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: form.name,
-            email: form.email,
-            password: form.password,
-            class: form.class,
-            board: form.board,
-            parent_phone: form.parentPhone,
-          }),
-        },
-      );
-
+      const response = await fetch(apiUrl("signup.php"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          class: form.class,
+          board: form.board,
+          parent_phone: form.parentPhone,
+        }),
+      });
       const result = await response.json();
-
-      console.log(result);
 
       if (result.success) {
         setToken(result.token);
         setRole(result.user.role);
-        // Map class to test ID directly — no extra API call needed
         const classToTestId = { 8: 3, 9: 2, 10: 1 };
         const testId = classToTestId[String(form.class)] || 1;
         navigate(`/instructions/${testId}`);
       } else {
         setErrors({ api: result.message });
       }
-    } catch (error) {
-      console.log(error);
-
-      alert("Server error");
+    } catch {
+      setErrors({ api: "Server error. Please try again." });
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <>
-      <style>{styles}</style>
-      <div className="signup-outer">
-        <div className="signup-card">
-          {/* LEFT PANEL */}
-          <div className="signup-left">
-            <div className="left-blob1" />
-            <div className="left-blob2" />
-            <div className="left-blob3" />
-            <div className="orbit-wrap">
-              <div className="orbit-ring" />
-              <div className="orbit-ring2" />
-              <div className="orb1" />
-              <div className="orb2" />
+      <style>{keyframes}</style>
+
+      {/* Outer wrapper — natural scroll on mobile, centered on desktop */}
+      <div className="min-h-screen w-full bg-[#EEF4FF] font-['Sora',sans-serif] flex items-start md:items-center justify-center p-3 md:p-6">
+        <div className="anim-fade-up flex flex-col md:flex-row w-full max-w-[980px] md:min-h-[600px] rounded-2xl md:rounded-[28px] overflow-hidden shadow-[0_20px_60px_rgba(74,144,217,0.15),0_4px_16px_rgba(0,0,0,0.06)] bg-white">
+          {/* LEFT PANEL — gradient brand side */}
+          <div className="relative w-full md:w-2/5 bg-[linear-gradient(145deg,#1D9E75_0%,#185FA5_100%)] flex flex-col items-center justify-center px-6 py-8 md:px-8 md:py-10 overflow-hidden">
+            {/* decorative blobs */}
+            <div
+              className="absolute -top-16 -right-16 w-[200px] h-[200px] rounded-full bg-white/10"
+              aria-hidden
+            />
+            <div
+              className="absolute -bottom-10 -left-10 w-[160px] h-[160px] rounded-full bg-white/[0.06]"
+              aria-hidden
+            />
+            <div
+              className="absolute top-[40%] -left-5 w-[100px] h-[100px] rounded-full bg-white/[0.05]"
+              aria-hidden
+            />
+
+            {/* orbit rings — desktop only */}
+            <div
+              className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[220px] pointer-events-none"
+              aria-hidden>
+              <div className="absolute inset-0 rounded-full border border-dashed border-white/15" />
+              <div className="absolute inset-[22px] rounded-full border border-dashed border-white/10" />
+              <div className="anim-orbit-1 absolute top-1/2 left-1/2 w-2 h-2 -m-1 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+              <div className="anim-orbit-2 absolute top-1/2 left-1/2 w-1.5 h-1.5 -m-[3px] rounded-full bg-white/70" />
             </div>
 
-            <div className="logo-wrap">
-              <div className="logo-img-wrap">
-                <img src={logo} alt="Pramyan Logo" className="logo-real" />
+            {/* logo */}
+            <div className="anim-float relative z-10 w-full mb-5">
+              <div className="bg-white rounded-2xl px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.15)] flex items-center justify-center">
+                <img
+                  src={logo}
+                  alt="Pramyan Logo"
+                  className="block w-full max-w-[180px] h-auto"
+                />
               </div>
             </div>
 
-            <div className="left-text">
-              <h2>Your success starts right here</h2>
-              <p>India's smartest student assessment platform</p>
+            {/* welcome text */}
+            <div className="anim-fade-left anim-d-300 relative z-10 text-center mb-5">
+              <h2 className="text-white text-[17px] font-semibold leading-relaxed mb-1.5">
+                Your success starts right here
+              </h2>
+              <p className="text-white/70 text-xs font-['Inter',sans-serif]">
+                India's smartest student assessment platform
+              </p>
             </div>
 
-            <div className="features">
-              {[
-                { icon: "⚡", text: "Instant diagnostic reports" },
-                { icon: "◈", text: "Chapter-wise SWOT analysis" },
-                { icon: "◎", text: "Personalised 4-week study plan" },
-                { icon: "✦", text: "Updates to parents" },
-              ].map((f, i) => (
-                <div className="feat-item" key={i}>
-                  <div className="feat-icon">{f.icon}</div>
-                  {f.text}
+            {/* feature pills — desktop only (kept hidden on mobile to match original) */}
+            <div className="anim-fade-left anim-d-500 relative z-10 hidden md:flex flex-col gap-2 w-full mb-5">
+              {FEATURES.map(({ Icon, text }, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-white/[0.12] border border-white/[0.18] text-white text-xs font-['Inter',sans-serif] transition hover:bg-white/20 hover:translate-x-1">
+                  <span className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                    <Icon
+                      className="w-3.5 h-3.5 text-white"
+                      strokeWidth={2.25}
+                    />
+                  </span>
+                  {text}
                 </div>
               ))}
             </div>
 
-            <div className="bottom-tag">
-              <div className="avatar-stack">
-                {[
-                  ["R", "#1D9E75"],
-                  ["A", "#3a7bd5"],
-                  ["K", "#0a5a45"],
-                  ["S", "#2563a8"],
-                ].map(([l, c], i) => (
-                  <div className="av" key={i} style={{ background: c }}>
-                    {l}
+            {/* student avatar tag — desktop only */}
+            <div className="anim-fade-left anim-d-700 relative z-10 hidden md:flex items-center gap-2.5 bg-white/10 border border-white/15 rounded-full pr-3.5 pl-2 py-1.5">
+              <div className="flex">
+                {AVATARS.map(([letter, color], i) => (
+                  <div
+                    key={i}
+                    className="w-6 h-6 rounded-full border-2 border-white/30 flex items-center justify-center text-[8px] font-bold text-white -ml-1.5 first:ml-0"
+                    style={{ background: color }}>
+                    {letter}
                   </div>
                 ))}
               </div>
-              <p>students joined</p>
+              <p className="text-[11px] text-white/85 font-['Inter',sans-serif]">
+                students joined
+              </p>
             </div>
           </div>
 
-          {/* RIGHT PANEL */}
-          <div className="signup-right">
-            <div className="form-wrap">
-              <div className="top-bar">
-                <div className="step-pills">
-                  <div className="pill pill-done" />
-                  <div className="pill pill-active" />
-                  <div className="pill pill-next" />
+          {/* RIGHT PANEL — form */}
+          <div className="relative flex-1 bg-white flex items-center justify-center px-6 py-8 md:px-12 md:py-10 overflow-hidden">
+            {/* decorative bg circles — desktop only */}
+            <div
+              className="hidden md:block absolute -top-16 -right-16 w-[220px] h-[220px] rounded-full bg-[#EEF4FF]/60 pointer-events-none"
+              aria-hidden
+            />
+            <div
+              className="hidden md:block absolute -bottom-10 -left-10 w-[160px] h-[160px] rounded-full bg-[#E1F5EE]/50 pointer-events-none"
+              aria-hidden
+            />
+
+            <div className="anim-fade-up relative z-10 w-full max-w-[370px]">
+              {/* top bar — left-aligned & stacked on mobile, side-by-side on desktop */}
+              <div className="flex flex-col items-start gap-2.5 md:flex-row md:items-center md:justify-around md:gap-3 mb-5">
+                {/* step pills */}
+                <div
+                  className="flex gap-[5px] items-center"
+                  aria-label="Sign-up step 2 of 3">
+                  <div className="h-1 w-7 rounded-[2px] bg-[#1D9E75]" />
+                  <div className="h-1 w-9 rounded-[2px] bg-[#185FA5]" />
+                  <div className="h-1 w-[18px] rounded-[2px] bg-[#dde8f8]" />
                 </div>
-                <div className="sign-in-link">
-                  Already have an account? <a href="/">Sign In</a>
+                <div className="text-[11.5px] text-[#888] font-['Inter',sans-serif]">
+                  Already have an account?{" "}
+                  <a
+                    href="/"
+                    className="text-[#185FA5] font-medium hover:underline">
+                    Sign In
+                  </a>
                 </div>
               </div>
 
-              <div className="form-title">
-                <h2>Create Account</h2>
-                <p>Join Pramyan — Unlock your true potential</p>
+              {/* title — also left-aligned (was implicitly so, making it explicit) */}
+              <div className="mb-4 text-left">
+                <h2 className="text-[22px] font-bold text-[#0d1f3c] mb-1">
+                  Create Account
+                </h2>
+                <p className="text-xs text-[#999] font-['Inter',sans-serif]">
+                  Join Pramyan — Unlock your true potential
+                </p>
               </div>
 
+              {/* google button */}
               <button
-                className="google-btn"
+                type="button"
                 onClick={() => {
-                  const frontendOrigin = encodeURIComponent(window.location.origin);
-                  window.location.href = apiUrl(`google-auth.php?frontend_origin=${frontendOrigin}`);
-                }}>
-                <svg width="16" height="16" viewBox="0 0 24 24">
+                  const frontendOrigin = encodeURIComponent(
+                    window.location.origin,
+                  );
+                  window.location.href = apiUrl(
+                    `google-auth.php?frontend_origin=${frontendOrigin}`,
+                  );
+                }}
+                className="w-full h-[42px] bg-[#f8fbff] border-[1.5px] border-[#d4e4f7] rounded-xl text-[13px] font-medium text-[#1a1a1a] cursor-pointer flex items-center justify-center gap-2 mb-3.5 transition-all hover:border-[#185FA5] hover:bg-white hover:shadow-[0_4px_16px_rgba(24,95,165,0.1)] hover:-translate-y-0.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden>
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -498,74 +305,99 @@ export default function SignUp() {
                 Continue with Google
               </button>
 
-              <div className="divider">
-                <span>or sign up with email</span>
+              {/* divider */}
+              <div className="flex items-center gap-2.5 mb-3.5">
+                <span className="flex-1 h-px bg-[#f0f4fb]" />
+                <span className="text-[11px] text-[#bbb] font-['Inter',sans-serif] whitespace-nowrap">
+                  or sign up with email
+                </span>
+                <span className="flex-1 h-px bg-[#f0f4fb]" />
               </div>
 
-              {errors.api && <p className="error-msg">{errors.api}</p>}
+              {/* api error */}
+              {errors.api && <p className={`${errorCls} mb-2`}>{errors.api}</p>}
 
-              <div className="grid2">
-                <div className="field">
-                  <label>Full Name</label>
+              {/* row 1: name + email */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-2.5">
+                <div>
+                  <label className={labelCls}>Full Name</label>
                   <input
                     name="name"
                     type="text"
                     placeholder="Name"
                     value={form.name}
                     onChange={handleChange}
+                    className={inputCls}
                   />
-                  {errors.name && <p className="error-msg">{errors.name}</p>}
+                  {errors.name && <p className={errorCls}>{errors.name}</p>}
                 </div>
-                <div className="field">
-                  <label>Email Address</label>
+                <div>
+                  <label className={labelCls}>Email Address</label>
                   <input
                     name="email"
                     type="email"
                     placeholder="you@email.com"
                     value={form.email}
                     onChange={handleChange}
+                    className={inputCls}
                   />
-                  {errors.email && <p className="error-msg">{errors.email}</p>}
+                  {errors.email && <p className={errorCls}>{errors.email}</p>}
                 </div>
               </div>
 
-              <div className="grid2">
-                <div className="field">
-                  <label>Password</label>
-                  <input
-                    name="password"
-                    type="password"
-                    placeholder="Min. 8 characters"
-                    value={form.password}
-                    onChange={handleChange}
-                  />
+              {/* row 2: password (with toggle) + parent phone */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-2.5">
+                <div>
+                  <label className={labelCls}>Password</label>
+                  <div className="relative">
+                    <input
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Min. 8 characters"
+                      value={form.password}
+                      onChange={handleChange}
+                      className={`${inputCls} pr-10`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#a8c4e8] hover:text-[#185FA5] transition-colors p-1 rounded">
+                      {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
                   {errors.password && (
-                    <p className="error-msg">{errors.password}</p>
+                    <p className={errorCls}>{errors.password}</p>
                   )}
                 </div>
-                <div className="field">
-                  <label>Parent's Phone</label>
+                <div>
+                  <label className={labelCls}>Parent's Phone</label>
                   <input
                     name="parentPhone"
                     type="tel"
                     placeholder="+91 98765 43210"
                     value={form.parentPhone}
                     onChange={handleChange}
+                    className={inputCls}
                   />
                   {errors.parentPhone && (
-                    <p className="error-msg">{errors.parentPhone}</p>
+                    <p className={errorCls}>{errors.parentPhone}</p>
                   )}
                 </div>
               </div>
 
-              <div className="grid2">
-                <div className="field">
-                  <label>Class</label>
-                  <div className="select-wrap">
+              {/* row 3: class + board */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-3">
+                <div>
+                  <label className={labelCls}>Class</label>
+                  <div className="relative">
                     <select
                       name="class"
                       value={form.class}
-                      onChange={handleChange}>
+                      onChange={handleChange}
+                      className={`${inputCls} pr-7 cursor-pointer`}>
                       <option value="">Select Class</option>
                       {[8, 9, 10].map((c) => (
                         <option key={c} value={c}>
@@ -573,36 +405,62 @@ export default function SignUp() {
                         </option>
                       ))}
                     </select>
+                    <ChevronDown
+                      size={14}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#185FA5] pointer-events-none"
+                    />
                   </div>
-                  {errors.class && <p className="error-msg">{errors.class}</p>}
+                  {errors.class && <p className={errorCls}>{errors.class}</p>}
                 </div>
-                <div className="field">
-                  <label>School Board</label>
-                  <div className="select-wrap">
+                <div>
+                  <label className={labelCls}>School Board</label>
+                  <div className="relative">
                     <select
                       name="board"
                       value={form.board}
-                      onChange={handleChange}>
+                      onChange={handleChange}
+                      className={`${inputCls} pr-7 cursor-pointer`}>
                       <option value="">Select Board</option>
                       <option value="CBSE">CBSE</option>
                       <option value="ICSE">ICSE</option>
                       <option value="State Board">State Board</option>
                     </select>
+                    <ChevronDown
+                      size={14}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#185FA5] pointer-events-none"
+                    />
                   </div>
-                  {errors.board && <p className="error-msg">{errors.board}</p>}
+                  {errors.board && <p className={errorCls}>{errors.board}</p>}
                 </div>
               </div>
 
+              {/* submit */}
               <button
-                className="submit-btn"
+                type="button"
                 onClick={handleSubmit}
-                disabled={loading}>
-                {loading ? "Creating Account..." : "Create My Account →"}
+                disabled={loading}
+                className="group relative w-full h-[44px] rounded-xl text-[13.5px] font-semibold text-white cursor-pointer overflow-hidden bg-[linear-gradient(135deg,#1D9E75_0%,#185FA5_100%)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(24,95,165,0.3)] active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed disabled:translate-y-0 disabled:hover:shadow-none">
+                {!loading && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute top-0 -left-full w-[60%] h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] transition-[left] duration-500 group-hover:left-[150%]"
+                  />
+                )}
+                <span className="relative">
+                  {loading ? "Creating Account..." : "Create My Account →"}
+                </span>
               </button>
 
-              <p className="terms">
-                By signing up you agree to our <a href="#">Terms of Service</a>{" "}
-                and <a href="#">Privacy Policy</a>
+              {/* terms — left-aligned on mobile, centered on desktop */}
+              <p className="text-left md:text-center text-[10px] text-[#bbb] mt-2.5 leading-[1.7] font-['Inter',sans-serif]">
+                By signing up you agree to our{" "}
+                <a href="#" className="text-[#185FA5] hover:underline">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="#" className="text-[#185FA5] hover:underline">
+                  Privacy Policy
+                </a>
               </p>
             </div>
           </div>

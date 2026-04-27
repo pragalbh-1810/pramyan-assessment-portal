@@ -1556,54 +1556,49 @@ export default function TeacherPanel() {
                                     </th>
                                   </tr>
                                 </thead>
-                                <tbody>
-  {(() => {
-    const parseQLabel = (qText = '') => {
-      const match = qText.match(/Q(\d+)(?:\(([a-zA-Z])\))?/i);
-      if (match) return { num: parseInt(match[1]), sub: match[2]?.toLowerCase() ?? null };
-      return { num: null, sub: null };
-    };
-
-    return activeReport.questions?.map((q, i) => {
-      const ok = parseInt(q.is_correct) === 1;
-      const sk = !q.selected_option;
-      const { num, sub } = parseQLabel(q.q_text);
-      const qLabel = num ? `Q${num}${sub ? `(${sub})` : ''}` : `Q${i + 1}`;
-
-      return (
-        <tr key={q.question_id}>
-          <td className="px-3 py-3 border border-[#e2edf8] text-center font-extrabold text-[#185FA5]">
-            {qLabel}
-          </td>
-          <td className="px-3 py-3 border border-[#e2edf8] text-center font-semibold text-[#444]">
-            {q.section}
-          </td>
-          <td className="px-3 py-3 border border-[#e2edf8] text-left font-semibold text-[#555]">
-            {q.chapter}
-          </td>
-          <td className="px-3 py-3 border border-[#e2edf8] text-left text-[#555]">
-            {q.skill_type}
-          </td>
-          <td className="px-3 py-3 border border-[#e2edf8] text-center font-semibold">
-            {q.bloom_level}
-          </td>
-          <td className="px-3 py-3 border border-[#e2edf8] text-center font-bold text-[#1D9E75]">
-            {q.correct?.toUpperCase()}
-          </td>
-          <td
-            className="px-3 py-3 border border-[#e2edf8] text-center font-bold"
+                                {/* Raw Question Analysis table body */}
+<tbody>
+  {activeReport.questions?.map((q, i) => {
+    const ok = parseInt(q.is_correct) === 1;
+    const sk = !q.selected_option;
+    
+    // Parse Q number and sub-part from q_text or from DB columns
+    const qNum  = q.question_number || (i + 1);
+    const sub   = q.sub_part 
+      ? `(${q.sub_part})` 
+      : '';
+    
+    return (
+      <tr key={q.id}>
+        <td className="px-3 py-3 border border-[#e2edf8] text-center font-extrabold text-[#185FA5]">
+          Q{qNum}{sub}
+        </td>
+        <td className="px-3 py-3 border border-[#e2edf8] text-center font-semibold text-[#444]">
+          {q.section}
+        </td>
+        <td className="px-3 py-3 border border-[#e2edf8] text-left font-semibold text-[#555]">
+          {q.chapter}
+        </td>
+        <td className="px-3 py-3 border border-[#e2edf8] text-left text-[#555]">
+          {q.skill_type}
+        </td>
+        <td className="px-3 py-3 border border-[#e2edf8] text-center font-semibold">
+          {q.bloom_level}
+        </td>
+        <td className="px-3 py-3 border border-[#e2edf8] text-center font-bold text-[#1D9E75]">
+          {q.correct?.toUpperCase()}
+        </td>
+        <td className="px-3 py-3 border border-[#e2edf8] text-center font-bold"
             style={{ color: sk ? "#aaa" : ok ? "#1D9E75" : "#e24b4a" }}>
-            {sk ? "Skipped" : q.selected_option?.toUpperCase()}
-          </td>
-          <td
-            className="px-3 py-3 border border-[#e2edf8] text-center font-extrabold"
+          {sk ? "Skipped" : q.selected_option?.toUpperCase()}
+        </td>
+        <td className="px-3 py-3 border border-[#e2edf8] text-center font-extrabold"
             style={{ color: ok ? "#1D9E75" : "#e24b4a" }}>
-            {ok ? "1" : "0"}
-          </td>
-        </tr>
-      );
-    });
-  })()}
+          {ok ? "1" : "0"}
+        </td>
+      </tr>
+    );
+  })}
 </tbody>
                               </table>
                             </div>

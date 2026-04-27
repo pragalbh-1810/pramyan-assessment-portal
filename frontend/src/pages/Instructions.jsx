@@ -1,345 +1,101 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  FileText,
+  Clock,
+  HelpCircle,
+  GraduationCap,
+  ClipboardList,
+} from "lucide-react";
 import logo from "../assets/logo.jpeg";
 import { getToken, setToken } from "../utils/auth";
 import { apiUrl } from "../utils/api";
 
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500&display=swap');
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  @keyframes fadeInUp {
+// Keyframes that aren't in Tailwind by default — kept tiny and scoped.
+const keyframes = `
+  @keyframes instr-fade-up {
     from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  @keyframes fadeInLeft {
+  @keyframes instr-fade-left {
     from { opacity: 0; transform: translateX(-16px); }
-    to { opacity: 1; transform: translateX(0); }
+    to   { opacity: 1; transform: translateX(0); }
   }
-  @keyframes float {
+  @keyframes instr-float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+    50%      { transform: translateY(-8px); }
   }
-  @keyframes orbit1 {
+  @keyframes instr-orbit-1 {
     from { transform: rotate(0deg) translateX(100px) rotate(0deg); }
-    to { transform: rotate(360deg) translateX(100px) rotate(-360deg); }
+    to   { transform: rotate(360deg) translateX(100px) rotate(-360deg); }
   }
-  @keyframes orbit2 {
+  @keyframes instr-orbit-2 {
     from { transform: rotate(180deg) translateX(75px) rotate(-180deg); }
-    to { transform: rotate(540deg) translateX(75px) rotate(-540deg); }
+    to   { transform: rotate(540deg) translateX(75px) rotate(-540deg); }
   }
-
-  html, body {
-    height: 100%; margin: 0;
-    background: #EEF4FF;
-    font-family: 'Sora', sans-serif;
-    overflow: hidden;
-  }
-
-  .instr-outer {
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    background: #EEF4FF;
-    overflow: hidden;
-  }
-
-  .instr-card {
-    display: flex;
-    width: 100%;
-    max-width: 980px;
-    height: calc(100vh - 40px);
-    max-height: 700px;
-    border-radius: 28px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(74,144,217,0.15), 0 4px 16px rgba(0,0,0,0.06);
-    animation: fadeInUp 0.6s ease both;
-  }
-
-  /* LEFT PANEL */
-  .instr-left {
-    width: 38%;
-    background: linear-gradient(145deg, #1D9E75 0%, #185FA5 100%);
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 2rem 1.8rem;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-  .left-blob1 {
-    position: absolute; top: -60px; right: -60px;
-    width: 200px; height: 200px; border-radius: 50%;
-    background: rgba(255,255,255,0.08);
-  }
-  .left-blob2 {
-    position: absolute; bottom: -40px; left: -40px;
-    width: 160px; height: 160px; border-radius: 50%;
-    background: rgba(255,255,255,0.06);
-  }
-  .orbit-wrap {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 220px; height: 220px; pointer-events: none;
-  }
-  .orbit-ring {
-    position: absolute; inset: 0; border-radius: 50%;
-    border: 1px dashed rgba(255,255,255,0.15);
-  }
-  .orbit-ring2 {
-    position: absolute; inset: 22px; border-radius: 50%;
-    border: 1px dashed rgba(255,255,255,0.1);
-  }
-  .orb1 {
-    position: absolute; top: 50%; left: 50%;
-    width: 8px; height: 8px; border-radius: 50%;
-    background: white; margin: -4px;
-    animation: orbit1 9s linear infinite;
-    box-shadow: 0 0 8px rgba(255,255,255,0.8);
-  }
-  .orb2 {
-    position: absolute; top: 50%; left: 50%;
-    width: 6px; height: 6px; border-radius: 50%;
-    background: rgba(255,255,255,0.7); margin: -3px;
-    animation: orbit2 6s linear infinite;
-  }
-
-  .logo-wrap {
-    position: relative; z-index: 2;
-    animation: float 4s ease-in-out infinite;
-    margin-bottom: 18px; width: 100%;
-  }
-  .logo-img-wrap {
-    background: white; border-radius: 20px;
-    padding: 10px 16px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .logo-real {
-    width: 100%; max-width: 160px;
-    height: auto; display: block; margin: 0 auto;
-  }
-
-  .left-text {
-    position: relative; z-index: 2;
-    text-align: left;
-    animation: fadeInLeft 0.8s ease 0.3s both;
-    margin-bottom: 18px;
-    width: 100%;
-  }
-  .left-text h2 {
-    color: white; font-size: 16px; font-weight: 600;
-    line-height: 1.6; margin-bottom: 4px;
-    text-align: left;
-    padding-left:4px;
-  }
-  .left-text p {
-    color: rgba(255,255,255,0.7); font-size: 11px;
-    font-family: 'Inter', sans-serif;
-    text-align: left;
-    padding-left:4px;
-  }
-
-  .test-info-boxes {
-    position: relative; z-index: 2;
-    display: flex; flex-direction: column; gap: 7px;
-    width: 100%;
-    animation: fadeInLeft 0.8s ease 0.5s both;
-  }
-  .info-box {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 12px; border-radius: 11px;
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.18);
-    font-family: 'Inter', sans-serif;
-  }
-  .info-box-icon {
-    width: 30px; height: 30px; border-radius: 7px;
-    background: rgb(255 255 255 / 82%);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; flex-shrink: 0;
-  }
-  .info-box-content {
-    display: flex; flex-direction: column;
-    align-items: flex-start;
-  }
-  .info-box-label {
-    font-size: 9px; color: rgba(255,255,255,0.6);
-    margin-bottom: 1px; text-transform: uppercase;
-    letter-spacing: 0.3px; text-align: left;
-  }
-  .info-box-value {
-    font-size: 12px; font-weight: 600; color: white;
-    text-align: left;
-  }
-
-  /* RIGHT PANEL */
-  .instr-right {
-    flex: 1; background: white;
-    display: flex; align-items: center; justify-content: center;
-    padding: 2rem 2.5rem;
-    position: relative; overflow: hidden;
-  }
-  .instr-right::before {
-    content: ''; position: absolute; top: -60px; right: -60px;
-    width: 220px; height: 220px; border-radius: 50%;
-    background: #EEF4FF; opacity: 0.6; pointer-events: none;
-  }
-  .instr-right::after {
-    content: ''; position: absolute; bottom: -40px; left: -40px;
-    width: 160px; height: 160px; border-radius: 50%;
-    background: #E1F5EE; opacity: 0.5; pointer-events: none;
-  }
-
-  .content-wrap {
-    width: 100%; max-width: 420px;
-    animation: fadeInUp 0.6s ease 0.2s both;
-    position: relative; z-index: 1;
-  }
-
-  .instr-title { margin-bottom: 12px; }
-  .instr-title h2 {
-    font-size: 20px; font-weight: 700;
-    color: #0d1f3c; margin-bottom: 3px;
-  }
-  .instr-title p {
-    font-size: 11px; color: #999;
-    font-family: 'Inter', sans-serif;
-  }
-
-  .rules-title {
-    font-size: 10px; font-weight: 700; color: #185FA5;
-    text-transform: uppercase; letter-spacing: 0.5px;
-    margin-bottom: 7px;
-  }
-
-  .rules-list {
-    display: flex; flex-direction: column; gap: 5px;
-    margin-bottom: 12px;
-  }
-  .rule-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 7px 11px; border-radius: 10px;
-    background: #f8fbff;
-    border: 1.5px solid #e2edf8;
-    transition: all 0.2s;
-  }
-  .rule-item:hover { border-color: #185FA5; background: #EEF4FF; }
-  .rule-num {
-    width: 18px; height: 18px; border-radius: 5px;
-    background: linear-gradient(135deg, #1D9E75, #185FA5);
-    color: white; font-size: 9px; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .rule-text {
-    font-size: 11.5px; color: #444;
-    font-family: 'Inter', sans-serif; line-height: 1.4;
-  }
-  .rule-text strong { color: #0d1f3c; font-weight: 600; }
-
-  .checkbox-wrap {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 13px;
-    background: #f0f9f5;
-    border: 1.5px solid #b8e8d4;
-    border-radius: 11px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .checkbox-wrap:hover { border-color: #1D9E75; background: #e6f7f1; }
-  .checkbox-wrap input[type="checkbox"] {
-    width: 15px; height: 15px;
-    accent-color: #1D9E75;
-    cursor: pointer; flex-shrink: 0;
-  }
-  .checkbox-label {
-    font-size: 11.5px; color: #1D9E75;
-    font-family: 'Inter', sans-serif;
-    font-weight: 500; cursor: pointer;
-  }
-
-  .start-btn {
-    width: 100%; height: 44px; border: none; border-radius: 12px;
-    font-size: 13.5px; font-weight: 600; font-family: 'Sora', sans-serif;
-    color: white; cursor: pointer;
-    background: linear-gradient(135deg, #1D9E75 0%, #185FA5 100%);
-    transition: all 0.3s; position: relative; overflow: hidden;
-  }
-  .start-btn::before {
-    content: ''; position: absolute; top: 0; left: -100%;
-    width: 60%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
-  }
-  .start-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(24,95,165,0.3);
-  }
-  .start-btn:hover:not(:disabled)::before { left: 150%; }
-  .start-btn:disabled {
-    background: #d0dff0; color: #aab8cc; cursor: not-allowed;
-  }
-
-  @media (max-width: 768px) {
-    html, body { overflow: auto; }
-    .instr-outer { height: auto; padding: 12px; align-items: flex-start; overflow-y: auto; }
-    .instr-card { flex-direction: column; height: auto; max-height: none; border-radius: 20px; }
-    .instr-left { width: 100%; padding: 1.5rem; }
-    .instr-left .orbit-wrap { display: none; }
-    .instr-right { padding: 1.5rem; overflow-y: auto; }
-    .content-wrap { max-width: 100%; }
-  }
+  .anim-fade-up   { animation: instr-fade-up 0.6s ease both; }
+  .anim-fade-left { animation: instr-fade-left 0.8s ease both; }
+  .anim-float     { animation: instr-float 4s ease-in-out infinite; }
+  .anim-orbit-1   { animation: instr-orbit-1 9s linear infinite; }
+  .anim-orbit-2   { animation: instr-orbit-2 6s linear infinite; }
+  .anim-d-300     { animation-delay: 0.3s; }
+  .anim-d-500     { animation-delay: 0.5s; }
 `;
 
 const RULES = [
   {
     text: (
       <>
-        <strong>Do not refresh</strong> the page. Your progress will be lost.
+        <strong className="text-[#0d1f3c] font-semibold">Do not refresh</strong>{" "}
+        the page. Your progress will be lost.
       </>
     ),
   },
   {
     text: (
       <>
-        <strong>Do not switch tabs</strong> or open other windows.
+        <strong className="text-[#0d1f3c] font-semibold">
+          Do not switch tabs
+        </strong>{" "}
+        or open other windows.
       </>
     ),
   },
   {
     text: (
       <>
-        The test has a <strong>time limit</strong>. It will auto-submit when
-        time runs out.
+        The test has a{" "}
+        <strong className="text-[#0d1f3c] font-semibold">time limit</strong>. It
+        will auto-submit when time runs out.
       </>
     ),
   },
   {
     text: (
       <>
-        Each question has <strong>4 options</strong>. Select only one answer.
+        Each question has{" "}
+        <strong className="text-[#0d1f3c] font-semibold">4 options</strong>.
+        Select only one answer.
       </>
     ),
   },
   {
     text: (
       <>
-        You can <strong>navigate between questions</strong> using the question
-        palette.
+        You can{" "}
+        <strong className="text-[#0d1f3c] font-semibold">
+          navigate between questions
+        </strong>{" "}
+        using the question palette.
       </>
     ),
   },
   {
     text: (
       <>
-        Once you click <strong>Submit Test</strong>, you cannot go back.
+        Once you click{" "}
+        <strong className="text-[#0d1f3c] font-semibold">Submit Test</strong>,
+        you cannot go back.
       </>
     ),
   },
@@ -348,7 +104,7 @@ const RULES = [
 export default function Instructions() {
   const navigate = useNavigate();
   const { testId } = useParams();
-  const [searchParams] = useSearchParams(); // Get URL parameters
+  const [searchParams] = useSearchParams();
   const tokenUrl = searchParams.get("token");
 
   const [checked, setChecked] = useState(false);
@@ -356,22 +112,20 @@ export default function Instructions() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. If returning from Google Auth, save the token to LocalStorage!
-    if (tokenUrl) {
-      setToken(tokenUrl);
-    }
+    // 1. If returning from Google Auth, save the token to LocalStorage
+    if (tokenUrl) setToken(tokenUrl);
 
-    // 2. Get active token (either the one we just saved, or from an existing session)
+    // 2. Get active token (just-saved or existing session)
     const activeToken = tokenUrl || getToken();
 
     if (!activeToken) {
-      alert("Please log in to continue.");
       navigate("/");
       return;
     }
 
     fetchTestDetails(activeToken);
-  }, [testId, tokenUrl, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [testId, tokenUrl]);
 
   const fetchTestDetails = async (token) => {
     try {
@@ -380,7 +134,6 @@ export default function Instructions() {
         { headers: { Authorization: `Bearer ${token}` } },
       );
       const data = await res.json();
-
       if (data.success) {
         setTest(data.test);
       } else {
@@ -394,14 +147,14 @@ export default function Instructions() {
   };
 
   const fallbackTest = (token) => {
-    // Decode token to get class and testId mapping
     let userClass = null;
     try {
       const decoded = JSON.parse(atob(token.split(".")[1]));
       userClass = decoded.class || null;
-    } catch (e) {}
+    } catch {
+      // ignore decode errors
+    }
 
-    // Map class to correct test name and details
     const classTestMap = {
       8: {
         name: "Class 8 Foundation Check",
@@ -435,106 +188,174 @@ export default function Instructions() {
 
   return (
     <>
-      <style>{styles}</style>
-      <div className="instr-outer">
-        <div className="instr-card">
-          {/* LEFT PANEL */}
-          <div className="instr-left">
-            <div className="left-blob1" />
-            <div className="left-blob2" />
-            <div className="orbit-wrap">
-              <div className="orbit-ring" />
-              <div className="orbit-ring2" />
-              <div className="orb1" />
-              <div className="orb2" />
+      <style>{keyframes}</style>
+
+      {/* Outer wrapper — natural scroll on mobile, centered on desktop */}
+      <div className="min-h-screen w-full bg-[#EEF4FF] font-['Sora',sans-serif] flex items-start md:items-center justify-center p-3 md:p-5">
+        <div className="anim-fade-up flex flex-col md:flex-row w-full max-w-[980px] rounded-2xl md:rounded-[28px] overflow-hidden shadow-[0_20px_60px_rgba(74,144,217,0.15),0_4px_16px_rgba(0,0,0,0.06)] bg-white">
+          {/* LEFT PANEL — gradient brand side */}
+          <div className="relative w-full md:w-[38%] md:shrink-0 bg-[linear-gradient(145deg,#1D9E75_0%,#185FA5_100%)] flex flex-col items-start justify-center px-6 py-7 md:px-7 md:py-8 overflow-hidden">
+            {/* decorative blobs */}
+            <div
+              className="absolute -top-16 -right-16 w-[200px] h-[200px] rounded-full bg-white/[0.08]"
+              aria-hidden
+            />
+            <div
+              className="absolute -bottom-10 -left-10 w-[160px] h-[160px] rounded-full bg-white/[0.06]"
+              aria-hidden
+            />
+
+            {/* orbit rings — desktop only */}
+            <div
+              className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[220px] pointer-events-none"
+              aria-hidden>
+              <div className="absolute inset-0 rounded-full border border-dashed border-white/15" />
+              <div className="absolute inset-[22px] rounded-full border border-dashed border-white/10" />
+              <div className="anim-orbit-1 absolute top-1/2 left-1/2 w-2 h-2 -m-1 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+              <div className="anim-orbit-2 absolute top-1/2 left-1/2 w-1.5 h-1.5 -m-[3px] rounded-full bg-white/70" />
             </div>
 
-            <div className="logo-wrap">
-              <div className="logo-img-wrap">
-                <img src={logo} alt="Pramyan Logo" className="logo-real" />
+            {/* logo */}
+            <div className="anim-float relative z-10 w-full mb-4">
+              <div className="bg-white rounded-2xl px-4 py-2.5 shadow-[0_8px_30px_rgba(0,0,0,0.15)] flex items-center justify-center">
+                <img
+                  src={logo}
+                  alt="Pramyan Logo"
+                  className="block w-full max-w-[160px] h-auto"
+                />
               </div>
             </div>
 
-            <div className="left-text">
-              <h2>You're almost ready! Read carefully.</h2>
-              <p>Please go through all instructions before starting</p>
+            {/* welcome text — left-aligned (matches original) */}
+            <div className="anim-fade-left anim-d-300 relative z-10 text-left w-full mb-4">
+              <h2 className="text-white text-base font-semibold leading-relaxed mb-1 pl-1">
+                You're almost ready! Read carefully.
+              </h2>
+              <p className="text-white/70 text-[11px] font-['Inter',sans-serif] pl-1">
+                Please go through all instructions before starting
+              </p>
             </div>
 
+            {/* test info boxes */}
             {!loading && test && (
-              <div className="test-info-boxes">
-                <div className="info-box">
-                  <div className="info-box-icon">📝</div>
-                  <div className="info-box-content">
-                    <span className="info-box-label">Test Name</span>
-                    <span className="info-box-value">{test.name}</span>
-                  </div>
-                </div>
-                <div className="info-box">
-                  <div className="info-box-icon">⏱</div>
-                  <div className="info-box-content">
-                    <span className="info-box-label">Duration</span>
-                    <span className="info-box-value">45 minutes</span>
-                  </div>
-                </div>
-                <div className="info-box">
-                  <div className="info-box-icon">❓</div>
-                  <div className="info-box-content">
-                    <span className="info-box-label">Total Questions</span>
-                    <span className="info-box-value">32 Questions</span>
-                  </div>
-                </div>
-                <div className="info-box">
-                  <div className="info-box-icon">🎓</div>
-                  <div className="info-box-content">
-                    <span className="info-box-label">Class</span>
-                    <span className="info-box-value">Class {test.class}</span>
-                  </div>
-                </div>
+              <div className="anim-fade-left anim-d-500 relative z-10 flex flex-col gap-1.5 w-full">
+                <InfoBox Icon={FileText} label="Test Name" value={test.name} />
+                <InfoBox
+                  Icon={Clock}
+                  label="Duration"
+                  value={`${test.duration_mins ?? 45} minutes`}
+                />
+                <InfoBox
+                  Icon={HelpCircle}
+                  label="Total Questions"
+                  value={`${test.total_questions ?? 32} Questions`}
+                />
+                <InfoBox
+                  Icon={GraduationCap}
+                  label="Class"
+                  value={test.class ? `Class ${test.class}` : "—"}
+                />
               </div>
             )}
           </div>
 
-          {/* RIGHT PANEL */}
-          <div className="instr-right">
-            <div className="content-wrap">
-              <div className="instr-title">
-                <h2>Instructions</h2>
-                <p>Read all rules carefully before you begin</p>
+          {/* RIGHT PANEL — instructions + checkbox + start */}
+          <div className="relative flex-1 bg-white flex items-center justify-center px-6 py-7 md:px-10 md:py-7 overflow-hidden">
+            {/* decorative bg circles — desktop only */}
+            <div
+              className="hidden md:block absolute -top-16 -right-16 w-[220px] h-[220px] rounded-full bg-[#EEF4FF]/60 pointer-events-none"
+              aria-hidden
+            />
+            <div
+              className="hidden md:block absolute -bottom-10 -left-10 w-[160px] h-[160px] rounded-full bg-[#E1F5EE]/50 pointer-events-none"
+              aria-hidden
+            />
+
+            <div className="anim-fade-up relative z-10 w-full max-w-[420px]">
+              {/* title */}
+              <div className="mb-3">
+                <h2 className="text-xl font-bold text-[#0d1f3c] mb-0.5">
+                  Instructions
+                </h2>
+                <p className="text-[11px] text-[#999] font-['Inter',sans-serif]">
+                  Read all rules carefully before you begin
+                </p>
               </div>
 
-              <div className="rules-title">📋 General Rules</div>
-              <div className="rules-list">
+              {/* rules header */}
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#185FA5] uppercase tracking-wider mb-2">
+                <ClipboardList size={12} strokeWidth={2.5} />
+                <span>General Rules</span>
+              </div>
+
+              {/* rules list */}
+              <div className="flex flex-col gap-1.5 mb-3">
                 {RULES.map((rule, i) => (
-                  <div className="rule-item" key={i}>
-                    <div className="rule-num">{i + 1}</div>
-                    <div className="rule-text">{rule.text}</div>
+                  <div
+                    key={i}
+                    className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-[10px] bg-[#f8fbff] border-[1.5px] border-[#e2edf8] transition-all hover:border-[#185FA5] hover:bg-[#EEF4FF]">
+                    <div className="w-[18px] h-[18px] rounded-[5px] bg-[linear-gradient(135deg,#1D9E75,#185FA5)] text-white text-[9px] font-bold flex items-center justify-center shrink-0">
+                      {i + 1}
+                    </div>
+                    <div className="text-[11.5px] text-[#444] font-['Inter',sans-serif] leading-snug">
+                      {rule.text}
+                    </div>
                   </div>
                 ))}
               </div>
 
-              <label
-                className="checkbox-wrap"
-                onClick={() => setChecked(!checked)}>
+              {/* agreement checkbox */}
+              <label className="flex items-center gap-2.5 px-3 py-2.5 bg-[#f0f9f5] border-[1.5px] border-[#b8e8d4] rounded-[11px] mb-2.5 cursor-pointer transition-all hover:border-[#1D9E75] hover:bg-[#e6f7f1]">
                 <input
                   type="checkbox"
                   checked={checked}
-                  onChange={() => setChecked(!checked)}
+                  onChange={(e) => setChecked(e.target.checked)}
+                  className="w-[15px] h-[15px] cursor-pointer shrink-0 accent-[#1D9E75]"
                 />
-                <span className="checkbox-label">
+                <span className="text-[11.5px] text-[#1D9E75] font-medium font-['Inter',sans-serif]">
                   I have read and understood all the instructions above
                 </span>
               </label>
 
+              {/* start button */}
               <button
-                className="start-btn"
+                type="button"
                 onClick={handleStartTest}
-                disabled={!checked}>
-                {checked ? "Start Test →" : "Please read instructions first"}
+                disabled={!checked}
+                className="group relative w-full h-[44px] rounded-xl text-[13.5px] font-semibold text-white cursor-pointer overflow-hidden bg-[linear-gradient(135deg,#1D9E75_0%,#185FA5_100%)] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(24,95,165,0.3)] active:translate-y-0 disabled:bg-[#d0dff0] disabled:bg-none disabled:text-[#aab8cc] disabled:cursor-not-allowed disabled:translate-y-0 disabled:hover:shadow-none">
+                {checked && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute top-0 -left-full w-[60%] h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] transition-[left] duration-500 group-hover:left-[150%]"
+                  />
+                )}
+                <span className="relative">
+                  {checked ? "Start Test →" : "Please read instructions first"}
+                </span>
               </button>
             </div>
           </div>
         </div>
       </div>
     </>
+  );
+}
+
+/* Sub-component: a single info box on the left panel */
+function InfoBox({ Icon, label, value }) {
+  return (
+    <div className="flex items-center gap-2.5 px-3 py-2 rounded-[11px] bg-white/[0.12] border border-white/[0.18] font-['Inter',sans-serif]">
+      <span className="w-[30px] h-[30px] rounded-[7px] bg-white/[0.82] flex items-center justify-center shrink-0">
+        <Icon size={16} className="text-[#185FA5]" strokeWidth={2.25} />
+      </span>
+      <div className="flex flex-col items-start min-w-0">
+        <span className="text-[9px] text-white/60 uppercase tracking-wide mb-px">
+          {label}
+        </span>
+        <span className="text-xs font-semibold text-white truncate max-w-full">
+          {value}
+        </span>
+      </div>
+    </div>
   );
 }

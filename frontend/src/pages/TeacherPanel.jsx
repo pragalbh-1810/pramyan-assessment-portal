@@ -659,44 +659,16 @@ export default function TeacherPanel() {
 // BEAUTIFUL REPORT FORMATTER
 // ==========================================
 function FormatReport({ report, student, teacherName }) {
-  // DYNAMIC RECALCULATION ENGINE - NOW GROUPS BY PARENT QUESTION
+  // PER-ROW SCORING ENGINE — each question row = 1 mark
+  // Section A (1-mark MCQs)         : 1 row each
+  // Section B (3-mark, 3 parts a-c) : 3 rows each
+  // Section C (4-mark, 4 parts a-d) : 4 rows each
+  // So total marks = total row count, and a row is correct iff that part was correct.
   let activeReport = { ...report };
 
   if (report.questions && report.questions.length > 0) {
     const qs = report.questions;
-
-    // Step 1: Group all questions by their parent number
-    const grouped = {};
-    qs.forEach((q, i) => {
-      const { num } = parseQLabel(q.q_text);
-      const qKey = num !== null ? `Q${num}` : `RAW_${i}`; // Group key
-
-      if (!grouped[qKey]) {
-        grouped[qKey] = {
-          chapter: q.chapter || "Unknown",
-          section: (q.section || "").toLowerCase(),
-          bloom_level: (q.bloom_level || "UNKNOWN").toUpperCase(),
-          skill_type: (q.skill_type || "").toUpperCase(),
-          risk_if_weak: q.risk_if_weak || "",
-          all_correct: true,
-          was_answered: false,
-        };
-      }
-
-      // If any sub-part is wrong, the entire parent question is marked wrong
-      if (parseInt(q.is_correct) !== 1) {
-        grouped[qKey].all_correct = false;
-      }
-
-      // If the student attempted any sub-part, mark the parent question as "answered"
-      if (q.selected_option && String(q.selected_option).trim() !== "") {
-        grouped[qKey].was_answered = true;
-      }
-    });
-
-    // Step 2: Loop through the newly grouped parent questions to calculate the total scores
-    const parentQs = Object.values(grouped);
-    const totalMax = parentQs.length;
+    const totalMax = qs.length;
 
     let totalScore = 0;
     let mathMax = 0,
@@ -714,37 +686,39 @@ function FormatReport({ report, student, teacherName }) {
       p3m = 0,
       p3s = 0;
 
-    parentQs.forEach((q) => {
-      const ok = q.all_correct;
+    qs.forEach((q) => {
+      const ok = parseInt(q.is_correct) === 1;
       if (ok) totalScore++;
-      if (!q.was_answered) skipped++;
+      if (!q.selected_option || String(q.selected_option).trim() === "") {
+        skipped++;
+      }
 
       // Subjects
-      if (q.section.includes("math")) {
+      const sec = (q.section || "").toLowerCase();
+      if (sec.includes("math")) {
         mathMax++;
         if (ok) mathScore++;
-      } else if (q.section.includes("sci")) {
+      } else if (sec.includes("sci")) {
         sciMax++;
         if (ok) sciScore++;
       }
 
       // Bloom
-      const lvl = q.bloom_level;
+      const lvl = (q.bloom_level || "UNKNOWN").toUpperCase();
       if (!bMap[lvl]) bMap[lvl] = { max_score: 0, score: 0 };
       bMap[lvl].max_score++;
       if (ok) bMap[lvl].score++;
 
       // Chapters
-      const ch = q.chapter;
+      const ch = q.chapter || "Unknown";
       if (!cMap[ch])
         cMap[ch] = {
           chapter: ch,
-          subject:
-            q.section === "math"
-              ? "Mathematics"
-              : q.section === "sci"
-                ? "Science"
-                : q.section,
+          subject: sec.includes("math")
+            ? "Mathematics"
+            : sec.includes("sci")
+              ? "Science"
+              : q.section,
           swot_category: "",
           max_score: 0,
           score: 0,
@@ -754,7 +728,7 @@ function FormatReport({ report, student, teacherName }) {
       if (ok) cMap[ch].score++;
 
       // Skills
-      const sk = q.skill_type;
+      const sk = (q.skill_type || "").toUpperCase();
       if (sk.includes("P1") || sk.includes("CONCEPT")) {
         p1m++;
         if (ok) p1s++;
@@ -794,7 +768,7 @@ function FormatReport({ report, student, teacherName }) {
       })
       .sort((a, b) => b.pct - a.pct);
 
-    // Overwrite with grouped parent data!
+    // Overwrite with row-level data!
     activeReport = {
       ...activeReport,
       total_score: totalScore,

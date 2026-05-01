@@ -71,6 +71,7 @@ function getChapterStatus(pct) {
 }
 
 const BLOOM_LEVELS = [
+<<<<<<< HEAD
   {
     level: "L1",
     name: "Remember",
@@ -124,6 +125,14 @@ const BLOOM_LEVELS = [
     action: "N/A",
     barColor: "#aaa",
   },
+=======
+  { level: "L1", name: "Remember", meaning: "Recall facts & formulas", example: "What is the area formula for a trapezium?", action: "Use flashcards. Memorise formulas, definitions, key facts. 10-min daily recall drill.", barColor: "#185FA5" },
+  { level: "L2", name: "Understand", meaning: "Explain or classify", example: "Why does a candle go out when covered?", action: "Ask 'why'. Use real-life examples. Connect concepts to things the student already knows.", barColor: "#2563a8" },
+  { level: "L3", name: "Apply", meaning: "Solve using formulas", example: '"Find pressure if F=200N, A=0.4m²."', action: "Walk through NCERT solved examples step by step. Identify WHICH step fails — formula, substitution, or arithmetic.", barColor: "#3a7bd5" },
+  { level: "L4", name: "Analyze", meaning: "Compare & reason", example: "How does increasing area reduce pressure? Give example.", action: "Cannot think through multi-step problems. Introduce analysis questions: 'What if...?', 'Compare A and B'.", barColor: "#1D9E75" },
+  { level: "L5", name: "Evaluate", meaning: "Judge & justify", example: "Which method of food preservation is better and why?", action: "No higher-order thinking yet. Practice HOTS and competency-based questions from CBSE banks.", barColor: "#e07b2a" },
+  
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
 ];
 
 const THREAT_HINTS = {
@@ -142,6 +151,167 @@ const THREAT_HINTS = {
   "Living & non-living things": "Class 6 living world",
   Water: "Class 7 water chapter",
 };
+
+const MATH_CHAPTER_KEYWORDS = [
+  "integer",
+  "rational",
+  "real number",
+  "fraction",
+  "decimal",
+  "exponent",
+  "power",
+  "ratio",
+  "proportion",
+  "percentage",
+  "algebra",
+  "linear equation",
+  "quadratic",
+  "polynomial",
+  "equation",
+  "arithmetic progression",
+  "coordinate",
+  "trigonometry",
+  "circle",
+  "construction",
+  "factorisation",
+  "geometry",
+  "angle",
+  "triangle",
+  "mensuration",
+  "perimeter",
+  "area",
+  "volume",
+  "statistics",
+  "probability",
+  "heron",
+];
+
+const SCI_CHAPTER_KEYWORDS = [
+  "crop production",
+  "microorganism",
+  "synthetic fibre",
+  "plastic",
+  "metal",
+  "non-metal",
+  "coal",
+  "petroleum",
+  "combustion",
+  "conservation",
+  "cell",
+  "reproduction",
+  "adolescence",
+  "force",
+  "pressure",
+  "friction",
+  "sound",
+  "chemical effect",
+  "electric current",
+  "natural phenomena",
+  "light",
+  "matter",
+  "atom",
+  "molecule",
+  "motion",
+  "energy",
+  "gravitation",
+  "tissue",
+  "life process",
+  "control and coordination",
+  "heredity",
+  "evolution",
+  "electricity",
+  "magnetic effect",
+  "carbon",
+  "acid",
+  "base",
+  "salt",
+  "periodic classification",
+  "environment",
+  "natural resource",
+  "source of energy",
+  "plant",
+  "nutrition",
+  "substance",
+  "living",
+  "water",
+  "disease",
+  "body movement",
+];
+
+const normalizeTag = (v) => String(v || "").trim().toLowerCase();
+
+function detectSubjectFromSection(sectionRaw, qTextRaw = "") {
+  const section = normalizeTag(sectionRaw);
+  if (
+    section.includes("math") ||
+    section.includes("mathematics") ||
+    section.includes("algebra") ||
+    section.includes("geometry")
+  ) {
+    return "math";
+  }
+
+  if (
+    section.includes("sci") ||
+    section.includes("science") ||
+    section.includes("physics") ||
+    section.includes("chemistry") ||
+    section.includes("biology")
+  ) {
+    return "sci";
+  }
+
+  const text = normalizeTag(qTextRaw);
+  if (text.includes("[math")) return "math";
+  if (text.includes("[science") || text.includes("[sci")) return "sci";
+
+  return null;
+}
+
+function detectSubjectFromChapter(chapterRaw) {
+  const chapter = normalizeTag(chapterRaw);
+  if (!chapter) return null;
+
+  if (MATH_CHAPTER_KEYWORDS.some((k) => chapter.includes(k))) return "math";
+  if (SCI_CHAPTER_KEYWORDS.some((k) => chapter.includes(k))) return "sci";
+
+  return null;
+}
+
+function detectSkillBucket(skillRaw) {
+  const skill = String(skillRaw || "").trim().toUpperCase();
+  if (!skill) return null;
+
+  if (
+    skill.includes("P1") ||
+    skill.includes("CONCEPT") ||
+    skill.includes("LEVEL 1") ||
+    skill.includes("SKILL 1")
+  ) {
+    return "P1";
+  }
+
+  if (
+    skill.includes("P2") ||
+    skill.includes("PROCED") ||
+    skill.includes("LEVEL 2") ||
+    skill.includes("SKILL 2")
+  ) {
+    return "P2";
+  }
+
+  if (
+    skill.includes("P3") ||
+    skill.includes("APPLIC") ||
+    skill.includes("HOTS") ||
+    skill.includes("LEVEL 3") ||
+    skill.includes("SKILL 3")
+  ) {
+    return "P3";
+  }
+
+  return null;
+}
 
 function buildChapterSectionMap(questions = []) {
   const map = {};
@@ -183,7 +353,27 @@ function buildSwotBuckets(chapterScores = [], chapterSectionMap = {}) {
 }
 
 function buildSkillRows(reportObj) {
+  const mathP1 = Number.isFinite(Number(reportObj.math_p1))
+    ? Number(reportObj.math_p1)
+    : 0;
+  const sciP1 = Number.isFinite(Number(reportObj.sci_p1))
+    ? Number(reportObj.sci_p1)
+    : 0;
+  const mathP2 = Number.isFinite(Number(reportObj.math_p2))
+    ? Number(reportObj.math_p2)
+    : 0;
+  const sciP2 = Number.isFinite(Number(reportObj.sci_p2))
+    ? Number(reportObj.sci_p2)
+    : 0;
+  const mathP3 = Number.isFinite(Number(reportObj.math_p3))
+    ? Number(reportObj.math_p3)
+    : 0;
+  const sciP3 = Number.isFinite(Number(reportObj.sci_p3))
+    ? Number(reportObj.sci_p3)
+    : 0;
+
   return [
+<<<<<<< HEAD
     {
       code: "P1",
       title: "Math - conceptual clarity",
@@ -220,14 +410,30 @@ function buildSkillRows(reportObj) {
       pct: reportObj.p3,
       color: "#5c6ac4",
     },
+=======
+    { code: "P1", title: "Math - conceptual clarity", pct: mathP1, color: "#21a179" },
+    { code: "P1", title: "Science - conceptual clarity", pct: sciP1, color: "#3b82f6" },
+    { code: "P2", title: "Math - procedural accuracy", pct: mathP2, color: "#e07b2a" },
+    { code: "P2", title: "Science - procedural accuracy", pct: sciP2, color: "#d65d33" },
+    { code: "P3", title: "Math - application (HOTS)", pct: mathP3, color: "#7c83fd" },
+    { code: "P3", title: "Science - application (HOTS)", pct: sciP3, color: "#5c6ac4" },
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
   ];
 }
 
 function buildSkillInsight(name, reportObj) {
-  const mathP1 = reportObj.p1 || 0;
-  const sciP1 = reportObj.sci_p1 || reportObj.p1 || 0;
-  const mathP2 = reportObj.p2 || 0;
-  const mathP3 = reportObj.p3 || 0;
+  const mathP1 = Number.isFinite(Number(reportObj.math_p1))
+    ? Number(reportObj.math_p1)
+    : 0;
+  const sciP1 = Number.isFinite(Number(reportObj.sci_p1))
+    ? Number(reportObj.sci_p1)
+    : 0;
+  const mathP2 = Number.isFinite(Number(reportObj.math_p2))
+    ? Number(reportObj.math_p2)
+    : 0;
+  const mathP3 = Number.isFinite(Number(reportObj.math_p3))
+    ? Number(reportObj.math_p3)
+    : 0;
   const mathExecPeak = Math.max(mathP2, mathP3);
   const mathDrop = Math.max(0, mathP1 - mathExecPeak);
   const person = name || "Student";
@@ -1388,14 +1594,19 @@ function ReportsTab({ students, teachers, loading }) {
 // BEAUTIFUL REPORT FORMATTER
 // ==========================================
 function FormatReport({ report, student, teacherName }) {
+<<<<<<< HEAD
   // PER-ROW SCORING ENGINE — each question row = 1 mark
   // Section A (1-mark MCQs)         : 1 row each
   // Section B (3-mark, 3 parts a-c) : 3 rows each
   // Section C (4-mark, 4 parts a-d) : 4 rows each
+=======
+  // DYNAMIC RECALCULATION ENGINE (mark-based: each stored row = 1 mark)
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
   let activeReport = { ...report };
 
   if (report.questions && report.questions.length > 0) {
     const qs = report.questions;
+<<<<<<< HEAD
     const totalMax = qs.length;
 
     let totalScore = 0;
@@ -1427,6 +1638,37 @@ function FormatReport({ report, student, teacherName }) {
         mathMax++;
         if (ok) mathScore++;
       } else if (sec.includes("sci")) {
+=======
+    const totalMax =
+      Number(report.max_score) > 0 ? Number(report.max_score) : qs.length;
+
+    let totalScore = 0;
+    let mathMax = 0, mathScore = 0;
+    let sciMax = 0, sciScore = 0;
+    let answeredCount = 0;
+
+    const bMap = {};
+    const cMap = {};
+    let p1m = 0, p1s = 0, p2m = 0, p2s = 0, p3m = 0, p3s = 0;
+    let mathP1m = 0, mathP1s = 0, mathP2m = 0, mathP2s = 0, mathP3m = 0, mathP3s = 0;
+    let sciP1m = 0, sciP1s = 0, sciP2m = 0, sciP2s = 0, sciP3m = 0, sciP3s = 0;
+
+    qs.forEach((q) => {
+      const selected = String(q.selected_option ?? "").trim().toLowerCase();
+      const correctAns = String(q.correct ?? "").trim().toLowerCase();
+      const ok = selected !== "" && selected === correctAns;
+      if (ok) totalScore++;
+      if (selected !== "") answeredCount++;
+
+      // Subjects
+      const subject =
+        detectSubjectFromSection(q.section, q.q_text) ||
+        detectSubjectFromChapter(q.chapter);
+      if (subject === "math") {
+        mathMax++;
+        if (ok) mathScore++;
+      } else if (subject === "sci") {
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
         sciMax++;
         if (ok) sciScore++;
       }
@@ -1439,6 +1681,7 @@ function FormatReport({ report, student, teacherName }) {
 
       // Chapters
       const ch = q.chapter || "Unknown";
+<<<<<<< HEAD
       if (!cMap[ch])
         cMap[ch] = {
           chapter: ch,
@@ -1447,6 +1690,11 @@ function FormatReport({ report, student, teacherName }) {
             : sec.includes("sci")
               ? "Science"
               : q.section,
+=======
+      if (!cMap[ch]) cMap[ch] = {
+          chapter: ch,
+          subject: q.section,
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
           swot_category: "",
           max_score: 0,
           score: 0,
@@ -1456,16 +1704,45 @@ function FormatReport({ report, student, teacherName }) {
       if (ok) cMap[ch].score++;
 
       // Skills
+<<<<<<< HEAD
       const sk = (q.skill_type || "").toUpperCase();
       if (sk.includes("P1") || sk.includes("CONCEPT")) {
+=======
+      const skillBucket = detectSkillBucket(q.skill_type);
+      const isMath = subject === "math";
+      const isSci = subject === "sci";
+
+      if (skillBucket === "P1") {
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
         p1m++;
         if (ok) p1s++;
-      } else if (sk.includes("P2") || sk.includes("PROCED")) {
+        if (isMath) {
+          mathP1m++;
+          if (ok) mathP1s++;
+        } else if (isSci) {
+          sciP1m++;
+          if (ok) sciP1s++;
+        }
+      } else if (skillBucket === "P2") {
         p2m++;
         if (ok) p2s++;
-      } else if (sk.includes("P3") || sk.includes("APPLIC")) {
+        if (isMath) {
+          mathP2m++;
+          if (ok) mathP2s++;
+        } else if (isSci) {
+          sciP2m++;
+          if (ok) sciP2s++;
+        }
+      } else if (skillBucket === "P3") {
         p3m++;
         if (ok) p3s++;
+        if (isMath) {
+          mathP3m++;
+          if (ok) mathP3s++;
+        } else if (isSci) {
+          sciP3m++;
+          if (ok) sciP3s++;
+        }
       }
     });
 
@@ -1512,9 +1789,15 @@ function FormatReport({ report, student, teacherName }) {
       p1: p1m > 0 ? Math.round((p1s / p1m) * 100) : 0,
       p2: p2m > 0 ? Math.round((p2s / p2m) * 100) : 0,
       p3: p3m > 0 ? Math.round((p3s / p3m) * 100) : 0,
+      math_p1: mathP1m > 0 ? Math.round((mathP1s / mathP1m) * 100) : 0,
+      math_p2: mathP2m > 0 ? Math.round((mathP2s / mathP2m) * 100) : 0,
+      math_p3: mathP3m > 0 ? Math.round((mathP3s / mathP3m) * 100) : 0,
+      sci_p1: sciP1m > 0 ? Math.round((sciP1s / sciP1m) * 100) : 0,
+      sci_p2: sciP2m > 0 ? Math.round((sciP2s / sciP2m) * 100) : 0,
+      sci_p3: sciP3m > 0 ? Math.round((sciP3s / sciP3m) * 100) : 0,
       correct: totalScore,
-      unanswered: skipped,
-      wrong: totalMax - totalScore - skipped,
+      unanswered: Math.max(0, totalMax - answeredCount),
+      wrong: Math.max(0, answeredCount - totalScore),
     };
   }
 

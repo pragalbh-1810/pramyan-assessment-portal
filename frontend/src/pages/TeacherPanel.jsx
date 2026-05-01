@@ -7,9 +7,9 @@ import {
   AlertTriangle,
   XCircle,
   Inbox,
-  ArrowLeft,
   LogOut,
   GraduationCap,
+  Menu,
 } from "lucide-react";
 import logo from "../assets/logo.jpeg";
 import { getToken, removeToken } from "../utils/auth";
@@ -93,14 +93,6 @@ const BLOOM_LEVELS = [
       "No higher-order thinking yet. Practice HOTS and competency-based questions from CBSE banks.",
     barColor: "#e07b2a",
   },
-  {
-    level: "L6",
-    name: "Create",
-    meaning: "Design & invent",
-    example: "Design an experiment to show microorganism growth.",
-    action: "N/A",
-    barColor: "#aaa",
-  },
 ];
 
 const THREAT_HINTS = {
@@ -119,6 +111,167 @@ const THREAT_HINTS = {
   "Living & non-living things": "Class 6 living world",
   Water: "Class 7 water chapter",
 };
+
+const MATH_CHAPTER_KEYWORDS = [
+  "integer",
+  "rational",
+  "real number",
+  "fraction",
+  "decimal",
+  "exponent",
+  "power",
+  "ratio",
+  "proportion",
+  "percentage",
+  "algebra",
+  "linear equation",
+  "quadratic",
+  "polynomial",
+  "equation",
+  "arithmetic progression",
+  "coordinate",
+  "trigonometry",
+  "circle",
+  "construction",
+  "factorisation",
+  "geometry",
+  "angle",
+  "triangle",
+  "mensuration",
+  "perimeter",
+  "area",
+  "volume",
+  "statistics",
+  "probability",
+  "heron",
+];
+
+const SCI_CHAPTER_KEYWORDS = [
+  "crop production",
+  "microorganism",
+  "synthetic fibre",
+  "plastic",
+  "metal",
+  "non-metal",
+  "coal",
+  "petroleum",
+  "combustion",
+  "conservation",
+  "cell",
+  "reproduction",
+  "adolescence",
+  "force",
+  "pressure",
+  "friction",
+  "sound",
+  "chemical effect",
+  "electric current",
+  "natural phenomena",
+  "light",
+  "matter",
+  "atom",
+  "molecule",
+  "motion",
+  "energy",
+  "gravitation",
+  "tissue",
+  "life process",
+  "control and coordination",
+  "heredity",
+  "evolution",
+  "electricity",
+  "magnetic effect",
+  "carbon",
+  "acid",
+  "base",
+  "salt",
+  "periodic classification",
+  "environment",
+  "natural resource",
+  "source of energy",
+  "plant",
+  "nutrition",
+  "substance",
+  "living",
+  "water",
+  "disease",
+  "body movement",
+];
+
+const normalizeTag = (v) => String(v || "").trim().toLowerCase();
+
+function detectSubjectFromSection(sectionRaw, qTextRaw = "") {
+  const section = normalizeTag(sectionRaw);
+  if (
+    section.includes("math") ||
+    section.includes("mathematics") ||
+    section.includes("algebra") ||
+    section.includes("geometry")
+  ) {
+    return "math";
+  }
+
+  if (
+    section.includes("sci") ||
+    section.includes("science") ||
+    section.includes("physics") ||
+    section.includes("chemistry") ||
+    section.includes("biology")
+  ) {
+    return "sci";
+  }
+
+  const text = normalizeTag(qTextRaw);
+  if (text.includes("[math")) return "math";
+  if (text.includes("[science") || text.includes("[sci")) return "sci";
+
+  return null;
+}
+
+function detectSubjectFromChapter(chapterRaw) {
+  const chapter = normalizeTag(chapterRaw);
+  if (!chapter) return null;
+
+  if (MATH_CHAPTER_KEYWORDS.some((k) => chapter.includes(k))) return "math";
+  if (SCI_CHAPTER_KEYWORDS.some((k) => chapter.includes(k))) return "sci";
+
+  return null;
+}
+
+function detectSkillBucket(skillRaw) {
+  const skill = String(skillRaw || "").trim().toUpperCase();
+  if (!skill) return null;
+
+  if (
+    skill.includes("P1") ||
+    skill.includes("CONCEPT") ||
+    skill.includes("LEVEL 1") ||
+    skill.includes("SKILL 1")
+  ) {
+    return "P1";
+  }
+
+  if (
+    skill.includes("P2") ||
+    skill.includes("PROCED") ||
+    skill.includes("LEVEL 2") ||
+    skill.includes("SKILL 2")
+  ) {
+    return "P2";
+  }
+
+  if (
+    skill.includes("P3") ||
+    skill.includes("APPLIC") ||
+    skill.includes("HOTS") ||
+    skill.includes("LEVEL 3") ||
+    skill.includes("SKILL 3")
+  ) {
+    return "P3";
+  }
+
+  return null;
+}
 
 function buildChapterSectionMap(questions = []) {
   const map = {};
@@ -160,51 +313,78 @@ function buildSwotBuckets(chapterScores = [], chapterSectionMap = {}) {
 }
 
 function buildSkillRows(reportObj) {
+  const mathP1 = Number.isFinite(Number(reportObj.math_p1))
+    ? Number(reportObj.math_p1)
+    : 0;
+  const sciP1 = Number.isFinite(Number(reportObj.sci_p1))
+    ? Number(reportObj.sci_p1)
+    : 0;
+  const mathP2 = Number.isFinite(Number(reportObj.math_p2))
+    ? Number(reportObj.math_p2)
+    : 0;
+  const sciP2 = Number.isFinite(Number(reportObj.sci_p2))
+    ? Number(reportObj.sci_p2)
+    : 0;
+  const mathP3 = Number.isFinite(Number(reportObj.math_p3))
+    ? Number(reportObj.math_p3)
+    : 0;
+  const sciP3 = Number.isFinite(Number(reportObj.sci_p3))
+    ? Number(reportObj.sci_p3)
+    : 0;
+
   return [
     {
       code: "P1",
       title: "Math - conceptual clarity",
-      pct: reportObj.p1,
+      pct: mathP1,
       color: "#21a179",
     },
     {
       code: "P1",
       title: "Science - conceptual clarity",
-      pct: reportObj.p1,
+      pct: sciP1,
       color: "#3b82f6",
     },
     {
       code: "P2",
       title: "Math - procedural accuracy",
-      pct: reportObj.p2,
+      pct: mathP2,
       color: "#e07b2a",
     },
     {
       code: "P2",
       title: "Science - procedural accuracy",
-      pct: reportObj.p2,
+      pct: sciP2,
       color: "#d65d33",
     },
     {
       code: "P3",
       title: "Math - application (HOTS)",
-      pct: reportObj.p3,
+      pct: mathP3,
       color: "#7c83fd",
     },
     {
       code: "P3",
       title: "Science - application (HOTS)",
-      pct: reportObj.p3,
+      pct: sciP3,
       color: "#5c6ac4",
     },
   ];
 }
 
 function buildSkillInsight(name, reportObj) {
-  const mathP1 = reportObj.p1 || 0;
-  const sciP1 = reportObj.sci_p1 || reportObj.p1 || 0;
-  const mathP2 = reportObj.p2 || 0;
-  const mathP3 = reportObj.p3 || 0;
+  const mathP1 = Number.isFinite(Number(reportObj.math_p1))
+    ? Number(reportObj.math_p1)
+    : 0;
+  const sciP1 = Number.isFinite(Number(reportObj.sci_p1))
+    ? Number(reportObj.sci_p1)
+    : 0;
+  const mathP2 = Number.isFinite(Number(reportObj.math_p2))
+    ? Number(reportObj.math_p2)
+    : 0;
+  const mathP3 = Number.isFinite(Number(reportObj.math_p3))
+    ? Number(reportObj.math_p3)
+    : 0;
   const mathExecPeak = Math.max(mathP2, mathP3);
   const mathDrop = Math.max(0, mathP1 - mathExecPeak);
   const person = name || "Student";
@@ -231,7 +411,6 @@ function buildSkillInsight(name, reportObj) {
   return `Notice: ${person}'s P1 in Math is ${mathP1}% - ${conceptText}. ${mathExecText} ${scienceText} ${closeText}`;
 }
 
-// Regex that ignores spaces: "Q21 (a)", "Q21(a)", "Q 21 ( a )", etc.
 function parseQLabel(qText = "") {
   const match = qText.match(/Q(\d+)\s*(?:\(\s*([a-zA-Z])\s*\))?/i);
   if (match)
@@ -239,10 +418,6 @@ function parseQLabel(qText = "") {
   return { num: null, sub: null };
 }
 
-// Maps a parsed question number to its paper section (A / B / C).
-// Section A = Q1-Q20  (20 single questions, 1 mark each)
-// Section B = Q21-Q28 (8 questions x 3 parts a/b/c = 24 parts)
-// Section C = Q29-Q32 (4 questions x 4 parts a/b/c/d = 16 parts)
 function getPaperSection(num) {
   if (num == null) return "Other";
   if (num >= 1 && num <= 20) return "A";
@@ -309,6 +484,9 @@ export default function TeacherPanel() {
   const [report, setReport] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState("");
+  
+  // Default sidebar to true so it shows on load
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   useEffect(() => {
     const token = getToken();
@@ -379,6 +557,10 @@ export default function TeacherPanel() {
   };
 
   const selectStudent = async (s) => {
+    // Automatically close sidebar on mobile devices once selected
+    if (window.innerWidth < 768) {
+      setIsSidebarOpen(false);
+    }
     setActiveStudent(s);
     setReport(null);
     setReportError("");
@@ -402,11 +584,6 @@ export default function TeacherPanel() {
     }
   };
 
-  const pillLabel = (s) => {
-    if (!s.test_id) return "No test";
-    return `${Math.round(s.overall_pct)}%`;
-  };
-
   const counts = {
     total: allStudents.length,
     strong: allStudents.filter((s) => s.test_id && s.overall_pct >= 75).length,
@@ -420,11 +597,30 @@ export default function TeacherPanel() {
     <>
       <style>{keyframes}</style>
 
+      {/* Backdrop for mobile sidebar - overlays everything behind the menu */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       <div className="md:h-screen min-h-screen bg-[#EEF4FF] font-['Sora',sans-serif] flex flex-col md:overflow-hidden">
         {/* ── TOP NAV ── */}
-        <nav className="sticky top-0 md:top-2.5 z-40 mx-2.5 md:mx-4 mt-2.5 rounded-2xl bg-[linear-gradient(135deg,#1D9E75_0%,#185FA5_100%)] shadow-[0_6px_28px_rgba(24,95,165,0.22)] flex-shrink-0">
+        <nav className="sticky top-0 md:top-2.5 z-50 mx-2.5 md:mx-4 mt-2.5 rounded-2xl bg-[linear-gradient(135deg,#1D9E75_0%,#185FA5_100%)] shadow-[0_6px_28px_rgba(24,95,165,0.22)] flex-shrink-0">
           <div className="flex items-center justify-between gap-2 px-3 md:px-6 h-14 md:h-16">
             <div className="flex items-center gap-2.5 min-w-0">
+              
+              {/* UNIVERSAL HAMBURGER BUTTON (VISIBLE ON MOBILE AND DESKTOP) */}
+              <button
+                type="button"
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="flex items-center justify-center text-white p-1.5 hover:bg-white/15 rounded-lg transition-colors cursor-pointer"
+                aria-label="Toggle Menu"
+              >
+                {isSidebarOpen ? <X size={22} strokeWidth={2.5} /> : <Menu size={22} strokeWidth={2.5} />}
+              </button>
+
               <img
                 src={logo}
                 alt="logo"
@@ -467,10 +663,16 @@ export default function TeacherPanel() {
         </nav>
 
         {/* ── LAYOUT ── */}
-        <div className="md:grid md:grid-cols-[360px_1fr] md:gap-0 md:flex-1 md:min-h-0 mt-2.5 md:mt-0">
-          {/* ── LEFT: STUDENT LIST ── */}
+        <div className="flex flex-col md:flex-row flex-1 min-h-0 mt-2.5 md:mt-0 relative overflow-hidden">
+          
+          {/* ── LEFT: STUDENT LIST SIDEBAR ── */}
           <aside
-            className={`${activeStudent ? "hidden md:flex" : "flex"} bg-white md:border-r md:border-[#d4e4f7] flex-col md:h-full md:overflow-hidden mx-2.5 md:mx-0 rounded-2xl md:rounded-none border md:border-0 border-[#d4e4f7]`}>
+            className={`${
+              isSidebarOpen 
+                ? "flex absolute inset-y-2 left-2 z-50 w-[85%] max-w-[320px] shadow-[0_10px_40px_rgba(0,0,0,0.2)] md:relative md:inset-auto md:w-[360px] md:max-w-none md:shadow-none" 
+                : "hidden"
+            } bg-white md:border-r md:border-[#d4e4f7] flex-col h-[calc(100%-16px)] md:h-full md:overflow-hidden mx-2.5 md:mx-0 rounded-2xl md:rounded-none border md:border-0 border-[#d4e4f7] transition-all shrink-0`}
+          >
             {/* head */}
             <div className="px-5 md:px-6 pt-5 pb-4 border-b border-[#f0f4fb] flex-shrink-0">
               <div className="text-base font-extrabold text-[#0d1f3c] mb-0.5">
@@ -553,7 +755,7 @@ export default function TeacherPanel() {
             </div>
 
             {/* list */}
-            <div className="flex-1 md:overflow-y-auto pb-6 tp-scroll-narrow">
+            <div className="flex-1 overflow-y-auto pb-6 tp-scroll-narrow">
               {listLoading ? (
                 <div className="py-10 text-center text-[#888] text-sm font-['Inter',sans-serif]">
                   Loading...
@@ -586,10 +788,6 @@ export default function TeacherPanel() {
                           Class {s.class} · {s.email}
                         </div>
                       </div>
-                      <span
-                        className={`ml-auto shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full ${pillCls(s.overall_pct, !!s.test_id)}`}>
-                        {pillLabel(s)}
-                      </span>
                     </button>
                   );
                 })
@@ -598,35 +796,16 @@ export default function TeacherPanel() {
           </aside>
 
           {/* ── RIGHT: REPORT ── */}
-          <div
-            className={`${activeStudent ? "flex" : "hidden md:flex"} flex-col md:h-full md:overflow-y-auto bg-[#EEF4FF] tp-scroll`}>
-            {/* mobile back bar */}
-            {activeStudent && (
-              <div className="md:hidden sticky top-0 z-10 bg-[#EEF4FF]/95 backdrop-blur-sm px-3 py-2.5 border-b border-[#d4e4f7]">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveStudent(null);
-                    setReport(null);
-                    setReportError("");
-                  }}
-                  className="flex items-center gap-1.5 text-[#185FA5] text-[13px] font-semibold cursor-pointer active:scale-95 transition">
-                  <ArrowLeft size={16} strokeWidth={2.5} />
-                  All students
-                </button>
-              </div>
-            )}
-
+          <div className="flex-col flex-1 h-full overflow-y-auto bg-[#EEF4FF] tp-scroll min-w-0 flex">
             <div className="px-4 md:px-10 py-5 md:py-8 pb-16">
               {!activeStudent ? (
-                <div className="hidden md:flex flex-col items-center justify-center min-h-[400px] gap-3 text-center">
-                  <div className="text-4xl">👈</div>
+                <div className="flex flex-col items-center justify-center min-h-[400px] gap-3 text-center">
+                  <div className="text-4xl">📊</div>
                   <h2 className="text-lg font-bold text-[#0d1f3c]">
                     Select a Student
                   </h2>
-                  <p className="text-[#888] text-sm font-['Inter',sans-serif]">
-                    Click any student from the left panel to view their full
-                    diagnostic report.
+                  <p className="text-[#888] text-sm font-['Inter',sans-serif] max-w-[280px]">
+                    Open the sidebar and tap any student to view their full diagnostic report.
                   </p>
                 </div>
               ) : reportLoading ? (
@@ -659,23 +838,32 @@ export default function TeacherPanel() {
 // BEAUTIFUL REPORT FORMATTER
 // ==========================================
 function FormatReport({ report, student, teacherName }) {
+<<<<<<< HEAD
   // PER-ROW SCORING ENGINE — each question row = 1 mark
   // Section A (1-mark MCQs)         : 1 row each
   // Section B (3-mark, 3 parts a-c) : 3 rows each
   // Section C (4-mark, 4 parts a-d) : 4 rows each
   // So total marks = total row count, and a row is correct iff that part was correct.
+=======
+  // DYNAMIC RECALCULATION ENGINE (mark-based: each stored row = 1 mark)
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
   let activeReport = { ...report };
 
   if (report.questions && report.questions.length > 0) {
     const qs = report.questions;
+<<<<<<< HEAD
     const totalMax = qs.length;
 
+=======
+    const totalMax =
+      Number(report.max_score) > 0 ? Number(report.max_score) : qs.length;
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
     let totalScore = 0;
     let mathMax = 0,
       mathScore = 0;
     let sciMax = 0,
       sciScore = 0;
-    let skipped = 0;
+    let answeredCount = 0;
 
     const bMap = {};
     const cMap = {};
@@ -685,8 +873,21 @@ function FormatReport({ report, student, teacherName }) {
       p2s = 0,
       p3m = 0,
       p3s = 0;
+    let mathP1m = 0,
+      mathP1s = 0,
+      mathP2m = 0,
+      mathP2s = 0,
+      mathP3m = 0,
+      mathP3s = 0;
+    let sciP1m = 0,
+      sciP1s = 0,
+      sciP2m = 0,
+      sciP2s = 0,
+      sciP3m = 0,
+      sciP3s = 0;
 
     qs.forEach((q) => {
+<<<<<<< HEAD
       const ok = parseInt(q.is_correct) === 1;
       if (ok) totalScore++;
       if (!q.selected_option || String(q.selected_option).trim() === "") {
@@ -699,6 +900,22 @@ function FormatReport({ report, student, teacherName }) {
         mathMax++;
         if (ok) mathScore++;
       } else if (sec.includes("sci")) {
+=======
+      const selected = String(q.selected_option ?? "").trim().toLowerCase();
+      const correctAns = String(q.correct ?? "").trim().toLowerCase();
+      const ok = selected !== "" && selected === correctAns;
+      if (ok) totalScore++;
+      if (selected !== "") answeredCount++;
+
+      // Subjects
+      const subject =
+        detectSubjectFromSection(q.section, q.q_text) ||
+        detectSubjectFromChapter(q.chapter);
+      if (subject === "math") {
+        mathMax++;
+        if (ok) mathScore++;
+      } else if (subject === "sci") {
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
         sciMax++;
         if (ok) sciScore++;
       }
@@ -714,11 +931,15 @@ function FormatReport({ report, student, teacherName }) {
       if (!cMap[ch])
         cMap[ch] = {
           chapter: ch,
+<<<<<<< HEAD
           subject: sec.includes("math")
             ? "Mathematics"
             : sec.includes("sci")
               ? "Science"
               : q.section,
+=======
+          subject: q.section,
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
           swot_category: "",
           max_score: 0,
           score: 0,
@@ -728,20 +949,48 @@ function FormatReport({ report, student, teacherName }) {
       if (ok) cMap[ch].score++;
 
       // Skills
+<<<<<<< HEAD
       const sk = (q.skill_type || "").toUpperCase();
       if (sk.includes("P1") || sk.includes("CONCEPT")) {
+=======
+      const skillBucket = detectSkillBucket(q.skill_type);
+      const isMath = subject === "math";
+      const isSci = subject === "sci";
+
+      if (skillBucket === "P1") {
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
         p1m++;
         if (ok) p1s++;
-      } else if (sk.includes("P2") || sk.includes("PROCED")) {
+        if (isMath) {
+          mathP1m++;
+          if (ok) mathP1s++;
+        } else if (isSci) {
+          sciP1m++;
+          if (ok) sciP1s++;
+        }
+      } else if (skillBucket === "P2") {
         p2m++;
         if (ok) p2s++;
-      } else if (sk.includes("P3") || sk.includes("APPLIC")) {
+        if (isMath) {
+          mathP2m++;
+          if (ok) mathP2s++;
+        } else if (isSci) {
+          sciP2m++;
+          if (ok) sciP2s++;
+        }
+      } else if (skillBucket === "P3") {
         p3m++;
         if (ok) p3s++;
+        if (isMath) {
+          mathP3m++;
+          if (ok) mathP3s++;
+        } else if (isSci) {
+          sciP3m++;
+          if (ok) sciP3s++;
+        }
       }
     });
 
-    // Rebuild arrays
     const bloom_scores = Object.keys(bMap).map((k) => ({
       bloom_level: k,
       score: bMap[k].score,
@@ -768,7 +1017,10 @@ function FormatReport({ report, student, teacherName }) {
       })
       .sort((a, b) => b.pct - a.pct);
 
+<<<<<<< HEAD
     // Overwrite with row-level data!
+=======
+>>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
     activeReport = {
       ...activeReport,
       total_score: totalScore,
@@ -786,9 +1038,15 @@ function FormatReport({ report, student, teacherName }) {
       p1: p1m > 0 ? Math.round((p1s / p1m) * 100) : 0,
       p2: p2m > 0 ? Math.round((p2s / p2m) * 100) : 0,
       p3: p3m > 0 ? Math.round((p3s / p3m) * 100) : 0,
+      math_p1: mathP1m > 0 ? Math.round((mathP1s / mathP1m) * 100) : 0,
+      math_p2: mathP2m > 0 ? Math.round((mathP2s / mathP2m) * 100) : 0,
+      math_p3: mathP3m > 0 ? Math.round((mathP3s / mathP3m) * 100) : 0,
+      sci_p1: sciP1m > 0 ? Math.round((sciP1s / sciP1m) * 100) : 0,
+      sci_p2: sciP2m > 0 ? Math.round((sciP2s / sciP2m) * 100) : 0,
+      sci_p3: sciP3m > 0 ? Math.round((sciP3s / sciP3m) * 100) : 0,
       correct: totalScore,
-      unanswered: skipped,
-      wrong: totalMax - totalScore - skipped,
+      unanswered: Math.max(0, totalMax - answeredCount),
+      wrong: Math.max(0, answeredCount - totalScore),
     };
   }
   // ========================================================
@@ -1190,19 +1448,13 @@ function FormatReport({ report, student, teacherName }) {
                   );
                   const maxMarks = dbScore
                     ? dbScore.max_score
-                    : levelObj.level === "L6"
-                      ? "-"
-                      : 0;
+                    : 0;
                   const scored = dbScore
                     ? dbScore.score
-                    : levelObj.level === "L6"
-                      ? "N/A"
-                      : 0;
+                    : 0;
                   const pct = dbScore
                     ? dbScore.pct
-                    : levelObj.level === "L6"
-                      ? "N/A"
-                      : 0;
+                    : 0;
                   return (
                     <tr key={i}>
                       <td className="px-3 py-3 border border-[#e2edf8] text-center font-bold">
@@ -1227,9 +1479,9 @@ function FormatReport({ report, student, teacherName }) {
                         className="px-3 py-3 border border-[#e2edf8] text-center font-extrabold"
                         style={{
                           color:
-                            pct !== "N/A" && pct >= 50 ? "#1D9E75" : "#e24b4a",
+                            pct >= 50 ? "#1D9E75" : "#e24b4a",
                         }}>
-                        {pct !== "N/A" ? `${pct}%` : pct}
+                        {pct}%
                       </td>
                     </tr>
                   );

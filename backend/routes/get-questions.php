@@ -1,79 +1,36 @@
 <?php
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
-    echo json_encode([
-        "success" => false,
-        "message" => "Method not allowed"
-    ]);
-    exit();
-}
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit(); }
 
 require_once dirname(__DIR__) . '/config/db.php';
 require_once dirname(__DIR__) . '/middleware/auth.php';
 
-
-// STEP 1: verify login token
 $user = authenticate();
-
-
-// STEP 2: get test_id from URL
 $test_id = $_GET['test_id'] ?? null;
 
 if (!$test_id) {
     http_response_code(400);
-    echo json_encode([
-        "success" => false,
-        "message" => "test_id is required"
-    ]);
+    echo json_encode(["success" => false, "message" => "test_id is required"]);
     exit();
 }
 
-
-// STEP 3: fetch questions (without correct answer)
+// Fetch all questions exactly as they appear in the database
 $stmt = $pdo->prepare("
-    SELECT 
-        id,
-        section,
-        q_text,
-        q_image,
-        opt_a,
-        opt_b,
-        opt_c,
-        opt_d,
-        chapter,
-        bloom_level,
-        skill_type
-    FROM questions
-    WHERE test_id = ?
+    SELECT id, section, q_text, q_image, opt_a, opt_b, opt_c, opt_d, chapter, bloom_level, skill_type
+    FROM questions WHERE test_id = ?
 ");
-
 $stmt->execute([$test_id]);
 $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// FIX: Count unique main questions dynamically (Outputs 32)
-$main_questions = [];
-foreach ($questions as $q) {
-    if (preg_match('/^Q(\d+)/i', $q['q_text'], $matches)) {
-        $main_questions[$matches[1]] = true;
-    }
-}
-$actual_total = count($main_questions);
-
-// STEP 4: return response
+// Return EXACTLY the number of questions in the database (usually 60) so pagination works correctly!
 echo json_encode([
     "success" => true,
     "test_id" => (int)$test_id,
-    "total_questions" => $actual_total, // Now sends exactly 32
+    "total_questions" => count($questions), 
     "questions" => $questions
 ]);
+?>

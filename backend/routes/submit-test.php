@@ -31,8 +31,7 @@ try {
         exit();
     }
 
-    // Security Check
-    $stmt = $pdo->prepare("SELECT id, is_submitted FROM student_tests WHERE id = ? AND user_id = ?");
+    $stmt = $pdo->prepare("SELECT id, test_id, is_submitted FROM student_tests WHERE id = ? AND user_id = ?");
     $stmt->execute([$student_test_id, $user_id]);
     $attempt = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -48,34 +47,25 @@ try {
         exit();
     }
 
+    $test_id = (int)$attempt['test_id'];
+
     // Lock the test
     $pdo->prepare("UPDATE student_tests SET is_submitted = 1 WHERE id = ?")
         ->execute([$student_test_id]);
 
-    // =========================================
-    // FETCH ALL RESPONSES WITH QUESTION DETAILS
-    // =========================================
     $calcStmt = $pdo->prepare("
         SELECT 
-            r.selected_option,
-            q.correct,
-            q.section,
-            q.chapter,
-            q.bloom_level,
-            q.skill_type
-        FROM responses r
-        JOIN questions q ON r.question_id = q.id
-        WHERE r.student_test_id = ?
+            q.correct, q.section, q.chapter, q.bloom_level, q.skill_type, r.selected_option
+        FROM questions q
+        LEFT JOIN responses r 
+            ON r.question_id = q.id AND r.student_test_id = ?
+        WHERE q.test_id = ?
     ");
-    $calcStmt->execute([$student_test_id]);
+    $calcStmt->execute([$student_test_id, $test_id]);
     $responses = $calcStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // =========================================
     // INITIALIZE COUNTERS
-    // =========================================
-    $total = 0;
-    $math  = 0;
-    $sci   = 0;
+    $total = 0; $math = 0; $sci = 0;
 
     $chapterStats = [];
     $bloomStats   = [];
@@ -85,11 +75,13 @@ try {
         "P3" => ["score" => 0, "total" => 0],
     ];
 
-    // =========================================
-    // LOOP & CALCULATE EVERYTHING
-    // =========================================
+    // LOOP & CALCULATE (1 Row = 1 Mark)
     foreach ($responses as $r) {
-        $correct = ($r['selected_option'] === $r['correct']) ? 1 : 0;
+        $marks = 1; // FIX: Every sub-question row is worth exactly 1 mark
+        
+        $selected = strtolower(trim((string)($r['selected_option'] ?? '')));
+        $answer   = strtolower(trim((string)($r['correct'] ?? '')));
+        $correct = ($selected !== '' && $selected === $answer) ? $marks : 0;
         $total += $correct;
 
         // Section score
@@ -101,43 +93,41 @@ try {
 
         // Chapter grouping
         $ch = $r['chapter'];
-        if (!isset($chapterStats[$ch])) {
-            $chapterStats[$ch] = ["score" => 0, "total" => 0];
-        }
+        if (!isset($chapterStats[$ch])) $chapterStats[$ch] = ["score" => 0, "total" => 0];
         $chapterStats[$ch]['score'] += $correct;
-        $chapterStats[$ch]['total']++;
+        $chapterStats[$ch]['total'] += $marks;
 
         // Bloom grouping
         $bl = $r['bloom_level'];
-        if (!isset($bloomStats[$bl])) {
-            $bloomStats[$bl] = ["score" => 0, "total" => 0];
-        }
+        if (!isset($bloomStats[$bl])) $bloomStats[$bl] = ["score" => 0, "total" => 0];
         $bloomStats[$bl]['score'] += $correct;
-        $bloomStats[$bl]['total']++;
+        $bloomStats[$bl]['total'] += $marks;
 
         // Skill P1/P2/P3 grouping
         $sk = $r['skill_type'];
-        if (isset($skillStats[$sk])) {
-            $skillStats[$sk]['score'] += $correct;
-            $skillStats[$sk]['total']++;
+        if (strpos($sk, 'P1') !== false) {
+            $skillStats['P1']['total'] += $marks;
+            $skillStats['P1']['score'] += $correct;
+        }
+        if (strpos($sk, 'P2') !== false) {
+            $skillStats['P2']['total'] += $marks;
+            $skillStats['P2']['score'] += $correct;
+        }
+        if (strpos($sk, 'P3') !== false) {
+            $skillStats['P3']['total'] += $marks;
+            $skillStats['P3']['score'] += $correct;
         }
     }
 
-    // =========================================
     // CALCULATE PERCENTAGES
-    // =========================================
-   // ✅ Count ALL questions in test, not just answered ones
-$allQStmt = $pdo->prepare("SELECT COUNT(*) FROM questions WHERE test_id = (SELECT test_id FROM student_tests WHERE id = ?)");
-$allQStmt->execute([$student_test_id]);
-$totalQuestions = (int)$allQStmt->fetchColumn();
-$pct = $totalQuestions > 0 ? round(($total / $totalQuestions) * 100, 2) : 0;
+    $allQStmt = $pdo->prepare("SELECT COUNT(*) FROM questions WHERE test_id = (SELECT test_id FROM student_tests WHERE id = ?)");
+    $allQStmt->execute([$student_test_id]);
+    $totalQuestions = (int)$allQStmt->fetchColumn(); // Will be 60
+    $pct = $totalQuestions > 0 ? round(($total / $totalQuestions) * 100, 2) : 0;
 
-    $p1 = $skillStats['P1']['total'] > 0
-        ? round(($skillStats['P1']['score'] / $skillStats['P1']['total']) * 100, 2) : 0;
-    $p2 = $skillStats['P2']['total'] > 0
-        ? round(($skillStats['P2']['score'] / $skillStats['P2']['total']) * 100, 2) : 0;
-    $p3 = $skillStats['P3']['total'] > 0
-        ? round(($skillStats['P3']['score'] / $skillStats['P3']['total']) * 100, 2) : 0;
+    $p1 = $skillStats['P1']['total'] > 0 ? round(($skillStats['P1']['score'] / $skillStats['P1']['total']) * 100, 2) : 0;
+    $p2 = $skillStats['P2']['total'] > 0 ? round(($skillStats['P2']['score'] / $skillStats['P2']['total']) * 100, 2) : 0;
+    $p3 = $skillStats['P3']['total'] > 0 ? round(($skillStats['P3']['score'] / $skillStats['P3']['total']) * 100, 2) : 0;
 
     $action_plan = json_encode([
         "week1" => "Focus on weak chapters",
@@ -146,47 +136,33 @@ $pct = $totalQuestions > 0 ? round(($total / $totalQuestions) * 100, 2) : 0;
         "week4" => "Attempt mock test"
     ]);
 
-    // =========================================
-    // SAVE MAIN RESULT (with p1, p2, p3)
-    // =========================================
+    // SAVE MAIN RESULT
     $insertResult = $pdo->prepare("
         INSERT INTO results
             (student_test_id, total_score, math_score, sci_score, overall_pct, status, p1, p2, p3, action_plan)
         VALUES (?, ?, ?, ?, ?, 'scored', ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
-            total_score = VALUES(total_score),
-            math_score  = VALUES(math_score),
-            sci_score   = VALUES(sci_score),
-            overall_pct = VALUES(overall_pct),
-            p1          = VALUES(p1),
-            p2          = VALUES(p2),
-            p3          = VALUES(p3),
-            action_plan = VALUES(action_plan),
-            status      = 'scored'
+            total_score = VALUES(total_score), math_score = VALUES(math_score), sci_score = VALUES(sci_score),
+            overall_pct = VALUES(overall_pct), p1 = VALUES(p1), p2 = VALUES(p2), p3 = VALUES(p3),
+            action_plan = VALUES(action_plan), status = 'scored'
     ");
     $insertResult->execute([$student_test_id, $total, $math, $sci, $pct, $p1, $p2, $p3, $action_plan]);
 
-    // Get result_id
-    $result_id = $pdo->lastInsertId();
-    if (!$result_id) {
-        $r2 = $pdo->prepare("SELECT id FROM results WHERE student_test_id = ?");
-        $r2->execute([$student_test_id]);
-        $result_id = $r2->fetchColumn();
-    }
+    $result_id = $pdo->lastInsertId() ?: $pdo->query("SELECT id FROM results WHERE student_test_id = $student_test_id")->fetchColumn();
 
-    // =========================================
-    // CLEAR OLD CHAPTER/BLOOM DATA THEN RE-SAVE
-    // =========================================
     $pdo->prepare("DELETE FROM chapter_scores WHERE result_id = ?")->execute([$result_id]);
     $pdo->prepare("DELETE FROM bloom_scores WHERE result_id = ?")->execute([$result_id]);
 
     // Save chapter SWOT scores
+    $t_strength = 70;
+    $t_opportunity = 40;
+
     foreach ($chapterStats as $chapter => $data) {
         $cpct = $data['total'] > 0 ? round(($data['score'] / $data['total']) * 100, 2) : 0;
 
-        if ($cpct >= 80)     $swot = "Strength";
-        elseif ($cpct >= 50) $swot = "Opportunity";
-        else                 $swot = "Weakness";
+        if ($cpct >= $t_strength)         $swot = "Strength";
+        elseif ($cpct >= $t_opportunity)  $swot = "Opportunity";
+        else                              $swot = "Weakness";
 
         $pdo->prepare("
             INSERT INTO chapter_scores (result_id, chapter, score, max_score, pct, swot_category)
@@ -194,7 +170,6 @@ $pct = $totalQuestions > 0 ? round(($total / $totalQuestions) * 100, 2) : 0;
         ")->execute([$result_id, $chapter, $data['score'], $data['total'], $cpct, $swot]);
     }
 
-    // Save bloom scores
     foreach ($bloomStats as $bloom => $data) {
         $bpct = $data['total'] > 0 ? round(($data['score'] / $data['total']) * 100, 2) : 0;
 
@@ -204,9 +179,6 @@ $pct = $totalQuestions > 0 ? round(($total / $totalQuestions) * 100, 2) : 0;
         ")->execute([$result_id, $bloom, $data['score'], $data['total'], $bpct]);
     }
 
-    // =========================================
-    // RETURN RESPONSE
-    // =========================================
     http_response_code(200);
     echo json_encode([
         'success'   => true,

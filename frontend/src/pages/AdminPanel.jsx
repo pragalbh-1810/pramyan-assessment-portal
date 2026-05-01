@@ -71,68 +71,12 @@ function getChapterStatus(pct) {
 }
 
 const BLOOM_LEVELS = [
-<<<<<<< HEAD
-  {
-    level: "L1",
-    name: "Remember",
-    meaning: "Recall facts & formulas",
-    example: "What is the area formula for a trapezium?",
-    action:
-      "Use flashcards. Memorise formulas, definitions, key facts. 10-min daily recall drill.",
-    barColor: "#185FA5",
-  },
-  {
-    level: "L2",
-    name: "Understand",
-    meaning: "Explain or classify",
-    example: "Why does a candle go out when covered?",
-    action:
-      "Ask 'why'. Use real-life examples. Connect concepts to things the student already knows.",
-    barColor: "#2563a8",
-  },
-  {
-    level: "L3",
-    name: "Apply",
-    meaning: "Solve using formulas",
-    example: '"Find pressure if F=200N, A=0.4m²."',
-    action:
-      "Walk through NCERT solved examples step by step. Identify WHICH step fails — formula, substitution, or arithmetic.",
-    barColor: "#3a7bd5",
-  },
-  {
-    level: "L4",
-    name: "Analyze",
-    meaning: "Compare & reason",
-    example: "How does increasing area reduce pressure? Give example.",
-    action:
-      "Cannot think through multi-step problems. Introduce analysis questions: 'What if...?', 'Compare A and B'.",
-    barColor: "#1D9E75",
-  },
-  {
-    level: "L5",
-    name: "Evaluate",
-    meaning: "Judge & justify",
-    example: "Which method of food preservation is better and why?",
-    action:
-      "No higher-order thinking yet. Practice HOTS and competency-based questions from CBSE banks.",
-    barColor: "#e07b2a",
-  },
-  {
-    level: "L6",
-    name: "Create",
-    meaning: "Design & invent",
-    example: "Design an experiment to show microorganism growth.",
-    action: "N/A",
-    barColor: "#aaa",
-  },
-=======
   { level: "L1", name: "Remember", meaning: "Recall facts & formulas", example: "What is the area formula for a trapezium?", action: "Use flashcards. Memorise formulas, definitions, key facts. 10-min daily recall drill.", barColor: "#185FA5" },
   { level: "L2", name: "Understand", meaning: "Explain or classify", example: "Why does a candle go out when covered?", action: "Ask 'why'. Use real-life examples. Connect concepts to things the student already knows.", barColor: "#2563a8" },
   { level: "L3", name: "Apply", meaning: "Solve using formulas", example: '"Find pressure if F=200N, A=0.4m²."', action: "Walk through NCERT solved examples step by step. Identify WHICH step fails — formula, substitution, or arithmetic.", barColor: "#3a7bd5" },
   { level: "L4", name: "Analyze", meaning: "Compare & reason", example: "How does increasing area reduce pressure? Give example.", action: "Cannot think through multi-step problems. Introduce analysis questions: 'What if...?', 'Compare A and B'.", barColor: "#1D9E75" },
   { level: "L5", name: "Evaluate", meaning: "Judge & justify", example: "Which method of food preservation is better and why?", action: "No higher-order thinking yet. Practice HOTS and competency-based questions from CBSE banks.", barColor: "#e07b2a" },
   
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
 ];
 
 const THREAT_HINTS = {
@@ -373,51 +317,12 @@ function buildSkillRows(reportObj) {
     : 0;
 
   return [
-<<<<<<< HEAD
-    {
-      code: "P1",
-      title: "Math - conceptual clarity",
-      pct: reportObj.p1,
-      color: "#21a179",
-    },
-    {
-      code: "P1",
-      title: "Science - conceptual clarity",
-      pct: reportObj.p1,
-      color: "#3b82f6",
-    },
-    {
-      code: "P2",
-      title: "Math - procedural accuracy",
-      pct: reportObj.p2,
-      color: "#e07b2a",
-    },
-    {
-      code: "P2",
-      title: "Science - procedural accuracy",
-      pct: reportObj.p2,
-      color: "#d65d33",
-    },
-    {
-      code: "P3",
-      title: "Math - application (HOTS)",
-      pct: reportObj.p3,
-      color: "#7c83fd",
-    },
-    {
-      code: "P3",
-      title: "Science - application (HOTS)",
-      pct: reportObj.p3,
-      color: "#5c6ac4",
-    },
-=======
     { code: "P1", title: "Math - conceptual clarity", pct: mathP1, color: "#21a179" },
     { code: "P1", title: "Science - conceptual clarity", pct: sciP1, color: "#3b82f6" },
     { code: "P2", title: "Math - procedural accuracy", pct: mathP2, color: "#e07b2a" },
     { code: "P2", title: "Science - procedural accuracy", pct: sciP2, color: "#d65d33" },
     { code: "P3", title: "Math - application (HOTS)", pct: mathP3, color: "#7c83fd" },
     { code: "P3", title: "Science - application (HOTS)", pct: sciP3, color: "#5c6ac4" },
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
   ];
 }
 
@@ -1594,51 +1499,11 @@ function ReportsTab({ students, teachers, loading }) {
 // BEAUTIFUL REPORT FORMATTER
 // ==========================================
 function FormatReport({ report, student, teacherName }) {
-<<<<<<< HEAD
-  // PER-ROW SCORING ENGINE — each question row = 1 mark
-  // Section A (1-mark MCQs)         : 1 row each
-  // Section B (3-mark, 3 parts a-c) : 3 rows each
-  // Section C (4-mark, 4 parts a-d) : 4 rows each
-=======
   // DYNAMIC RECALCULATION ENGINE (mark-based: each stored row = 1 mark)
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
   let activeReport = { ...report };
 
   if (report.questions && report.questions.length > 0) {
     const qs = report.questions;
-<<<<<<< HEAD
-    const totalMax = qs.length;
-
-    let totalScore = 0;
-    let mathMax = 0,
-      mathScore = 0;
-    let sciMax = 0,
-      sciScore = 0;
-    let skipped = 0;
-
-    const bMap = {};
-    const cMap = {};
-    let p1m = 0,
-      p1s = 0,
-      p2m = 0,
-      p2s = 0,
-      p3m = 0,
-      p3s = 0;
-
-    qs.forEach((q) => {
-      const ok = parseInt(q.is_correct) === 1;
-      if (ok) totalScore++;
-      if (!q.selected_option || String(q.selected_option).trim() === "") {
-        skipped++;
-      }
-
-      // Subjects
-      const sec = (q.section || "").toLowerCase();
-      if (sec.includes("math")) {
-        mathMax++;
-        if (ok) mathScore++;
-      } else if (sec.includes("sci")) {
-=======
     const totalMax =
       Number(report.max_score) > 0 ? Number(report.max_score) : qs.length;
 
@@ -1668,7 +1533,6 @@ function FormatReport({ report, student, teacherName }) {
         mathMax++;
         if (ok) mathScore++;
       } else if (subject === "sci") {
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
         sciMax++;
         if (ok) sciScore++;
       }
@@ -1681,7 +1545,6 @@ function FormatReport({ report, student, teacherName }) {
 
       // Chapters
       const ch = q.chapter || "Unknown";
-<<<<<<< HEAD
       if (!cMap[ch])
         cMap[ch] = {
           chapter: ch,
@@ -1690,11 +1553,6 @@ function FormatReport({ report, student, teacherName }) {
             : sec.includes("sci")
               ? "Science"
               : q.section,
-=======
-      if (!cMap[ch]) cMap[ch] = {
-          chapter: ch,
-          subject: q.section,
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
           swot_category: "",
           max_score: 0,
           score: 0,
@@ -1704,16 +1562,8 @@ function FormatReport({ report, student, teacherName }) {
       if (ok) cMap[ch].score++;
 
       // Skills
-<<<<<<< HEAD
       const sk = (q.skill_type || "").toUpperCase();
       if (sk.includes("P1") || sk.includes("CONCEPT")) {
-=======
-      const skillBucket = detectSkillBucket(q.skill_type);
-      const isMath = subject === "math";
-      const isSci = subject === "sci";
-
-      if (skillBucket === "P1") {
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
         p1m++;
         if (ok) p1s++;
         if (isMath) {

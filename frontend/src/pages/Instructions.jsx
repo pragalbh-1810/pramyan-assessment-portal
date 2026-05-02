@@ -163,19 +163,19 @@ export default function Instructions() {
       },
       9: {
         name: "Class 9 Mid-Term Readiness Test",
-        duration_mins: 60,
+        duration_mins: 45,
         total_questions: 32,
       },
       10: {
         name: "Class 10 Diagnostic Assessment",
-        duration_mins: 90,
+        duration_mins: 45,
         total_questions: 32,
       },
     };
 
     const testInfo = classTestMap[Number(userClass)] || {
       name: "Pramyan Diagnostic Assessment",
-      duration_mins: 60,
+      duration_mins: 45,
       total_questions: 32,
     };
 

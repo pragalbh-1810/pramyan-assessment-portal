@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import logo from "../assets/logo.jpeg";
 import { getToken, removeToken } from "../utils/auth";
-import { apiUrl } from "../utils/api";
+import { apiUrl, API_BASE } from "../utils/api";
 
 function decodeJWT(t) {
   try {
@@ -1114,6 +1114,35 @@ function FormatReport({ report, student, teacherName }) {
           </div>
         </div>
       </div>
+
+      {/* Uploaded File View */}
+      {activeReport.uploaded_file && (
+        <>
+          <div className="flex items-center gap-2 mt-9 mb-5 text-[15px] md:text-base font-extrabold text-[#185FA5]">
+            <span>📝</span>
+            <span>Working Sheet</span>
+          </div>
+          <div className="bg-white rounded-[18px] p-6 shadow-[0_4px_16px_rgba(24,95,165,0.05)] border border-[#e2edf8] mb-6">
+            <div className="text-[13px] text-[#666] font-['Inter',sans-serif] mb-4">
+              The student attached a working sheet for this test.
+            </div>
+            <div className="flex justify-center bg-[#f8fbff] p-4 rounded-xl border border-[#e2edf8]">
+              <a 
+                href={`${API_BASE.replace(/\/routes\/?$/, "/uploads/working_sheets")}/${activeReport.uploaded_file}`} 
+                target="_blank" 
+                rel="noreferrer"
+                className="cursor-pointer"
+              >
+                <img 
+                  src={`${API_BASE.replace(/\/routes\/?$/, "/uploads/working_sheets")}/${activeReport.uploaded_file}`}
+                  alt="Working Sheet" 
+                  className="max-w-full max-h-[500px] rounded object-contain border border-[#d4e4f7] hover:opacity-95 transition-opacity"
+                />
+              </a>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Subjects */}
       <div className="flex items-center gap-2 mt-9 mb-5 text-[15px] md:text-base font-extrabold text-[#185FA5]">

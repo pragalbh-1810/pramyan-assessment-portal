@@ -68,9 +68,13 @@ try {
         $studentTestId = (int)($stmt->fetchColumn() ?: 0);
 
         if ($studentTestId <= 0) {
-            http_response_code(404);
-            echo json_encode(["success" => false, "message" => "No student_test found for this test."]);
-            exit();
+            // Create a student test row if it doesn't exist yet
+            $insertAttempt = $pdo->prepare("
+                INSERT INTO student_tests (user_id, test_id, start_time, is_submitted)
+                VALUES (?, ?, NOW(), 0)
+            ");
+            $insertAttempt->execute([$userId, $testId]);
+            $studentTestId = (int)$pdo->lastInsertId();
         }
     }
 
@@ -110,6 +114,18 @@ try {
 
     $stmt = $pdo->prepare("UPDATE responses SET uploaded_file = ? WHERE student_test_id = ?");
     $stmt->execute([$newFileName, $studentTestId]);
+
+    // If no responses exist yet, insert a dummy one for the first question
+    if ($stmt->rowCount() === 0) {
+        $qStmt = $pdo->prepare("SELECT id FROM questions WHERE test_id = ? LIMIT 1");
+        $qStmt->execute([$testId]);
+        $firstQuestionId = (int)$qStmt->fetchColumn();
+
+        if ($firstQuestionId > 0) {
+            $insertStmt = $pdo->prepare("INSERT INTO responses (student_test_id, question_id, uploaded_file) VALUES (?, ?, ?)");
+            $insertStmt->execute([$studentTestId, $firstQuestionId, $newFileName]);
+        }
+    }
 
     http_response_code(200);
     echo json_encode([

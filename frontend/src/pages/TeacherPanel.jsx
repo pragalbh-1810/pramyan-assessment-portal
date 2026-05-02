@@ -1127,6 +1127,7 @@ function FormatReport({ report, student, teacherName }) {
               The student attached a working sheet for this test.
             </div>
             <div className="flex justify-center bg-[#f8fbff] p-4 rounded-xl border border-[#e2edf8]">
+<<<<<<< HEAD
               <a
                 href={`${API_BASE.replace(/\/routes\/?$/, "/uploads/working_sheets")}/${activeReport.uploaded_file}`}
                 target="_blank"
@@ -1135,6 +1136,17 @@ function FormatReport({ report, student, teacherName }) {
                 <img
                   src={`${API_BASE.replace(/\/routes\/?$/, "/uploads/working_sheets")}/${activeReport.uploaded_file}`}
                   alt="Working Sheet"
+=======
+              <a 
+                href={`${API_BASE.replace(/\/routes\/?$/, "/uploads/working_sheets")}/${activeReport.uploaded_file}`} 
+                target="_blank" 
+                rel="noreferrer"
+                className="cursor-pointer"
+              >
+                <img 
+                  src={`${API_BASE.replace(/\/routes\/?$/, "/uploads/working_sheets")}/${activeReport.uploaded_file}`}
+                  alt="Working Sheet" 
+>>>>>>> ba0525367cbed7bf476a3966492a3d95a74c6b1a
                   className="max-w-full max-h-[500px] rounded object-contain border border-[#d4e4f7] hover:opacity-95 transition-opacity"
                 />
               </a>

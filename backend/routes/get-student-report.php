@@ -274,6 +274,11 @@ try {
     }
     unset($q);
 
+    // ── 9.5. Uploaded File ─────────────────────────────────
+    $fileStmt = $pdo->prepare("SELECT uploaded_file FROM responses WHERE student_test_id = ? AND uploaded_file IS NOT NULL AND uploaded_file != '' LIMIT 1");
+    $fileStmt->execute([$student_test_id]);
+    $uploadedFile = $fileStmt->fetchColumn() ?: null;
+
     // ── 10. Response ───────────────────────────────────────
     echo json_encode([
         'success'        => true,
@@ -292,6 +297,7 @@ try {
         'chapter_scores' => $ch_scores ?: [],
         'bloom_scores'   => $bl_scores ?: [],
         'questions'      => $questions  ?: [],
+        'uploaded_file'  => $uploadedFile,
     ]);
 
 } catch (Exception $e) {

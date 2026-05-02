@@ -37,7 +37,7 @@ const keyframes = `
   .anim-spin       { animation: test-spin 1s linear infinite; }
 `;
 
-const TOTAL_TIME = 45 * 60; // 45 minutes
+const TOTAL_TIME = 40 * 60; // 40 minutes
 
 function decodeToken(token) {
   try {
@@ -119,10 +119,9 @@ export default function ActiveTest() {
     setIsLoading(true);
     setLoadError("");
     try {
-      const res = await fetch(
-        apiUrl(`get-questions.php?test_id=${testId}`),
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      const res = await fetch(apiUrl(`get-questions.php?test_id=${testId}`), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const result = await res.json().catch(() => null);
 
       if (res.status === 401) {
@@ -144,7 +143,9 @@ export default function ActiveTest() {
       }
     } catch (err) {
       console.error(err);
-      setLoadError("Network error while loading test. Check server and try again.");
+      setLoadError(
+        "Network error while loading test. Check server and try again.",
+      );
     } finally {
       setIsLoading(false);
     }

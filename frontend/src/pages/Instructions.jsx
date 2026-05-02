@@ -158,24 +158,24 @@ export default function Instructions() {
     const classTestMap = {
       8: {
         name: "Class 8 Foundation Check",
-        duration_mins: 45,
+        duration_mins: 40,
         total_questions: 32,
       },
       9: {
         name: "Class 9 Mid-Term Readiness Test",
-        duration_mins: 45,
+        duration_mins: 40,
         total_questions: 32,
       },
       10: {
         name: "Class 10 Diagnostic Assessment",
-        duration_mins: 45,
+        duration_mins: 40,
         total_questions: 32,
       },
     };
 
     const testInfo = classTestMap[Number(userClass)] || {
       name: "Pramyan Diagnostic Assessment",
-      duration_mins: 45,
+      duration_mins: 40,
       total_questions: 32,
     };
 
@@ -240,15 +240,11 @@ export default function Instructions() {
             {!loading && test && (
               <div className="anim-fade-left anim-d-500 relative z-10 flex flex-col gap-1.5 w-full">
                 <InfoBox Icon={FileText} label="Test Name" value={test.name} />
-                <InfoBox
-                  Icon={Clock}
-                  label="Duration"
-                  value={`${test.duration_mins ?? 45} minutes`}
-                />
+                <InfoBox Icon={Clock} label="Duration" value="40 minutes" />
                 <InfoBox
                   Icon={HelpCircle}
                   label="Total Questions"
-                  value={`${test.total_questions ?? 32} Questions`}
+                  value="32 Questions"
                 />
                 <InfoBox
                   Icon={GraduationCap}

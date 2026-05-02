@@ -198,7 +198,10 @@ const SCI_CHAPTER_KEYWORDS = [
   "body movement",
 ];
 
-const normalizeTag = (v) => String(v || "").trim().toLowerCase();
+const normalizeTag = (v) =>
+  String(v || "")
+    .trim()
+    .toLowerCase();
 
 function detectSubjectFromSection(sectionRaw, qTextRaw = "") {
   const section = normalizeTag(sectionRaw);
@@ -239,7 +242,9 @@ function detectSubjectFromChapter(chapterRaw) {
 }
 
 function detectSkillBucket(skillRaw) {
-  const skill = String(skillRaw || "").trim().toUpperCase();
+  const skill = String(skillRaw || "")
+    .trim()
+    .toUpperCase();
   if (!skill) return null;
 
   if (
@@ -484,7 +489,7 @@ export default function TeacherPanel() {
   const [report, setReport] = useState(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState("");
-  
+
   // Default sidebar to true so it shows on load
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -599,7 +604,7 @@ export default function TeacherPanel() {
 
       {/* Backdrop for mobile sidebar - overlays everything behind the menu */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -610,15 +615,17 @@ export default function TeacherPanel() {
         <nav className="sticky top-0 md:top-2.5 z-50 mx-2.5 md:mx-4 mt-2.5 rounded-2xl bg-[linear-gradient(135deg,#1D9E75_0%,#185FA5_100%)] shadow-[0_6px_28px_rgba(24,95,165,0.22)] flex-shrink-0">
           <div className="flex items-center justify-between gap-2 px-3 md:px-6 h-14 md:h-16">
             <div className="flex items-center gap-2.5 min-w-0">
-              
               {/* UNIVERSAL HAMBURGER BUTTON (VISIBLE ON MOBILE AND DESKTOP) */}
               <button
                 type="button"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 className="flex items-center justify-center text-white p-1.5 hover:bg-white/15 rounded-lg transition-colors cursor-pointer"
-                aria-label="Toggle Menu"
-              >
-                {isSidebarOpen ? <X size={22} strokeWidth={2.5} /> : <Menu size={22} strokeWidth={2.5} />}
+                aria-label="Toggle Menu">
+                {isSidebarOpen ? (
+                  <X size={22} strokeWidth={2.5} />
+                ) : (
+                  <Menu size={22} strokeWidth={2.5} />
+                )}
               </button>
 
               <img
@@ -664,15 +671,13 @@ export default function TeacherPanel() {
 
         {/* ── LAYOUT ── */}
         <div className="flex flex-col md:flex-row flex-1 min-h-0 mt-2.5 md:mt-0 relative overflow-hidden">
-          
           {/* ── LEFT: STUDENT LIST SIDEBAR ── */}
           <aside
             className={`${
-              isSidebarOpen 
-                ? "flex absolute inset-y-2 left-2 z-50 w-[85%] max-w-[320px] shadow-[0_10px_40px_rgba(0,0,0,0.2)] md:relative md:inset-auto md:w-[360px] md:max-w-none md:shadow-none" 
+              isSidebarOpen
+                ? "flex absolute inset-y-2 left-2 z-50 w-[85%] max-w-[320px] shadow-[0_10px_40px_rgba(0,0,0,0.2)] md:relative md:inset-auto md:w-[360px] md:max-w-none md:shadow-none"
                 : "hidden"
-            } bg-white md:border-r md:border-[#d4e4f7] flex-col h-[calc(100%-16px)] md:h-full md:overflow-hidden mx-2.5 md:mx-0 rounded-2xl md:rounded-none border md:border-0 border-[#d4e4f7] transition-all shrink-0`}
-          >
+            } bg-white md:border-r md:border-[#d4e4f7] flex-col h-[calc(100%-16px)] md:h-full md:overflow-hidden mx-2.5 md:mx-0 rounded-2xl md:rounded-none border md:border-0 border-[#d4e4f7] transition-all shrink-0`}>
             {/* head */}
             <div className="px-5 md:px-6 pt-5 pb-4 border-b border-[#f0f4fb] flex-shrink-0">
               <div className="text-base font-extrabold text-[#0d1f3c] mb-0.5">
@@ -805,7 +810,8 @@ export default function TeacherPanel() {
                     Select a Student
                   </h2>
                   <p className="text-[#888] text-sm font-['Inter',sans-serif] max-w-[280px]">
-                    Open the sidebar and tap any student to view their full diagnostic report.
+                    Open the sidebar and tap any student to view their full
+                    diagnostic report.
                   </p>
                 </div>
               ) : reportLoading ? (
@@ -838,26 +844,13 @@ export default function TeacherPanel() {
 // BEAUTIFUL REPORT FORMATTER
 // ==========================================
 function FormatReport({ report, student, teacherName }) {
-<<<<<<< HEAD
-  // PER-ROW SCORING ENGINE — each question row = 1 mark
-  // Section A (1-mark MCQs)         : 1 row each
-  // Section B (3-mark, 3 parts a-c) : 3 rows each
-  // Section C (4-mark, 4 parts a-d) : 4 rows each
-  // So total marks = total row count, and a row is correct iff that part was correct.
-=======
   // DYNAMIC RECALCULATION ENGINE (mark-based: each stored row = 1 mark)
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
   let activeReport = { ...report };
 
   if (report.questions && report.questions.length > 0) {
     const qs = report.questions;
-<<<<<<< HEAD
-    const totalMax = qs.length;
-
-=======
     const totalMax =
       Number(report.max_score) > 0 ? Number(report.max_score) : qs.length;
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
     let totalScore = 0;
     let mathMax = 0,
       mathScore = 0;
@@ -887,22 +880,12 @@ function FormatReport({ report, student, teacherName }) {
       sciP3s = 0;
 
     qs.forEach((q) => {
-<<<<<<< HEAD
-      const ok = parseInt(q.is_correct) === 1;
-      if (ok) totalScore++;
-      if (!q.selected_option || String(q.selected_option).trim() === "") {
-        skipped++;
-      }
-
-      // Subjects
-      const sec = (q.section || "").toLowerCase();
-      if (sec.includes("math")) {
-        mathMax++;
-        if (ok) mathScore++;
-      } else if (sec.includes("sci")) {
-=======
-      const selected = String(q.selected_option ?? "").trim().toLowerCase();
-      const correctAns = String(q.correct ?? "").trim().toLowerCase();
+      const selected = String(q.selected_option ?? "")
+        .trim()
+        .toLowerCase();
+      const correctAns = String(q.correct ?? "")
+        .trim()
+        .toLowerCase();
       const ok = selected !== "" && selected === correctAns;
       if (ok) totalScore++;
       if (selected !== "") answeredCount++;
@@ -915,13 +898,12 @@ function FormatReport({ report, student, teacherName }) {
         mathMax++;
         if (ok) mathScore++;
       } else if (subject === "sci") {
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
         sciMax++;
         if (ok) sciScore++;
       }
 
       // Bloom
-      const lvl = (q.bloom_level || "UNKNOWN").toUpperCase();
+      const lvl = q.bloom_level;
       if (!bMap[lvl]) bMap[lvl] = { max_score: 0, score: 0 };
       bMap[lvl].max_score++;
       if (ok) bMap[lvl].score++;
@@ -931,15 +913,7 @@ function FormatReport({ report, student, teacherName }) {
       if (!cMap[ch])
         cMap[ch] = {
           chapter: ch,
-<<<<<<< HEAD
-          subject: sec.includes("math")
-            ? "Mathematics"
-            : sec.includes("sci")
-              ? "Science"
-              : q.section,
-=======
           subject: q.section,
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
           swot_category: "",
           max_score: 0,
           score: 0,
@@ -949,16 +923,11 @@ function FormatReport({ report, student, teacherName }) {
       if (ok) cMap[ch].score++;
 
       // Skills
-<<<<<<< HEAD
-      const sk = (q.skill_type || "").toUpperCase();
-      if (sk.includes("P1") || sk.includes("CONCEPT")) {
-=======
       const skillBucket = detectSkillBucket(q.skill_type);
       const isMath = subject === "math";
       const isSci = subject === "sci";
 
       if (skillBucket === "P1") {
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
         p1m++;
         if (ok) p1s++;
         if (isMath) {
@@ -1017,10 +986,6 @@ function FormatReport({ report, student, teacherName }) {
       })
       .sort((a, b) => b.pct - a.pct);
 
-<<<<<<< HEAD
-    // Overwrite with row-level data!
-=======
->>>>>>> 60a79b1129ea280f42506ab416a54066732d24df
     activeReport = {
       ...activeReport,
       total_score: totalScore,
@@ -1446,15 +1411,9 @@ function FormatReport({ report, student, teacherName }) {
                   const dbScore = activeReport.bloom_scores?.find((b) =>
                     b.bloom_level.toUpperCase().includes(levelObj.level),
                   );
-                  const maxMarks = dbScore
-                    ? dbScore.max_score
-                    : 0;
-                  const scored = dbScore
-                    ? dbScore.score
-                    : 0;
-                  const pct = dbScore
-                    ? dbScore.pct
-                    : 0;
+                  const maxMarks = dbScore ? dbScore.max_score : 0;
+                  const scored = dbScore ? dbScore.score : 0;
+                  const pct = dbScore ? dbScore.pct : 0;
                   return (
                     <tr key={i}>
                       <td className="px-3 py-3 border border-[#e2edf8] text-center font-bold">
@@ -1478,8 +1437,7 @@ function FormatReport({ report, student, teacherName }) {
                       <td
                         className="px-3 py-3 border border-[#e2edf8] text-center font-extrabold"
                         style={{
-                          color:
-                            pct >= 50 ? "#1D9E75" : "#e24b4a",
+                          color: pct >= 50 ? "#1D9E75" : "#e24b4a",
                         }}>
                         {pct}%
                       </td>
